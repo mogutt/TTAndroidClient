@@ -1,0 +1,130 @@
+Android TeamTalk的原型是Android-IM，欢迎小伙伴儿们在此基础上进行各种节操满满的改进，并与大家分享～
+
+
+注：本文假设你已经有Android开发环境，且对Android开发的基本常识有所了解
+
+本文以eclipse为例
+启动Eclipse，导入Android客户端项目，请确保你当前的Android SDK是最新版。 如果编译出错，请修改项目根目录下的 project.properties 文件。 
+
+一、程序所依赖项目信息
+	1.mgimlibs
+	 git地址：http://gitlab.mogujie.org/androidop-team/mgimlibs.git
+	 说明：该工程放置了android team talk中所使用到的界面组件
+	 
+	 
+二、程序环境支持
+    1.NDK
+    2.SDK
+      推荐使用Android 4.0 以上版本的SDK(target=android-14)
+          
+ 
+
+三、工程目录结构
+
+根目录
+
+    ├ jni 
+    ├ libs
+    ├ res
+    ├ src
+    ├ mogujie_android_style.xml  
+    ├ AndroidManifest.xml
+    ├ README.md
+
+
+目录解释
+
+README.md 文件
+
+    项目介绍信息。
+
+
+mogujie_android_style.xml 文件
+    代码风格模板，需要导入到eclipse perferences的code style中。
+    
+        
+    
+AndroidManifest.xml 文件
+
+    AndroidManifest.xml用于设置应用程序的版本、用户权限及注册Activity等组件及其他配置。
+   
+src
+
+    ├ com.mogujie.im.adapter --UI用到的相关数据适配器
+    ├ com.mogujie.im.adapter.album --相册数据处理相关的数据适配器
+    ├ com.mogujie.im.app --存放程序全局类的包
+    ├ com.mogujie.im.audio.biz --存放语音的业务接口类
+    ├ com.mogujie.im.cache －－缓存相关的实现
+    ├ com.mogujie.im.cache.biz --缓存的业务接口类
+    ├ com.mogujie.im.config --常量级的配置信息
+    ├ com.mogujie.im.conn --网络连接与状态维护
+    ├ com.mogujie.im.biz --用于存放业务相关的处理类
+    ├ com.mogujie.im.db --数据库相关的处理
+    ├ com.mogujie.im.db.biz --数据库相关的接口类
+    ├ com.mogujie.im.entity --实体类
+    ├ com.mogujie.im.exception --异常处理类
+    ├ com.mogujie.im.https --网络访问相关
+    ├ com.mogujie.im.log --日志处理类
+    ├ com.mogujie.im.packet --packet的处理类
+    ├ com.mogujie.im.packet.base --packet相关的基础处理类
+    ├ com.mogujie.im.packet.biz --放置面向各业务的包
+    ├ com.mogujie.im.queue --消息队列相关
+    ├ com.mogujie.im.queue.action --存放消息队列使用的action
+    ├ com.mogujie.im.service --存放Service与相关的Receiver
+    ├ com.mogujie.im.socket --socket相关的处理
+    ├ com.mogujie.im.support.audio --语音相关的处理    
+    ├ com.mogujie.im.task --task的实现   
+    ├ com.mogujie.im.task.biz --面向业务级的各task实现类
+    ├ com.mogujie.im.timer --timer的实现
+    ├ com.mogujie.im.ui --界面相关的activity包
+    ├ com.mogujie.im.ui.base --activity相关的基类包
+    ├ com.mogujie.im.ui.tools --界面用到的工具类
+    ├ com.mogujie.im.utils --程序的工具类
+    ├ com.mogujie.im.widget --界面相关的组件
+    
+    
+res 
+
+     res存放项目用到的图片、布局、样式等资源文件。
+
+    ├ anim
+    ├ color
+    ├ drawable
+    ├ drawable-hdpi
+    ├ drawable-xdpi
+    ├ drawable-xxhdpi
+    ├ layout
+    ├ values
+    ├ values-sw600dp
+    ├ values-sw720dp-land
+    └ values-sw820dp
+    
+    
+libs目录
+
+      libs目录用于存放项目引用的第三方jar包。   
+      
+     
+jni
+
+      项目使用语音压缩库speex。
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+ -----------------------------------------     
+      
+      
+      
+      
+

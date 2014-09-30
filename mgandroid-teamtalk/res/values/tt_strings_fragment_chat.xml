@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chat_title">聊天</string>
+    <string name="chat_search">搜索</string>
+</resources>
