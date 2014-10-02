@@ -7,8 +7,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
@@ -20,7 +18,6 @@ import android.widget.Toast;
 import com.mogujie.tt.R;
 import com.mogujie.tt.app.IMEntrance;
 import com.mogujie.tt.cache.biz.CacheHub;
-import com.mogujie.tt.config.HandlerConstant;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.conn.NetStateDispach;
 import com.mogujie.tt.imlib.IMActions;
@@ -32,11 +29,11 @@ import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.base.TTBaseActivity;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
-import com.mogujie.tt.utils.NetworkUtil;
 
 public class LoginActivity extends TTBaseActivity implements OnIMServiceListner {
 
-	protected static Handler uiHandler = null;
+	// todo eric remove uiHandler dead Codes
+	// protected static Handler uiHandler = null;
 
 	private EditText mNameView;
 
@@ -59,23 +56,36 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 
 	private LoginIdentity loginIdentity;
 
-	public static Handler getUiHandler() {
+	// public static Handler getUiHandler() {
+	//
+	// return uiHandler;
+	//
+	// }
 
-		return uiHandler;
+	private String getLoginErrorTip(int errorCode) {
+		switch (errorCode) {
+		case ErrorCode.E_CONNECT_LOGIN_SERVER_FAILED:
+			return getString(R.string.connect_login_server_failed);
+		case ErrorCode.E_REQ_MSG_SERVER_ADDRS_FAILED:
+			return getString(R.string.req_msg_server_addrs_failed);
+		case ErrorCode.E_CONNECT_MSG_SERVER_FAILED:
+			return getString(R.string.connect_msg_server_failed);
+		case ErrorCode.E_LOGIN_MSG_SERVER_FAILED:
+			return getString(R.string.login_msg_server_failed);
+		case ErrorCode.E_LOGIN_GENERAL_FAILED:
+			return getString(R.string.login_error_general_failed);
 
+		default:
+			return getString(R.string.login_error_unexpected);
+
+		}
 	}
 
 	private void onLoginError(int errorCode) {
-		logger.d("login#onLoginError -> errorCode:%d", errorCode);
+		logger.e("login#onLoginError -> errorCode:%d", errorCode);
 
-		String errorTip;
-		if (errorCode == ErrorCode.E_LOGIN_GENERAL_FAILED) {
-			errorTip = getString(R.string.login_error_common_failed);
-		} else {
-			String errorTipFormat = getString(R.string.login_error_other_failed);
-			errorTip = errorTipFormat.replace("$$ERROR_CODE$$",
-					String.valueOf(errorCode));
-		}
+		String errorTip = getLoginErrorTip(errorCode);
+		logger.d("login#errorTip:%s", errorTip);
 
 		mLoginStatusView.setVisibility(View.GONE);
 
@@ -117,8 +127,7 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 		try {
 			loginIdentity = imService.getDbManager().loadLoginIdentity();
 
-			logger.d("login#loginId:%s, pwd:%s", loginIdentity.loginId,
-					loginIdentity.pwd);
+			logger.d("login#loginId:%s", loginIdentity.loginId);
 
 			mNameView.setText(loginIdentity.loginId);
 			mPasswordView.setText(loginIdentity.pwd);
@@ -281,14 +290,15 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 					if (loginName.equals(loginIdentity.loginId)) {
 						logger.d("login#username is not changed");
 						userNameChanged = false;
-					} 
-					
+					}
+
 					if (mPassword.equals(loginIdentity.pwd)) {
 						logger.d("login#pwd is not changed");
 						pwdChanged = false;
 					}
 				}
-				imLoginMgr.login(loginName, mPassword, userNameChanged, pwdChanged);
+				imLoginMgr.login(loginName, mPassword, userNameChanged,
+						pwdChanged);
 			}
 
 		}
@@ -332,36 +342,36 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 	@Override
 	protected void initHandler() {
 
-		uiHandler = new Handler() {
-
-			@Override
-			public void handleMessage(Message msg) {
-
-				super.handleMessage(msg);
-
-				switch (msg.what) {
-				case HandlerConstant.HANDLER_LOGIN_MSG_SERVER:
-					onLoginSuccess();
-					break;
-				case HandlerConstant.HANDLER_LOGIN_MSG_SERVER_FAILED:
-					onLoginFailed(getString(R.string.login_failed));
-					break;
-				case HandlerConstant.HANDLER_LOGIN_MSG_SERVER_TIMEOUT:
-					onLoginFailed(getString(R.string.login_timeout));
-					break;
-				default:
-					onLoginFailed(getString(R.string.error_incorrect_user));
-					break;
-				}
-			}
-		};
+		// uiHandler = new Handler() {
+		//
+		// @Override
+		// public void handleMessage(Message msg) {
+		//
+		// super.handleMessage(msg);
+		//
+		// switch (msg.what) {
+		// case HandlerConstant.HANDLER_LOGIN_MSG_SERVER:
+		// onLoginSuccess();
+		// break;
+		// case HandlerConstant.HANDLER_LOGIN_MSG_SERVER_FAILED:
+		// onLoginFailed(getString(R.string.login_failed));
+		// break;
+		// case HandlerConstant.HANDLER_LOGIN_MSG_SERVER_TIMEOUT:
+		// onLoginFailed(getString(R.string.login_timeout));
+		// break;
+		// default:
+		// onLoginFailed(getString(R.string.error_incorrect_user));
+		// break;
+		// }
+		// }
+		// };
 	}
 
-	private void onLoginFailed(String tip) {
-		mPasswordView.setError(tip);
-		mPasswordView.requestFocus();
-		mLoginStatusView.setVisibility(View.GONE);
-	}
+	// private void onLoginFailed(String tip) {
+	// mPasswordView.setError(tip);
+	// mPasswordView.requestFocus();
+	// mLoginStatusView.setVisibility(View.GONE);
+	// }
 
 	private void onLoginSuccess() {
 		logger.i("login#onLoginSuccess");

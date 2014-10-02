@@ -1,260 +1,236 @@
-
 package com.mogujie.tt.imlib.network;
 
 import java.net.InetSocketAddress;
-
 import java.util.concurrent.Executors;
 
 import org.jboss.netty.bootstrap.ClientBootstrap;
-
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.SimpleChannelHandler;
-
 import org.jboss.netty.channel.ChannelFactory;
-
 import org.jboss.netty.channel.ChannelFuture;
-
 import org.jboss.netty.channel.ChannelPipeline;
-
 import org.jboss.netty.channel.ChannelPipelineFactory;
-
 import org.jboss.netty.channel.Channels;
-
+import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-
 import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 
-import android.content.Context;
 import android.os.Handler;
 
-
-
-
 import com.mogujie.tt.config.ProtocolConstant;
-//import com.mogujie.tt.conn.ReconnectManager;
-import com.mogujie.tt.imlib.IMLoginManager;
-import com.mogujie.tt.imlib.common.ErrorCode;
 import com.mogujie.tt.imlib.proto.PacketEncoder;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.Header;
 import com.mogujie.tt.packet.base.Packet;
 
+//import com.mogujie.tt.conn.ReconnectManager;
+
 public class SocketThread extends Thread {
 
-    private ClientBootstrap clientBootstrap = null;
+	private ClientBootstrap clientBootstrap = null;
 
-    private ChannelFactory channelFactory = null;
+	private ChannelFactory channelFactory = null;
 
-    private ChannelFuture channelFuture = null;
+	private ChannelFuture channelFuture = null;
 
-    private Channel channel = null;
+	private Channel channel = null;
 
-    public Handler subHandler = null;
+	public Handler subHandler = null;
 
-    private String strHost = null;
+	private String strHost = null;
 
-    private int nPort = 0;
+	private int nPort = 0;
 
-    private static Logger logger = Logger.getLogger(SocketThread.class);
+	private static Logger logger = Logger.getLogger(SocketThread.class);
 
-    public SocketThread(String strHost, int nPort, SimpleChannelHandler handler) {
+	public SocketThread(String strHost, int nPort, SimpleChannelHandler handler) {
 
-        this.strHost = strHost;
+		this.strHost = strHost;
 
-        this.nPort = nPort;
+		this.nPort = nPort;
 
-        init(handler);
+		init(handler);
 
-    }
+	}
 
-    @Override
-    public void run() {
+	@Override
+	public void run() {
 
-        // Looper.prepare();
+		// Looper.prepare();
 
-        // subHandler = new Handler() {
+		// subHandler = new Handler() {
 
-        // @Override
+		// @Override
 
-        // public void handleMessage(Message msg) {
+		// public void handleMessage(Message msg) {
 
-        // switch (msg.what) {
+		// switch (msg.what) {
 
-        // // case MessageConstant.REQUEST_NETTY_SERVER:
+		// // case MessageConstant.REQUEST_NETTY_SERVER:
 
-        // // break;
+		// // break;
 
-        // default:
+		// default:
 
-        // }
+		// }
 
-        // }
+		// }
 
-        // };
+		// };
 
-        boolean ok = doConnect();
-        if (!ok) {
-        	logger.e("login#doConnect failed");
-        	IMLoginManager.instance().onLoginFailed(ErrorCode.E_CONNECT_SERVER_FAILED);
-        }
-        
+		doConnect();
 
-        // Looper.loop();
+		// Looper.loop();
 
-    }
+	}
 
-    private void init(final SimpleChannelHandler handler) {
+	private void init(final SimpleChannelHandler handler) {
 
-    	//only one IO thread
-        channelFactory = new NioClientSocketChannelFactory(
+		// only one IO thread
+		channelFactory = new NioClientSocketChannelFactory(
 
-                Executors.newSingleThreadExecutor(),
+		Executors.newSingleThreadExecutor(),
 
-                Executors.newSingleThreadExecutor());
+		Executors.newSingleThreadExecutor());
 
-        clientBootstrap = new ClientBootstrap(channelFactory);
+		clientBootstrap = new ClientBootstrap(channelFactory);
 
-        clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+		clientBootstrap.setOption("connectTimeoutMillis", 5000);
 
-            public ChannelPipeline getPipeline() throws Exception {
+		clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
 
-                ChannelPipeline pipeline = Channels.pipeline();
+			public ChannelPipeline getPipeline() throws Exception {
 
-                // 接收的数据包解码
+				ChannelPipeline pipeline = Channels.pipeline();
 
-                // pipeline.addLast("decoder", new PacketDecoder());
+				// 接收的数据包解码
 
-                pipeline.addLast("decoder", new LengthFieldBasedFrameDecoder(
+				// pipeline.addLast("decoder", new PacketDecoder());
 
-                        400 * 1024, 0, 4, -4, 0));
+				pipeline.addLast("decoder", new LengthFieldBasedFrameDecoder(
 
-                // 发送的数据包编码
+				400 * 1024, 0, 4, -4, 0));
 
-                pipeline.addLast("encoder", new PacketEncoder());
+				// 发送的数据包编码
 
-                // 具体的业务处理，这个handler只负责接收数据，并传递给dispatcher
+				pipeline.addLast("encoder", new PacketEncoder());
 
-                pipeline.addLast("handler", handler);
+				// 具体的业务处理，这个handler只负责接收数据，并传递给dispatcher
 
-                return pipeline;
+				pipeline.addLast("handler", handler);
 
-            }
+				return pipeline;
 
-        });
+			}
 
-        clientBootstrap.setOption("tcpNoDelay", true);
+		});
 
-        clientBootstrap.setOption("keepAlive", true);
+		clientBootstrap.setOption("tcpNoDelay", true);
 
-        // clientBootstrap.setOption("keepIdle", 20);
+		clientBootstrap.setOption("keepAlive", true);
 
-        // clientBootstrap.setOption("keepInterval", 5);
+		// clientBootstrap.setOption("keepIdle", 20);
 
-        // clientBootstrap.setOption("keepCount", 3);
+		// clientBootstrap.setOption("keepInterval", 5);
 
-    }
+		// clientBootstrap.setOption("keepCount", 3);
 
-    public boolean doConnect() {
-    	logger.d("login#doconnect");
+	}
 
-        try {
+	public boolean doConnect() {
 
-            if ((null == channel || (null != channel && !channel.isConnected()))
+		try {
 
-                    && null != this.strHost && this.nPort > 0) {
+			if ((null == channel || (null != channel && !channel.isConnected()))
 
-                // Start the connection attempt.
+					&& null != this.strHost && this.nPort > 0) {
 
-                channelFuture = clientBootstrap.connect(new InetSocketAddress(
+				// Start the connection attempt.
 
-                        strHost, nPort));
+				channelFuture = clientBootstrap.connect(new InetSocketAddress(
 
-                // Wait until the connection attempt succeeds or fails.
+				strHost, nPort));
 
-                channel = channelFuture.awaitUninterruptibly().getChannel();
+				// Wait until the connection attempt succeeds or fails.
 
-                if (!channelFuture.isSuccess()) {
+				channel = channelFuture.awaitUninterruptibly().getChannel();
 
-                    channelFuture.getCause().printStackTrace();
+				if (!channelFuture.isSuccess()) {
 
-                    clientBootstrap.releaseExternalResources();
+					channelFuture.getCause().printStackTrace();
 
-                    //ReconnectManager.getInstance().setOnRecconnecting(false);
+					clientBootstrap.releaseExternalResources();
 
-                    //ReconnectManager.getInstance().setLogining(false);
+					// ReconnectManager.getInstance().setOnRecconnecting(false);
 
-                    return false;
+					// ReconnectManager.getInstance().setLogining(false);
 
-                }
+					return false;
 
-            }
+				}
 
-            // Wait until the connection is closed or the connection attemp
+			}
 
-            // fails.
+			// Wait until the connection is closed or the connection attemp
 
-            channelFuture.getChannel().getCloseFuture().awaitUninterruptibly();
+			// fails.
 
-            // Shut down thread pools to exit.
+			channelFuture.getChannel().getCloseFuture().awaitUninterruptibly();
 
-            clientBootstrap.releaseExternalResources();
+			// Shut down thread pools to exit.
 
-            return true;
+			clientBootstrap.releaseExternalResources();
 
-        } catch (Exception e) {
+			return true;
 
-            //ReconnectManager.getInstance().setOnRecconnecting(false);
+		} catch (Exception e) {
+			logger.e("do connect failed. e: %s", e.getStackTrace().toString());
 
-            //ReconnectManager.getInstance().setLogining(false);
+			return false;
 
-            logger.e("%s", e.getStackTrace().toString());
+		}
 
-            return false;
+	}
 
-        }
+	public Channel getChannel() {
 
-    }
+		return channel;
 
-    public Channel getChannel() {
+	}
 
-        return channel;
+	public void close() {
 
-    }
+		if (null == channelFuture)
 
-    public void close() {
+			return;
 
-        if (null == channelFuture)
+		if (null != channelFuture.getChannel()) {
 
-            return;
+			channelFuture.getChannel().close();
 
-        if (null != channelFuture.getChannel()) {
+		}
 
-            channelFuture.getChannel().close();
+		channelFuture.cancel();
 
-        }
+	}
 
-        channelFuture.cancel();
+	public boolean sendPacket(Packet p) {
+		Header header = p.getRequest().getHeader();
+		ProtocolConstant.ProtocolDumper.dump(true, header);
 
-    }
+		if (null != p && null != channelFuture.getChannel()) {
 
-    public boolean sendPacket(Packet p) {
-    	Header header = p.getRequest().getHeader();
-    	ProtocolConstant.ProtocolDumper.dump(true, header);
-    	
-        if (null != p && null != channelFuture.getChannel()) {
+			channelFuture.getChannel().write(p);
 
-            channelFuture.getChannel().write(p);
+			logger.d("packet#send ok");
+			return true;
 
-            logger.d("packet#send ok");
-            return true;
+		} else {
 
-        } else {
+			logger.e("packet#send failed");
+			return false;
 
-        	logger.e("packet#send failed");
-            return false;
+		}
 
-        }
-
-    }
+	}
 
 }

@@ -4,19 +4,18 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
 
 import com.mogujie.tt.imlib.IMLoginManager;
 import com.mogujie.tt.imlib.IMPacketDispatcher;
 
-public class MsgServerHandler extends SimpleChannelHandler {
+public class MsgServerHandler extends BaseServerHandler {
 
 	@Override
 	public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e)
 			throws Exception {
 		// TODO Auto-generated method stub
 		super.channelConnected(ctx, e);
-		
+
 		IMLoginManager.instance().onMsgServerConnected();
 	}
 
@@ -25,7 +24,7 @@ public class MsgServerHandler extends SimpleChannelHandler {
 			ChannelStateEvent e) throws Exception {
 		// TODO Auto-generated method stub
 		super.channelDisconnected(ctx, e);
-		
+
 		IMLoginManager.instance().onMsgServerDisconnected();
 	}
 
@@ -34,8 +33,15 @@ public class MsgServerHandler extends SimpleChannelHandler {
 			throws Exception {
 		// TODO Auto-generated method stub
 		super.messageReceived(ctx, e);
-		
+
 		IMPacketDispatcher.dispatch((ChannelBuffer) e.getMessage());
+	}
+
+	@Override
+	protected void channelUnconnected() {
+		// TODO Auto-generated method stub
+
+		IMLoginManager.instance().onMessageServerUnconnected();
 
 	}
 

@@ -6,7 +6,6 @@ import java.util.List;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
-import android.widget.Toast;
 
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
@@ -45,18 +44,18 @@ public class IMLoginManager extends IMManager {
 	private SocketThread msgServerThread;
 	// todo eric make it to ContactEntity too
 	private User loginUser;
-	private final int MSG_SERVER_DISCONNECTED_EVENT = -1;
+	private static final int MSG_SERVER_DISCONNECTED_EVENT = -1;
 	private boolean loggined = false;
 	private boolean everLogined = false;
 	private boolean identityChanged = false;
-	Handler handler = new Handler() {
+	private static Handler handler = new Handler() {
 
 		@Override
 		public void handleMessage(Message msg) {
 			// TODO Auto-generated method stub
 
 			if (msg.what == MSG_SERVER_DISCONNECTED_EVENT) {
-				IMLoginManager.this.closeMsgServerConnection();
+				IMLoginManager.instance().closeMsgServerConnection();
 			}
 
 			// // todo eric don't put ui stuff here
@@ -125,11 +124,9 @@ public class IMLoginManager extends IMManager {
 	}
 
 	private void connectLoginServer() {
-		connectLoginServerImpl(ProtocolConstant.LOGIN_IP1,
-				ProtocolConstant.LOGIN_PORT);
-	}
+		String ip = ProtocolConstant.LOGIN_IP1;
+		int port = ProtocolConstant.LOGIN_PORT;
 
-	private void connectLoginServerImpl(String ip, int port) {
 		logger.i("login#connect login server -> (%s:%d)", ip, port);
 
 		loginServerThread = new SocketThread(ip, port, new LoginServerHandler());
@@ -139,6 +136,13 @@ public class IMLoginManager extends IMManager {
 	public void cancel() {
 		// todo eric
 		logger.i("login#cancel");
+	}
+
+	public void onLoginServerUnconnected() {
+		logger.i("login#onLoginServerUnConnected");
+
+		IMLoginManager.instance().onLoginFailed(
+				ErrorCode.E_CONNECT_LOGIN_SERVER_FAILED);
 	}
 
 	public void onLoginFailed(int errorCode) {
@@ -194,12 +198,12 @@ public class IMLoginManager extends IMManager {
 	}
 
 	public void onLoginServerDisconnected() {
-		logger.w("login#onLoginServerDisconnected");
+		logger.e("login#onLoginServerDisconnected");
 
 		// todo eric is enum capable of comparing just like int?
 		if (currentStatus < STATUS_CONNECT_MSG_SERVER) {
 			logger.e("login server disconnected unexpectedly");
-			onLoginFailed(ErrorCode.E_LOGIN_SERVER_DISCONNECTED_UNEXPECTEDLY);
+			onLoginFailed(ErrorCode.E_REQ_MSG_SERVER_ADDRS_FAILED);
 		}
 	}
 
@@ -275,6 +279,11 @@ public class IMLoginManager extends IMManager {
 		msgServerThread.start();
 	}
 
+	public void onMessageServerUnconnected() {
+		logger.i("login#onMessageServerUnconnected");
+		onLoginFailed(ErrorCode.E_CONNECT_MSG_SERVER_FAILED);
+	}
+
 	public void onMsgServerConnected() {
 		logger.i("login#onMsgServerConnected");
 
@@ -284,6 +293,10 @@ public class IMLoginManager extends IMManager {
 	public void onMsgServerDisconnected() {
 		logger.w("login#onMsgServerDisconnected");
 
+		if (currentStatus < STATUS_LOGIN_OK) {
+			onLoginFailed(ErrorCode.E_LOGIN_MSG_SERVER_FAILED);
+		}
+		
 		currentStatus = STATUS_MSG_SERVER_DISCONNECTED;
 
 		loggined = false;
@@ -339,7 +352,7 @@ public class IMLoginManager extends IMManager {
 	}
 
 	public void closeMsgServerConnection() {
-		logger.d("login#closeMsgServerConnection");
+		logger.i("login#closeMsgServerConnection");
 
 		if (msgServerThread != null) {
 			msgServerThread.close();
