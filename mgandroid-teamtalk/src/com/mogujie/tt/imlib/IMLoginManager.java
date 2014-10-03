@@ -55,7 +55,7 @@ public class IMLoginManager extends IMManager {
 			// TODO Auto-generated method stub
 
 			if (msg.what == MSG_SERVER_DISCONNECTED_EVENT) {
-				IMLoginManager.instance().closeMsgServerConnection();
+				IMLoginManager.instance().disconnectMsgServer();
 			}
 
 			// // todo eric don't put ui stuff here
@@ -77,6 +77,10 @@ public class IMLoginManager extends IMManager {
 
 	private int currentStatus = STATUS_CONNECT_LOGIN_SERVER;
 
+	public boolean isEverLoginned() {
+		return everLogined;
+	}
+
 	public boolean isLoggined() {
 		return loggined;
 	}
@@ -85,6 +89,10 @@ public class IMLoginManager extends IMManager {
 		return loginUser;
 	}
 
+	public boolean isDoingLogin() {
+		return currentStatus <= STATUS_LOGINING_MSG_SERVER;
+	}
+	
 	public String getLoginId() {
 		return loginId;
 	}
@@ -98,10 +106,22 @@ public class IMLoginManager extends IMManager {
 		logger.d("login#creating IMLoginManager");
 	}
 
-	public void relogin() {
-		if (everLogined) {
-			connectLoginServer();
+	public boolean relogin() {
+		logger.d("login#relogin");
+		
+		if (isDoingLogin()) {
+			logger.d("login#isDoingLogin, no need");
+			return false;
 		}
+		
+		if (loggined) {
+			logger.d("login#already logined, no need");
+			return false;
+		}
+		
+		connectLoginServer();
+		
+		return true;
 	}
 
 	public void login(String userName, String password,
@@ -149,6 +169,7 @@ public class IMLoginManager extends IMManager {
 		logger.i("login#onLoginFailed -> errorCode:%d", errorCode);
 
 		currentStatus = STATUS_LOGIN_FAILED;
+		loggined = false;
 
 		Intent intent = new Intent(IMActions.ACTION_LOGIN_RESULT);
 		intent.putExtra(SysConstant.lOGIN_ERROR_CODE_KEY, errorCode);
@@ -255,13 +276,26 @@ public class IMLoginManager extends IMManager {
 	}
 
 	private void disconnectLoginServer() {
-		logger.i("login#disconnect login server");
+		logger.i("login#disconnectLoginServer");
 
 		if (loginServerThread != null) {
-			logger.i("login#close login server when logining msg server");
 			loginServerThread.close();
 
-			loginServerThread = null;
+			logger.i("login#do real disconnectLoginServer ok");
+
+			// todo eric
+			// loginServerThread = null;
+		}
+	}
+
+	private void disconnectMsgServer() {
+		logger.i("login#disconnectMsgServer");
+
+		if (msgServerThread != null) {
+			msgServerThread.close();
+			logger.i("login#do real disconnectMsgServer ok");
+
+			// msgServerThread = null;
 		}
 	}
 
@@ -290,13 +324,23 @@ public class IMLoginManager extends IMManager {
 		reqLoginMsgServer();
 	}
 
+	private void broadcastDisconnectWithServer() {
+		logger.i("login#broadcastDisconnectWithServer");
+
+		if (ctx != null) {
+			ctx.sendBroadcast(new Intent(IMActions.ACTION_SERVER_DISCONNECTED));
+		}
+	}
+
 	public void onMsgServerDisconnected() {
 		logger.w("login#onMsgServerDisconnected");
 
 		if (currentStatus < STATUS_LOGIN_OK) {
 			onLoginFailed(ErrorCode.E_LOGIN_MSG_SERVER_FAILED);
+		} else {
+			broadcastDisconnectWithServer();
 		}
-		
+
 		currentStatus = STATUS_MSG_SERVER_DISCONNECTED;
 
 		loggined = false;
@@ -351,18 +395,14 @@ public class IMLoginManager extends IMManager {
 		}
 	}
 
-	public void closeMsgServerConnection() {
-		logger.i("login#closeMsgServerConnection");
-
-		if (msgServerThread != null) {
-			msgServerThread.close();
-			msgServerThread = null;
-
-			logger.d("login#close msgServerThread ok");
-		}
-	}
-
 	public SocketThread getMsgServerChannel() {
 		return msgServerThread;
+	}
+
+	public void disconnect() {
+		logger.d("login#disconnect");
+
+		disconnectLoginServer();
+		disconnectMsgServer();
 	}
 }

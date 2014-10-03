@@ -99,13 +99,15 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 
 		logger.d("login#onAction -> action:%s", action);
 
-		int errorCode = intent
-				.getIntExtra(SysConstant.lOGIN_ERROR_CODE_KEY, -1);
+		if (action.equals(IMActions.ACTION_LOGIN_RESULT)) {
+			int errorCode = intent.getIntExtra(
+					SysConstant.lOGIN_ERROR_CODE_KEY, -1);
 
-		if (errorCode != ErrorCode.S_OK) {
-			onLoginError(errorCode);
-		} else {
-			onLoginSuccess();
+			if (errorCode != ErrorCode.S_OK) {
+				onLoginError(errorCode);
+			} else {
+				onLoginSuccess();
+			}
 		}
 	}
 

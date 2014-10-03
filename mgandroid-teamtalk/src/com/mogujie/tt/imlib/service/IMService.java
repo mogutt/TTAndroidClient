@@ -8,18 +8,11 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.ConnectivityManager;
 import android.os.Binder;
 import android.os.IBinder;
-import android.view.LayoutInflater;
 
-import com.mogujie.tt.R;
 import com.mogujie.tt.config.SysConstant;
-import com.mogujie.tt.conn.ConnectionManager;
 import com.mogujie.tt.imlib.IMActions;
 import com.mogujie.tt.imlib.IMContactManager;
 import com.mogujie.tt.imlib.IMGroupManager;
@@ -27,7 +20,7 @@ import com.mogujie.tt.imlib.IMHeartBeatManager;
 import com.mogujie.tt.imlib.IMLoginManager;
 import com.mogujie.tt.imlib.IMMessageManager;
 import com.mogujie.tt.imlib.IMRecentSessionManager;
-import com.mogujie.tt.imlib.IMSession;
+import com.mogujie.tt.imlib.IMReconnectManager;
 import com.mogujie.tt.imlib.db.IMDbManager;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
@@ -35,15 +28,24 @@ import com.mogujie.tt.imlib.proto.MessageEntity;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.activity.MessageActivity;
-import com.mogujie.tt.ui.base.TTBaseActivity;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
-import com.mogujie.tt.utils.NetworkUtil;
 
 public class IMService extends Service implements OnIMServiceListner {
 
 	private Logger logger = Logger.getLogger(IMService.class);
 	private IMServiceBinder binder = new IMServiceBinder();
+	
+	//hold the references
+	private IMLoginManager loginMgr = getLoginManager();
+	private IMContactManager contactMgr = getContactManager();
+	private IMGroupManager groupMgr = getGroupManager();
+	private IMMessageManager messageMgr = getMessageManager();
+	private IMRecentSessionManager recentSessionMgr = getRecentSessionManager();
+	private IMReconnectManager reconnectMgr = getReconnectManager();
+	//this mgr needs cotext, put it off when context is valid
+	private IMDbManager dbMgr;
+	private IMHeartBeatManager heartBeatMgr = getHeartBeatManager();
 
 	public class IMServiceBinder extends Binder {
 		public IMService getService() {
@@ -88,13 +90,17 @@ public class IMService extends Service implements OnIMServiceListner {
 		IMMessageManager.instance().setContext(getApplicationContext());
 		IMGroupManager.instance().setContext(getApplicationContext());
 		IMRecentSessionManager.instance().setContext(getApplicationContext());
+		IMReconnectManager.instance().setContext(getApplicationContext());
+		
+		dbMgr = getDbManager();
 
 		List<String> actions = new ArrayList<String>();
 		actions.add(IMActions.ACTION_MSG_RECV);
-		actions.add(ConnectivityManager.CONNECTIVITY_ACTION);
 		imServiceHelper.registerActions(getApplicationContext(), actions,
 				IMServiceHelper.INTENT_NO_PRIORITY, this);
 
+		IMReconnectManager.instance().register();
+		
 		// todo eric it makes debug difficult
 		// return START_STICKY;
 
@@ -142,6 +148,13 @@ public class IMService extends Service implements OnIMServiceListner {
 
 		return IMRecentSessionManager.instance();
 	}
+	
+	public IMReconnectManager getReconnectManager() {
+		logger.d("IMReconnectManager");
+
+		return IMReconnectManager.instance();
+	}
+
 
 	@Override
 	public void onAction(String action, Intent intent,
@@ -168,11 +181,7 @@ public class IMService extends Service implements OnIMServiceListner {
 			updateRecentList(msg);
 
 			showInNotificationBar(msg, sessionId, msg.sessionType);
-		} else if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-			if (NetworkUtil.isNetWorkAvalible(getApplicationContext())) {
-				IMLoginManager.instance().relogin();
-			}
-		}
+		} 
 
 	}
 
@@ -186,29 +195,29 @@ public class IMService extends Service implements OnIMServiceListner {
 		recentSessionMg.batchUpdate(msgList);
 	}
 
-	private String getMsgNotificationId(MessageEntity msg) {
-		ContactEntity contact = getContactManager().findContact(msg.fromId);
-		if (contact == null) {
-			logger.e("notification#contact is null, id:%s", msg.fromId);
-			return msg.fromId;
-		}
-
-		if (msg.isGroupMsg()) {
-			String groupId = msg.toId;
-			GroupEntity group = getGroupManager().findGroup(groupId);
-			if (group == null) {
-				logger.e("notification#no group find by id:%s", groupId);
-				return groupId;
-			}
-
-			return String.format("%s[%s]", msg.fromId, group.name);
-		} else if (msg.isP2PMsg()) {
-			return String.format("[%s]", msg.fromId);
-		}
-
-		// so the UI would reflect the wrong info
-		return msg.fromId;
-	}
+//	private String getMsgNotificationId(MessageEntity msg) {
+//		ContactEntity contact = getContactManager().findContact(msg.fromId);
+//		if (contact == null) {
+//			logger.e("notification#contact is null, id:%s", msg.fromId);
+//			return msg.fromId;
+//		}
+//
+//		if (msg.isGroupMsg()) {
+//			String groupId = msg.toId;
+//			GroupEntity group = getGroupManager().findGroup(groupId);
+//			if (group == null) {
+//				logger.e("notification#no group find by id:%s", groupId);
+//				return groupId;
+//			}
+//
+//			return String.format("%s[%s]", msg.fromId, group.name);
+//		} else if (msg.isP2PMsg()) {
+//			return String.format("[%s]", msg.fromId);
+//		}
+//
+//		// so the UI would reflect the wrong info
+//		return msg.fromId;
+//	}
 
 	private String getNotificationContent(MessageEntity msg) {
 		// todo eric i18n
@@ -271,28 +280,29 @@ public class IMService extends Service implements OnIMServiceListner {
 		}
 	}
 	
-	private int getNotificationIconResId(MessageEntity msg) {
-		if (msg.isGroupMsg()) {
-			GroupEntity group = getGroupManager().findGroup(msg.toId);
-			if (group == null) {
-				logger.e("notification#no group find by id:%s", msg.toId);
-				return IMUIHelper.getDefaultAvatarResId(IMSession.SESSION_GROUP);
-			}
-			
-			return IMUIHelper.getDefaultAvatarResId(group.type);
-		} else {
-			return IMUIHelper.getDefaultAvatarResId(IMSession.SESSION_P2P);
-		}
-	}
+//	private int getNotificationIconResId(MessageEntity msg) {
+//		if (msg.isGroupMsg()) {
+//			GroupEntity group = getGroupManager().findGroup(msg.toId);
+//			if (group == null) {
+//				logger.e("notification#no group find by id:%s", msg.toId);
+//				return IMUIHelper.getDefaultAvatarResId(IMSession.SESSION_GROUP);
+//			}
+//			
+//			return IMUIHelper.getDefaultAvatarResId(group.type);
+//		} else {
+//			return IMUIHelper.getDefaultAvatarResId(IMSession.SESSION_P2P);
+//		}
+//	}
 
-	private Bitmap getNotificationLargeIcon(MessageEntity msg) {
-		int resId = getNotificationIconResId(msg);
-		
-		//todo eric should release it explicitly
-		return BitmapFactory.decodeResource(getResources(), resId);
-		 
-	}
+//	private Bitmap getNotificationLargeIcon(MessageEntity msg) {
+//		int resId = getNotificationIconResId(msg);
+//		
+//		//todo eric should release it explicitly
+//		return BitmapFactory.decodeResource(getResources(), resId);
+//		 
+//	}
 
+	@SuppressWarnings("deprecation")
 	private void showInNotificationBar(MessageEntity msg, String sessionId,
 			int sessionType) {
 		logger.d("notification#showInNotificationBar msg:%s, sessionId:%s, sessionType:%d", msg, sessionId, sessionType);

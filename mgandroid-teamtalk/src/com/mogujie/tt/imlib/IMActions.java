@@ -12,6 +12,12 @@ public interface IMActions {
 	
 	String ACTION_ADD_RECENT_CONTACT_OR_GROUP = "com.mogujie.tt.imlib.action.add_recent_contact_or_group";
 	
+	String ACTION_SERVER_DISCONNECTED = "com.mogujie.tt.imlib.action.server_disconnected";
+	
+	String ACTION_RECONNECT = "com.mogujie.tt.imlib.action.reconnect";
+
+
+	
 	
 
 }
