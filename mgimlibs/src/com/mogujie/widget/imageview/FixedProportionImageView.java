@@ -14,7 +14,7 @@ import android.view.ViewConfiguration;
 
 
 /**
- * 一个可以设置宽高比的imageview，附带点击的color mask功能
+ * 涓�釜鍙互璁剧疆瀹介珮姣旂殑imageview锛岄檮甯︾偣鍑荤殑color mask鍔熻兘
  * 
  * @author dolphinWang
  * 

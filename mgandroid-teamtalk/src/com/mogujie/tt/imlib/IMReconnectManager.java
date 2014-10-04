@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
+import android.os.PowerManager;
 
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.imlib.common.ErrorCode;
@@ -47,8 +48,7 @@ public class IMReconnectManager extends IMManager implements OnIMServiceListner 
 		actions.add(IMActions.ACTION_SERVER_DISCONNECTED);
 		actions.add(ConnectivityManager.CONNECTIVITY_ACTION);
 
-		imServiceHelper.registerActions(ctx, actions,
-				IMServiceHelper.INTENT_NO_PRIORITY, this);
+		imServiceHelper.registerActions(ctx, actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
 	}
 
 	private void scheduleReconnect(int seconds) {
@@ -61,29 +61,27 @@ public class IMReconnectManager extends IMManager implements OnIMServiceListner 
 			return;
 		}
 
-		AlarmManager am = (AlarmManager) ctx
-				.getSystemService(Context.ALARM_SERVICE);
+		AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
 		am.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + seconds
 				* 1000, pi);
 	}
 
 	private void resetReconnectTime() {
 		logger.d("reconnect#resetReconnectTime");
-		reconnect_index = 0;	
+		reconnect_index = 0;
 	}
-	
+
 	private void reconnect() {
 		logger.d("reconnect#reconnect the server");
-		
+
 		if (!IMLoginManager.instance().isEverLoginned()) {
 			logger.d("reconnect#not everlogined before, no need to do reconnect");
 			return;
 		}
-		
-		//so reconnect will use the initial reconnecting time
+
+		// so reconnect will use the initial reconnecting time
 		resetReconnectTime();
-		
-	
+
 		if (IMLoginManager.instance().relogin()) {
 			reconnecting = true;
 			logger.d("reconnect#start reconnecting");
@@ -108,8 +106,7 @@ public class IMReconnectManager extends IMManager implements OnIMServiceListner 
 
 	private void handleLoginResultAction(Intent intent) {
 		logger.d("reconnect#handleLoginResultAction");
-		int errorCode = intent
-				.getIntExtra(SysConstant.lOGIN_ERROR_CODE_KEY, -1);
+		int errorCode = intent.getIntExtra(SysConstant.lOGIN_ERROR_CODE_KEY, -1);
 
 		if (errorCode == ErrorCode.S_OK) {
 			onLoginSuccess();
@@ -143,7 +140,15 @@ public class IMReconnectManager extends IMManager implements OnIMServiceListner 
 	private void handleReconnectServer() {
 		logger.d("reconnect#handleReconnectServer");
 
-		IMLoginManager.instance().relogin();
+		PowerManager pm = (PowerManager) ctx.getSystemService(Context.POWER_SERVICE);
+		PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "teamtalk_reconnecting_wakelock");
+		wl.acquire();
+
+		try {
+			IMLoginManager.instance().relogin();
+		} finally {
+			wl.release();
+		}
 	}
 
 	@Override

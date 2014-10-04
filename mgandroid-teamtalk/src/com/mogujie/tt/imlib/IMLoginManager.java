@@ -205,9 +205,6 @@ public class IMLoginManager extends IMManager {
 	private void fetchData() {
 		logger.i("login#fetch data");
 
-		// todo rtc wakeup and then aquire a wake lock to send heartbeat
-		IMHeartBeatManager.instance().sendHeartbeatPriodically(5);
-
 		IMContactManager.instance().fetchContacts();
 		IMGroupManager.instance().fetchGroupList();
 	}

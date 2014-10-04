@@ -91,6 +91,8 @@ public class IMService extends Service implements OnIMServiceListner {
 		IMGroupManager.instance().setContext(getApplicationContext());
 		IMRecentSessionManager.instance().setContext(getApplicationContext());
 		IMReconnectManager.instance().setContext(getApplicationContext());
+		IMHeartBeatManager.instance().setContext(getApplicationContext());
+
 		
 		dbMgr = getDbManager();
 
@@ -100,6 +102,7 @@ public class IMService extends Service implements OnIMServiceListner {
 				IMServiceHelper.INTENT_NO_PRIORITY, this);
 
 		IMReconnectManager.instance().register();
+		IMHeartBeatManager.instance().register();
 		
 		// todo eric it makes debug difficult
 		// return START_STICKY;

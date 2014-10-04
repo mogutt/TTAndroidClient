@@ -25,6 +25,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.handmark.pulltorefresh.library.PullToRefreshListView;
 import com.mogujie.tt.R;
@@ -42,6 +43,7 @@ import com.mogujie.tt.conn.NetStateManager;
 import com.mogujie.tt.entity.RecentInfo;
 import com.mogujie.tt.imlib.IMActions;
 import com.mogujie.tt.imlib.IMRecentSessionManager;
+import com.mogujie.tt.imlib.common.ErrorCode;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.packet.MessageDispatchCenter;
 import com.mogujie.tt.ui.activity.MainActivity;
@@ -75,6 +77,7 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 	private ProgressBar progressbar;
 	private View curView = null;
 	private IMServiceHelper imServiceHelper = new IMServiceHelper();
+	private View noNetworkView;
 
 	public static Handler getUiHandler() {
 		return uiHandler;
@@ -93,13 +96,14 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		logger.d("onCreate");
+		logger.d("chatfragment#onCreate");
 
 		List<String> actions = new ArrayList<String>();
 		actions.add(IMActions.ACTION_ADD_RECENT_CONTACT_OR_GROUP);
+		actions.add(IMActions.ACTION_SERVER_DISCONNECTED);
+		actions.add(IMActions.ACTION_LOGIN_RESULT);
 
-		imServiceHelper.connect(getActivity(), actions,
-				IMServiceHelper.INTENT_NO_PRIORITY, this);
+		imServiceHelper.connect(getActivity(), actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
 
 		// initHandler();
 		// registEvents();
@@ -128,11 +132,31 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 
 	@Override
 	public void onStart() {
+		logger.d("chatfragment#onStart");
+
 		super.onStart();
 	}
 
 	@Override
+	public void onStop() {
+		logger.d("chatfragment#onStop");
+
+		// TODO Auto-generated method stub
+		super.onStop();
+	}
+
+	@Override
+	public void onPause() {
+		logger.d("chatfragment#onPause");
+
+		// TODO Auto-generated method stub
+		super.onPause();
+	}
+
+	@Override
 	public void onResume() {
+		logger.d("chatfragment#onResume");
+
 		// handleTips(getActivity().getString(R.string.loading_contacts));//
 		// 数据源为空时需要空列表提示
 		setTileByNetState();
@@ -158,15 +182,10 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 				+ ProtocolConstant.CID_MSG_DATA;
 		MessageDispatchCenter.getInstance().register(msgHandler, msgData);
 		// 网络状态通知
-		NetStateDispach.getInstance().register(getActivity().getClass(),
-				uiHandler);
+		NetStateDispach.getInstance().register(getActivity().getClass(), uiHandler);
 		// 未读消息通知
-		MessageNotifyCenter.getInstance().register(
-				SysConstant.EVENT_UNREAD_MSG, uiHandler,
-				HandlerConstant.HANDLER_CONTACTS_NEW_MESSAGE_COME);
-		MessageNotifyCenter.getInstance().register(
-				SysConstant.EVENT_RECENT_INFO_CHANGED, uiHandler,
-				HandlerConstant.HANDLER_CONTACTS_TO_REFRESH);
+		MessageNotifyCenter.getInstance().register(SysConstant.EVENT_UNREAD_MSG, uiHandler, HandlerConstant.HANDLER_CONTACTS_NEW_MESSAGE_COME);
+		MessageNotifyCenter.getInstance().register(SysConstant.EVENT_RECENT_INFO_CHANGED, uiHandler, HandlerConstant.HANDLER_CONTACTS_TO_REFRESH);
 	}
 
 	/**
@@ -174,12 +193,8 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 	 */
 	private void unRegistEvents() {
 		MessageDispatchCenter.getInstance().unRegister(msgHandler);
-		MessageNotifyCenter.getInstance().unregister(
-				SysConstant.EVENT_UNREAD_MSG, getUiHandler(),
-				HandlerConstant.HANDLER_CONTACTS_NEW_MESSAGE_COME);
-		MessageNotifyCenter.getInstance().unregister(
-				SysConstant.EVENT_RECENT_INFO_CHANGED, uiHandler,
-				HandlerConstant.HANDLER_CONTACTS_TO_REFRESH);
+		MessageNotifyCenter.getInstance().unregister(SysConstant.EVENT_UNREAD_MSG, getUiHandler(), HandlerConstant.HANDLER_CONTACTS_NEW_MESSAGE_COME);
+		MessageNotifyCenter.getInstance().unregister(SysConstant.EVENT_RECENT_INFO_CHANGED, uiHandler, HandlerConstant.HANDLER_CONTACTS_TO_REFRESH);
 		return;
 	}
 
@@ -199,8 +214,8 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 		// 设置标题
 		setTopTitle(getActivity().getString(R.string.chat_title));
 
-		//todo eric
-		//setTopRightButton(R.drawable.tt_top_search);
+		// todo eric
+		// setTopRightButton(R.drawable.tt_top_search);
 		topRightBtn.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
@@ -230,17 +245,16 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 		hideTopSearchBar();
 		SearchHelper.clear();
 		topSearchEdt.setText("");
-		
-		//todo eric
-		//setTopRightButton(R.drawable.tt_top_search);
+
+		// todo eric
+		// setTopRightButton(R.drawable.tt_top_search);
 		searchListView.setVisibility(View.GONE);
 		searchTransparentView.setVisibility(View.GONE);
 		CommonUtil.hideInput(getActivity());
 	}
 
 	private void clearSearchResult() {
-		searchListView.setBackgroundColor(getResources().getColor(
-				R.color.default_light_black_color));
+		searchListView.setBackgroundColor(getResources().getColor(R.color.default_light_black_color));
 		SearchHelper.clear();
 		searchAdapter.notifyDataSetChanged();
 	}
@@ -298,32 +312,30 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 			public void handleMessage(Message msg) {
 				super.handleMessage(msg);
 				switch (msg.what) {
-				case HandlerConstant.HANDLER_RECV_CONTACTLIST:
-				case ProtocolConstant.SID_BUDDY_LIST * 1000
-						+ ProtocolConstant.CID_CONTACT_RECENT_RESPONSE:
-					if (isAdded()) {
-						onRecieveRecentContactList(msg.obj, getActivity());
-					} else {
-						onRecieveRecentContactList(msg.obj, IMEntrance
-								.getInstance().getContext());
-					}
-					break;
-				case HandlerConstant.HANDLER_RECV_UNREAD_MSG_COUNT:
-				case ProtocolConstant.SID_MSG * 1000
-						+ ProtocolConstant.CID_MSG_UNREAD_CNT_RESPONSE:
-					// onRecvUnreadMsgCount(msg.obj);
-					break;
-				case ProtocolConstant.SID_BUDDY_LIST * 1000
-						+ ProtocolConstant.CID_GET_USER_INFO_RESPONSE:
-					if (isAdded()) {
-						onGetUserInfo(msg.obj, getActivity());
-					} else {
-						onGetUserInfo(msg.obj, IMEntrance.getInstance()
-								.getContext());
-					}
-					break;
-				default:
-					break;
+					case HandlerConstant.HANDLER_RECV_CONTACTLIST :
+					case ProtocolConstant.SID_BUDDY_LIST * 1000
+							+ ProtocolConstant.CID_CONTACT_RECENT_RESPONSE :
+						if (isAdded()) {
+							onRecieveRecentContactList(msg.obj, getActivity());
+						} else {
+							onRecieveRecentContactList(msg.obj, IMEntrance.getInstance().getContext());
+						}
+						break;
+					case HandlerConstant.HANDLER_RECV_UNREAD_MSG_COUNT :
+					case ProtocolConstant.SID_MSG * 1000
+							+ ProtocolConstant.CID_MSG_UNREAD_CNT_RESPONSE :
+						// onRecvUnreadMsgCount(msg.obj);
+						break;
+					case ProtocolConstant.SID_BUDDY_LIST * 1000
+							+ ProtocolConstant.CID_GET_USER_INFO_RESPONSE :
+						if (isAdded()) {
+							onGetUserInfo(msg.obj, getActivity());
+						} else {
+							onGetUserInfo(msg.obj, IMEntrance.getInstance().getContext());
+						}
+						break;
+					default :
+						break;
 				}
 			}
 		};
@@ -332,38 +344,36 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 			public void handleMessage(Message msg) {
 				super.handleMessage(msg);
 				switch (msg.what) {
-				case HandlerConstant.HANDLER_NET_STATE_DISCONNECTED:
-					if (isAdded()) {
-						setTopTitle(getActivity().getString(
-								R.string.network_was_disconnected));
-						// handleTips(getActivity().getString(R.string.network_was_disconnected));
-						hideProgress();
-					}
-					break;
-				case HandlerConstant.HANDLER_NET_STATE_CONNECTED:
-					if (isAdded()) {
-						setTopTitle(getActivity().getString(
-								R.string.contact_name));
-					}
-					break;
-				case HandlerConstant.HANDLER_CONTACTS_NEW_MESSAGE_COME:
-					if (isAdded()) {
-						updateAdapter(getActivity());
-					} else {
-						updateAdapter(IMEntrance.getInstance().getContext());
-					}
-					break;
-				case HandlerConstant.HANDLER_CONTACTS_TO_REFRESH:
-					contactAdapter.notifyDataSetChanged();
-					break;
-				case HandlerConstant.HANDLER_CONTACTS_REQUEST_TIMEOUT:
-					if (isAdded()) {
-						hideProgress();
-						// handleTips(getActivity().getString(R.string.load_contacts_failed));
-					}
-					break;
-				default:
-					break;
+					case HandlerConstant.HANDLER_NET_STATE_DISCONNECTED :
+						if (isAdded()) {
+							setTopTitle(getActivity().getString(R.string.network_was_disconnected));
+							// handleTips(getActivity().getString(R.string.network_was_disconnected));
+							hideProgress();
+						}
+						break;
+					case HandlerConstant.HANDLER_NET_STATE_CONNECTED :
+						if (isAdded()) {
+							setTopTitle(getActivity().getString(R.string.contact_name));
+						}
+						break;
+					case HandlerConstant.HANDLER_CONTACTS_NEW_MESSAGE_COME :
+						if (isAdded()) {
+							updateAdapter(getActivity());
+						} else {
+							updateAdapter(IMEntrance.getInstance().getContext());
+						}
+						break;
+					case HandlerConstant.HANDLER_CONTACTS_TO_REFRESH :
+						contactAdapter.notifyDataSetChanged();
+						break;
+					case HandlerConstant.HANDLER_CONTACTS_REQUEST_TIMEOUT :
+						if (isAdded()) {
+							hideProgress();
+							// handleTips(getActivity().getString(R.string.load_contacts_failed));
+						}
+						break;
+					default :
+						break;
 				}
 			}
 		};
@@ -445,8 +455,7 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 	}
 
 	private void initSearchView() {
-		searchListView = (PullToRefreshListView) curView
-				.findViewById(R.id.SearchListView);
+		searchListView = (PullToRefreshListView) curView.findViewById(R.id.SearchListView);
 		searchListView.setOnClickListener(new View.OnClickListener() {
 
 			@Override
@@ -458,10 +467,9 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 
 		searchListView.setOnItemClickListener(this);
 
-		searchTransparentView = (View) curView
-				.findViewById(R.id.search_transparent_view);
-		searchTipTextView = (TextView) curView
-				.findViewById(R.id.search_tip_txt);
+		searchTransparentView = (View) curView.findViewById(R.id.search_transparent_view);
+		searchTipTextView = (TextView) curView.findViewById(R.id.search_tip_txt);
+		noNetworkView = curView.findViewById(R.id.layout_no_network);
 
 		try {
 			searchAdapter = new SearchAdapter(getActivity());
@@ -508,11 +516,10 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 			return;
 		}
 
-//		handleUnreadMsgs(recentInfo.getEntityId(), recentInfo.getSessionType());
+		// handleUnreadMsgs(recentInfo.getEntityId(),
+		// recentInfo.getSessionType());
 
-		IMUIHelper.openSessionChatActivity(logger, getActivity(),
-				recentInfo.getEntityId(), recentInfo.getSessionType(),
-				imServiceHelper.getIMService());
+		IMUIHelper.openSessionChatActivity(logger, getActivity(), recentInfo.getEntityId(), recentInfo.getSessionType(), imServiceHelper.getIMService());
 
 		// if (position < 1)
 		// return;
@@ -716,27 +723,44 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 	public void onAction(String action, Intent intent,
 			BroadcastReceiver broadcastReceiver) {
 		// TODO Auto-generated method stub
-		logger.d("recent#onActions -> action:%s", action);
+		logger.d("chatfragment#recent#onActions -> action:%s", action);
 
 		if (action.equals(IMActions.ACTION_ADD_RECENT_CONTACT_OR_GROUP)) {
-			
 			// hideTips();
 			onRecentContactDataReady();
+		} else if (action.equals(IMActions.ACTION_SERVER_DISCONNECTED)) {
+			handleServerDisconnected();
+		} else if (action.equals(IMActions.ACTION_LOGIN_RESULT)) {
+			handleOnLoginResult(intent);
 		}
 
 	}
-	
+
+	private void handleOnLoginResult(Intent intent) {
+		logger.d("chatfragment#handleOnLoginResult");
+
+		int errorCode = intent.getIntExtra(SysConstant.lOGIN_ERROR_CODE_KEY, -1);
+
+		if (errorCode == ErrorCode.S_OK) {
+			logger.d("chatfragment#loginOk");
+
+			noNetworkView.setVisibility(View.GONE);
+		}
+	}
+	private void handleServerDisconnected() {
+		logger.d("chatfragment#handleServerDisconnected");
+		noNetworkView.setVisibility(View.VISIBLE);
+		Toast.makeText(getActivity(), getString(R.string.no_network_notification), Toast.LENGTH_SHORT).show();
+	}
+
 	private void onRecentContactDataReady() {
-		IMRecentSessionManager recentSessionManager = imServiceHelper
-				.getIMService().getRecentSessionManager();
+		IMRecentSessionManager recentSessionManager = imServiceHelper.getIMService().getRecentSessionManager();
 
 		int totalUnreadMsgCnt = recentSessionManager.getTotalUnreadMsgCnt();
 		logger.d("unread#total cnt %d", totalUnreadMsgCnt);
-		((MainActivity) getActivity())
-				.setUnreadMessageCnt(totalUnreadMsgCnt);
+		((MainActivity) getActivity()).setUnreadMessageCnt(totalUnreadMsgCnt);
 
-		List<RecentInfo> recentSessionList = recentSessionManager
-				.getRecentSessionList();
+		List<RecentInfo> recentSessionList = recentSessionManager.getRecentSessionList();
 		contactAdapter.setData(recentSessionList);
 
 		hideProgress();
@@ -745,8 +769,8 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 	@Override
 	public void onIMServiceConnected() {
 		// TODO Auto-generated method stub
-		logger.d("recent#onIMServiceConnected");
-		
+		logger.d("chatfragment#recent#onIMServiceConnected");
+
 		if (imServiceHelper.getIMService().getContactManager().recentContactsDataReady()) {
 			onRecentContactDataReady();
 		}

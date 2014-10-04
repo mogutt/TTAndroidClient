@@ -15,6 +15,9 @@ public interface IMActions {
 	String ACTION_SERVER_DISCONNECTED = "com.mogujie.tt.imlib.action.server_disconnected";
 	
 	String ACTION_RECONNECT = "com.mogujie.tt.imlib.action.reconnect";
+	
+	String ACTION_SENDING_HEARTBEAT = "com.mogujie.tt.imlib.action.sending_heartbeat";
+
 
 
 	

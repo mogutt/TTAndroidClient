@@ -16,7 +16,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.StatFs;
-import android.provider.DocumentsContract;
+//import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -374,76 +374,76 @@ public class CommonUtil {
         return path;
     }
 
-    @TargetApi(19)
-    /**
-     * 这个函数只有19以上会被调用到
-     * @param data
-     */
-    public static String getImagePathAboveKITKAT(Context context, Intent data) {
-        final Uri uri = data.getData();
-        String path = null;
-        if (DocumentsContract.isDocumentUri(context, uri)) {
-            if (CommonUtil.isExternalStorageDocument(uri)) {
-                final String docId = DocumentsContract.getDocumentId(uri);
-                final String[] split = docId.split(":");
-                final String type = split[0];
-
-                if ("primary".equalsIgnoreCase(type)) {
-                    path = Environment.getExternalStorageDirectory() + "/"
-                            + split[1];
-                }
-            } else if (CommonUtil.isDownloadsDocument(uri)) {
-                final String id = DocumentsContract.getDocumentId(uri);
-                final Uri contentUri = ContentUris.withAppendedId(
-                        Uri.parse("content://downloads/public_downloads"),
-                        Long.valueOf(id));
-
-                path = CommonUtil
-                        .getDataColumn(context, contentUri, null, null);
-            } else if (CommonUtil.isMediaDocument(uri)) {
-                final String docId = DocumentsContract.getDocumentId(uri);
-                final String[] split = docId.split(":");
-                final String type = split[0];
-
-                Uri contentUri = null;
-                if ("image".equals(type)) {
-                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                } else if ("video".equals(type)) {
-                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-                } else if ("audio".equals(type)) {
-                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-                }
-
-                final String selection = "_id=?";
-                final String[] selectionArgs = new String[] {
-                        split[1]
-                };
-
-                path = CommonUtil.getDataColumn(context, contentUri, selection,
-                        selectionArgs);
-            }
-        }// MediaStore (and general)
-        else if ("content".equalsIgnoreCase(uri.getScheme())) {
-
-            // Return the remote address
-            if (CommonUtil.isGooglePhotosUri(uri)) {
-                path = uri.getLastPathSegment();
-            } else {
-                path = CommonUtil.getDataColumn(context, uri, null, null);
-            }
-        }
-        // File
-        else if ("file".equalsIgnoreCase(uri.getScheme())) {
-            path = uri.getPath();
-        }
-
-        // 如果实在获取不到path，那就用旧方法再来一次
-        if (TextUtils.isEmpty(path)) {
-            path = PhotoHandler.getInstance(context).getImagePathFromUri(uri);
-        }
-
-        return path;
-    }
+//    @TargetApi(19)
+//    /**
+//     * 这个函数只有19以上会被调用到
+//     * @param data
+//     */
+//    public static String getImagePathAboveKITKAT(Context context, Intent data) {
+//        final Uri uri = data.getData();
+//        String path = null;
+//        if (DocumentsContract.isDocumentUri(context, uri)) {
+//            if (CommonUtil.isExternalStorageDocument(uri)) {
+//                final String docId = DocumentsContract.getDocumentId(uri);
+//                final String[] split = docId.split(":");
+//                final String type = split[0];
+//
+//                if ("primary".equalsIgnoreCase(type)) {
+//                    path = Environment.getExternalStorageDirectory() + "/"
+//                            + split[1];
+//                }
+//            } else if (CommonUtil.isDownloadsDocument(uri)) {
+//                final String id = DocumentsContract.getDocumentId(uri);
+//                final Uri contentUri = ContentUris.withAppendedId(
+//                        Uri.parse("content://downloads/public_downloads"),
+//                        Long.valueOf(id));
+//
+//                path = CommonUtil
+//                        .getDataColumn(context, contentUri, null, null);
+//            } else if (CommonUtil.isMediaDocument(uri)) {
+//                final String docId = DocumentsContract.getDocumentId(uri);
+//                final String[] split = docId.split(":");
+//                final String type = split[0];
+//
+//                Uri contentUri = null;
+//                if ("image".equals(type)) {
+//                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+//                } else if ("video".equals(type)) {
+//                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+//                } else if ("audio".equals(type)) {
+//                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+//                }
+//
+//                final String selection = "_id=?";
+//                final String[] selectionArgs = new String[] {
+//                        split[1]
+//                };
+//
+//                path = CommonUtil.getDataColumn(context, contentUri, selection,
+//                        selectionArgs);
+//            }
+//        }// MediaStore (and general)
+//        else if ("content".equalsIgnoreCase(uri.getScheme())) {
+//
+//            // Return the remote address
+//            if (CommonUtil.isGooglePhotosUri(uri)) {
+//                path = uri.getLastPathSegment();
+//            } else {
+//                path = CommonUtil.getDataColumn(context, uri, null, null);
+//            }
+//        }
+//        // File
+//        else if ("file".equalsIgnoreCase(uri.getScheme())) {
+//            path = uri.getPath();
+//        }
+//
+//        // 如果实在获取不到path，那就用旧方法再来一次
+//        if (TextUtils.isEmpty(path)) {
+//            path = PhotoHandler.getInstance(context).getImagePathFromUri(uri);
+//        }
+//
+//        return path;
+//    }
 
     public static int getDefaultPannelHeight(Context context) {
         if (context != null) {
