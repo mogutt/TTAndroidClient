@@ -33,7 +33,6 @@ public class IMHeartBeatManager extends IMManager implements OnIMServiceListner 
 		}
 	}
 
-	private int cnt = 0;
 	private Logger logger = Logger.getLogger(IMHeartBeatManager.class);
 	private IMServiceHelper imServiceHelper = new IMServiceHelper();
 	private PendingIntent pi;

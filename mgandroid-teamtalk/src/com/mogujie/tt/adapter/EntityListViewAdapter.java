@@ -20,7 +20,6 @@ import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.utils.EntityList;
-import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.widget.imageview.MGWebImageView;
 
 public class EntityListViewAdapter extends BaseAdapter implements

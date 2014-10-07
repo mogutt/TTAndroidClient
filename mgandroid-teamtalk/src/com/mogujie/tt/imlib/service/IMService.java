@@ -12,7 +12,6 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 
-import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.imlib.IMActions;
 import com.mogujie.tt.imlib.IMContactManager;
 import com.mogujie.tt.imlib.IMGroupManager;
@@ -21,6 +20,8 @@ import com.mogujie.tt.imlib.IMLoginManager;
 import com.mogujie.tt.imlib.IMMessageManager;
 import com.mogujie.tt.imlib.IMRecentSessionManager;
 import com.mogujie.tt.imlib.IMReconnectManager;
+import com.mogujie.tt.imlib.IMUnAckMsgManager;
+import com.mogujie.tt.imlib.IMUnreadMsgManager;
 import com.mogujie.tt.imlib.db.IMDbManager;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
@@ -46,6 +47,9 @@ public class IMService extends Service implements OnIMServiceListner {
 	//this mgr needs cotext, put it off when context is valid
 	private IMDbManager dbMgr;
 	private IMHeartBeatManager heartBeatMgr = getHeartBeatManager();
+	private IMUnAckMsgManager unAckMsgMgr = getUnAckMsgManager();
+	private IMUnreadMsgManager unReadMsgMgr = getUnReadMsgManager();
+
 
 	public class IMServiceBinder extends Binder {
 		public IMService getService() {
@@ -92,6 +96,9 @@ public class IMService extends Service implements OnIMServiceListner {
 		IMRecentSessionManager.instance().setContext(getApplicationContext());
 		IMReconnectManager.instance().setContext(getApplicationContext());
 		IMHeartBeatManager.instance().setContext(getApplicationContext());
+		IMUnAckMsgManager.instance().setContext(getApplicationContext());
+		IMUnreadMsgManager.instance().setContext(getApplicationContext());
+
 
 		
 		dbMgr = getDbManager();
@@ -103,11 +110,12 @@ public class IMService extends Service implements OnIMServiceListner {
 
 		IMReconnectManager.instance().register();
 		IMHeartBeatManager.instance().register();
+		IMUnAckMsgManager.instance().startUnAckTimeoutTimer();
 		
 		// todo eric it makes debug difficult
-		// return START_STICKY;
+		 return START_STICKY;
 
-		return START_NOT_STICKY;
+		//return START_NOT_STICKY;
 	}
 
 	public IMLoginManager getLoginManager() {
@@ -153,50 +161,64 @@ public class IMService extends Service implements OnIMServiceListner {
 	}
 	
 	public IMReconnectManager getReconnectManager() {
-		logger.d("IMReconnectManager");
+		logger.d("getReconnectManager");
 
 		return IMReconnectManager.instance();
 	}
+	
+	public IMUnAckMsgManager getUnAckMsgManager() {
+		logger.d("getUnAckMsgManager");
+
+		return IMUnAckMsgManager.instance();
+	}
+	
+	public IMUnreadMsgManager getUnReadMsgManager() {
+		logger.d("getUnReadMsgManager");
+
+		return IMUnreadMsgManager.instance();
+	}
+
+
 
 
 	@Override
 	public void onAction(String action, Intent intent,
 			BroadcastReceiver broadcastReceiver) {
 		// TODO Auto-generated method stub
-
-		if (action.equals(IMActions.ACTION_MSG_RECV)) {
-			logger.d("notification#recv unhandled message");
-
-			logger.d("notification#onMsgRecv");
-			String sessionId = intent
-					.getStringExtra(SysConstant.SESSION_ID_KEY);
-			String msgId = intent.getStringExtra(SysConstant.MSG_ID_KEY);
-			logger.d("notification#msg no one handled, sessionId:%s, msgId:%s",
-					sessionId, msgId);
-
-			MessageEntity msg = getMessageManager().getUnreadMsg(sessionId,
-					msgId);
-			if (msg == null) {
-				logger.e("chat#can't get unread msg");
-				return;
-			}
-
-			updateRecentList(msg);
-
-			showInNotificationBar(msg, sessionId, msg.sessionType);
-		} 
+//
+//		if (action.equals(IMActions.ACTION_MSG_RECV)) {
+//			logger.d("notification#recv unhandled message");
+//
+//			logger.d("notification#onMsgRecv");
+//			String sessionId = intent
+//					.getStringExtra(SysConstant.SESSION_ID_KEY);
+//			String msgId = intent.getStringExtra(SysConstant.MSG_ID_KEY);
+//			logger.d("notification#msg no one handled, sessionId:%s, msgId:%s",
+//					sessionId, msgId);
+//
+//			MessageEntity msg = getMessageManager().getUnreadMsg(sessionId,
+//					msgId);
+//			if (msg == null) {
+//				logger.e("chat#can't get unread msg");
+//				return;
+//			}
+//
+//			updateRecentList(msg);
+//
+//			showInNotificationBar(msg, sessionId, msg.sessionType);
+//		} 
 
 	}
 
-	private void updateRecentList(MessageEntity msg) {
-		logger.d("notification#updateRecentList");
-
-		IMRecentSessionManager recentSessionMg = getRecentSessionManager();
-
-		List<MessageEntity> msgList = new ArrayList<MessageEntity>();
-		msgList.add(msg);
-		recentSessionMg.batchUpdate(msgList);
-	}
+//	private void updateRecentList(MessageEntity msg) {
+//		logger.d("notification#updateRecentList");
+//
+//		IMRecentSessionManager recentSessionMg = getRecentSessionManager();
+//
+//		List<MessageEntity> msgList = new ArrayList<MessageEntity>();
+//		msgList.add(msg);
+//		recentSessionMg.batchUpdate(msgList);
+//	}
 
 //	private String getMsgNotificationId(MessageEntity msg) {
 //		ContactEntity contact = getContactManager().findContact(msg.fromId);

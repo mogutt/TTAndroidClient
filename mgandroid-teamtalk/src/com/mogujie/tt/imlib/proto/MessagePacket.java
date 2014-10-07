@@ -1,17 +1,12 @@
 package com.mogujie.tt.imlib.proto;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
-import com.mogujie.tt.entity.User;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.packet.base.DefaultHeader;
 import com.mogujie.tt.packet.base.Header;
 import com.mogujie.tt.packet.base.Packet;
-import com.mogujie.tt.utils.SequenceNumberMaker;
 
 /**
  * MsgServerPacket:请求(返回)登陆消息服务器 yugui 2014-05-04
@@ -47,7 +42,7 @@ public class MessagePacket extends Packet {
 		bodyBuffer.writeString(entity.fromId);
 		bodyBuffer.writeString(entity.toId);
 		bodyBuffer.writeInt(entity.createTime);
-		bodyBuffer.writeByte(entity.msgType);
+		bodyBuffer.writeByte(entity.type);
 		bodyBuffer.writeInt(entity.msgLen);
 		bodyBuffer.writeBytes(entity.msgData);
 		bodyBuffer.writeString(entity.attach);

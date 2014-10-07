@@ -4,17 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import opensource.jpinyin.PinyinFormat;
-import opensource.jpinyin.PinyinHelper;
 
 import android.content.Intent;
 
 import com.mogujie.tt.config.ProtocolConstant;
-import com.mogujie.tt.config.SysConstant;
-import com.mogujie.tt.conn.ConnectionStore;
 import com.mogujie.tt.entity.RecentInfo;
 import com.mogujie.tt.imlib.network.SocketThread;
 import com.mogujie.tt.imlib.proto.ContactEntity;
@@ -23,15 +17,11 @@ import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.proto.GroupPacket;
 import com.mogujie.tt.imlib.proto.GroupUnreadMsgPacket;
 import com.mogujie.tt.imlib.proto.UnreadMsgGroupListPacket;
-import com.mogujie.tt.imlib.proto.UnreadMsgGroupListPacket;
-import com.mogujie.tt.imlib.proto.UnreadMsgPacket;
 import com.mogujie.tt.imlib.utils.IMContactHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.packet.base.Header;
-import com.mogujie.tt.socket.MoGuSocket;
 import com.mogujie.tt.utils.pinyin.PinYin;
-import com.mogujie.tt.imlib.proto.UnreadMsgGroupListPacket;
 
 public class IMGroupManager extends IMManager {
 	private static IMGroupManager inst;
@@ -146,8 +136,7 @@ public class IMGroupManager extends IMManager {
 		GroupPacket packet = new GroupPacket();
 		packet.decode(buffer);
 
-		GroupPacket.PacketResponse resp = (GroupPacket.PacketResponse) packet
-				.getResponse();
+		GroupPacket.PacketResponse resp = (GroupPacket.PacketResponse) packet.getResponse();
 		logger.i("group#group cnt:%d", resp.entityList.size());
 
 		for (GroupEntity group : resp.entityList) {
@@ -177,26 +166,25 @@ public class IMGroupManager extends IMManager {
 	}
 
 	private void triggerAddRecentInfo() {
-		for (Entry<String, GroupEntity> entry : groups.entrySet()) {
+		if (groupReadyConditionOk()) {
+			for (Entry<String, GroupEntity> entry : groups.entrySet()) {
 
-			GroupEntity group = entry.getValue();
-			if (group == null) {
-				continue;
+				GroupEntity group = entry.getValue();
+				if (group == null) {
+					continue;
+				}
+
+				RecentInfo recentSession = IMContactHelper.convertGroupEntity2RecentInfo(group);
+				IMRecentSessionManager.instance().addRecentSession(recentSession);
 			}
 
-			RecentInfo recentSession = IMContactHelper
-					.convertGroupEntity2RecentInfo(group);
-			IMRecentSessionManager.instance().addRecentSession(recentSession);
+			IMRecentSessionManager.instance().broadcast();
 		}
-
-		IMRecentSessionManager.instance().broadcast();
 	}
 
 	public void adjustDialogMembers(List<String> addingMemberList,
 			List<String> removingMemberList) {
-		logger.d(
-				"adjust#adjustDialogMembers, adding size:%d, removing size:%d",
-				addingMemberList.size(), removingMemberList.size());
+		logger.d("adjust#adjustDialogMembers, adding size:%d, removing size:%d", addingMemberList.size(), removingMemberList.size());
 
 		if (addingMemberList.isEmpty() && removingMemberList.isEmpty()) {
 			logger.d("tempgroup#no need to adjust");
@@ -206,19 +194,18 @@ public class IMGroupManager extends IMManager {
 	}
 
 	public void reqCreateTempGroup(String tempGroupName, List<String> memberList) {
-		logger.i("tempgrouop#createDialog");
+		logger.i("tempgroup#reqCreateTempGroup, name:%s, member cnt:%d", tempGroupName, memberList.size());
 
 		SocketThread channel = IMLoginManager.instance().getMsgServerChannel();
 		if (channel == null) {
-			logger.e("tempgrouop#channel is null");
+			logger.e("tempgroup#channel is null");
 			return;
 		}
 
 		String dummyTempGroupAvatarUrl = "";
-		channel.sendPacket(new CreateTempGroupPacket(tempGroupName,
-				dummyTempGroupAvatarUrl, memberList));
+		channel.sendPacket(new CreateTempGroupPacket(tempGroupName, dummyTempGroupAvatarUrl, memberList));
 
-		logger.i("tempgrouop#send packet to server");
+		logger.i("tempgroup#send packet to server");
 
 	}
 
@@ -228,8 +215,7 @@ public class IMGroupManager extends IMManager {
 		CreateTempGroupPacket packet = new CreateTempGroupPacket();
 		packet.decode(buffer);
 
-		CreateTempGroupPacket.PacketResponse resp = (CreateTempGroupPacket.PacketResponse) packet
-				.getResponse();
+		CreateTempGroupPacket.PacketResponse resp = (CreateTempGroupPacket.PacketResponse) packet.getResponse();
 
 		if (resp.result != 0) {
 			logger.e("tempgroup#createTempGroup failed");
@@ -239,11 +225,12 @@ public class IMGroupManager extends IMManager {
 		GroupEntity group = resp.entity;
 		group.pinyin = PinYin.getPinYin(group.name);
 
-		logger.i("tempgroup# -> entity:%s", group);
+		logger.i("tempgroup# -> new temp group:%s", group);
+
+		groups.put(group.id, group);
 
 		// ctx.sendBroadcast(new Intent(IMActions.ACTION_GROUP_READY));
 		logger.d("tempgroup#broadcast group ready msg");
-
 	}
 
 	private void reqUnreadMsgGroupList() {
@@ -266,8 +253,7 @@ public class IMGroupManager extends IMManager {
 		UnreadMsgGroupListPacket packet = new UnreadMsgGroupListPacket();
 		packet.decode(buffer);
 
-		UnreadMsgGroupListPacket.PacketResponse resp = (UnreadMsgGroupListPacket.PacketResponse) packet
-				.getResponse();
+		UnreadMsgGroupListPacket.PacketResponse resp = (UnreadMsgGroupListPacket.PacketResponse) packet.getResponse();
 		logger.i("unread#unreadMsgGroupList cnt:%d", resp.entityList.size());
 		unreadMsgGroupList = resp.entityList;
 
@@ -297,9 +283,8 @@ public class IMGroupManager extends IMManager {
 		}
 
 		for (UnreadMsgGroupListPacket.PacketResponse.Entity entity : unreadMsgGroupList) {
-			logger.d("unread#sending unreadmsg request -> groupId:%s",
-					entity.groupId);
-			
+			logger.d("unread#sending unreadmsg request -> groupId:%s", entity.groupId);
+
 			GroupUnreadMsgPacket.PacketRequest.Entity requestParam = new GroupUnreadMsgPacket.PacketRequest.Entity();
 			requestParam.groupId = entity.groupId;
 			channel.sendPacket(new GroupUnreadMsgPacket(requestParam));

@@ -115,6 +115,7 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 	public void onIMServiceConnected() {
 		// TODO Auto-generated method stub
 
+		logger.d("login#onIMServiceConnected");
 		IMService imService = imServiceHelper.getIMService();
 		if (imService == null) {
 			return;
@@ -142,6 +143,8 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 	protected void onCreate(Bundle savedInstanceState) {
 
 		super.onCreate(savedInstanceState);
+		
+		logger.d("login#onCreate");
 
 		List<String> actions = new ArrayList<String>();
 		actions.add(IMActions.ACTION_LOGIN_RESULT);

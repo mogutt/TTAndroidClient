@@ -1,22 +1,19 @@
 package com.mogujie.tt.imlib;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.nio.charset.Charset;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
 
 import android.content.Intent;
 
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
-import com.mogujie.tt.entity.RecentInfo;
 import com.mogujie.tt.imlib.db.IMDbManager;
 import com.mogujie.tt.imlib.network.SocketThread;
 import com.mogujie.tt.imlib.proto.AckGroupUnreadMsgPacket;
 import com.mogujie.tt.imlib.proto.AckUnreadMsgPacket;
+import com.mogujie.tt.imlib.proto.ContactEntity;
+import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.proto.GroupUnreadMsgPacket;
 import com.mogujie.tt.imlib.proto.MessageEntity;
 import com.mogujie.tt.imlib.proto.MessageNotifyPacket;
@@ -26,8 +23,6 @@ import com.mogujie.tt.imlib.proto.UnreadMsgPacket.PacketResponse;
 import com.mogujie.tt.imlib.utils.IMContactHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
-import com.mogujie.tt.packet.base.Packet.Response;
-import com.mogujie.tt.utils.MessageSplitResult;
 
 public class IMMessageManager extends IMManager {
 	private static IMMessageManager inst;
@@ -44,14 +39,58 @@ public class IMMessageManager extends IMManager {
 	}
 
 	private int seqNo = 1;
-	private IMUnAckMsgManager unackMsgMgr = new IMUnAckMsgManager();
-	private IMUnreadMsgManager unreadMsgMgr = new IMUnreadMsgManager();
 
 	private IMMessageManager() {
 
 	}
 
-	private byte getTextMsgType(int sessionType) {
+	public void sendText(String peerId, String text, int sessionType,
+			MessageInfo msgInfo) {
+		logger.i("chat#text#sendText -> peerId:%s, text:%s", peerId, text);
+
+		fillMessageCommonInfo(msgInfo, peerId, getTextMsgType(sessionType), sessionType);
+
+		msgInfo.msgData = text.getBytes(Charset.forName("utf8"));
+		msgInfo.msgLen = msgInfo.msgData.length;
+
+		sendMessage(msgInfo);
+	}
+
+	public void sendVoice(String peerId, byte[] voiceData, int sessionType,
+			MessageInfo msgInfo) {
+		logger.i("chat#audio#sendVoice -> peerId:%s, voidDataLen:%d", peerId, voiceData.length);
+
+		fillMessageCommonInfo(msgInfo, peerId, getAudioMsgType(sessionType), sessionType);
+
+		// todo eric utf8?
+		msgInfo.msgData = voiceData;
+		msgInfo.msgLen = voiceData.length;
+
+		sendMessage(msgInfo);
+	}
+
+	private void fillMessageCommonInfo(MessageInfo msg, String peerId,
+			byte msgType, int sessionType) {
+		msg.seqNo = seqNo++;
+		msg.fromId = IMLoginManager.instance().getLoginId();
+		msg.toId = peerId;
+
+		msg.generateMsgIdIfEmpty();
+		msg.generateSessionId(true);
+		msg.generateSessionType(sessionType);
+
+		logger.d("chat#msg.fromid" + msg.fromId);
+
+		// todo eric, use the server time
+		msg.createTime = (int) (System.currentTimeMillis() / 1000);
+
+		msg.type = msgType;
+
+		// it looks no one use attach param now
+		msg.attach = "";
+	}
+
+	private static byte getTextMsgType(int sessionType) {
 		byte msgType = ProtocolConstant.MSG_TYPE_P2P_TEXT;
 
 		if (sessionType == IMSession.SESSION_GROUP
@@ -62,7 +101,7 @@ public class IMMessageManager extends IMManager {
 		return msgType;
 	}
 
-	private byte getAudioMsgType(int sessionType) {
+	private static byte getAudioMsgType(int sessionType) {
 		byte msgType = ProtocolConstant.MSG_TYPE_P2P_AUDIO;
 
 		if (sessionType == IMSession.SESSION_GROUP
@@ -73,73 +112,8 @@ public class IMMessageManager extends IMManager {
 		return msgType;
 	}
 
-	// todo eric remove msgInfo
-	public void sendText(String peerId, String text, int sessionType,
-			MessageInfo msgInfo) {
-		logger.i("chat#sendText -> peerId:%s, text:%s", peerId, text);
-
-		MessageEntity msg = createMessageEntity(getTextMsgType(sessionType));
-		msg.toId = peerId;
-
-		// todo eric utf8?
-		msg.msgData = text.getBytes();
-		msg.msgLen = msg.msgData.length;
-		logger.d("chat#msgLen:%d", msg.msgLen);
-
-		sendMessage(msg, msgInfo);
-	}
-
-	public void sendVoice(String peerId, byte[] voiceData, int sesionType,
-			MessageInfo msgInfo) {
-		logger.i("chat#audio#sendVoice -> peerId:%s, voidDataLen:%d", peerId,
-				voiceData.length);
-
-		MessageEntity msg = createMessageEntity(getAudioMsgType(sesionType));
-		msg.toId = peerId;
-
-		// todo eric utf8?
-		msg.msgData = voiceData;
-		msg.msgLen = voiceData.length;
-
-		sendMessage(msg, msgInfo);
-	}
-
-	private MessageEntity createMessageEntity(byte msgType) {
-		MessageEntity msg = new MessageEntity();
-		msg.seqNo = seqNo++;
-
-		// todo eric manage the current user myself
-		msg.fromId = IMLoginManager.instance().getLoginId();
-
-		logger.d("chat#msg.fromid" + msg.fromId);
-
-		// todo eric, use the server time
-		msg.createTime = (int) (System.currentTimeMillis() / 1000);
-
-		msg.msgType = msgType;
-
-		// todo eric, it looks no one use attach param now
-		msg.attach = "";
-		return msg;
-	}
-
-	private void generateMsgSessionInfo(MessageEntity msg, boolean sending) {
-		logger.d("chat#generateMsgSessionInfo msg:%s,  sending:%s", msg,
-				sending);
-
-		msg.generateMsgId();
-		msg.generateSessionId(sending);
-		msg.generateSessionType();
-
-		if (!sending) {
-			msg.msgInfo = MessageEntity2MessageInfo(msg);
-		}
-	}
-
-	private void sendMessage(MessageEntity msg, MessageInfo msgInfo) {
-		logger.i("chat#sendMessage, msg:%s", msg);
-
-		generateMsgSessionInfo(msg, true);
+	private void sendMessage(MessageInfo msgInfo) {
+		logger.i("chat#sendMessage, msg:%s", msgInfo);
 
 		SocketThread channel = IMLoginManager.instance().getMsgServerChannel();
 		if (channel == null) {
@@ -147,13 +121,15 @@ public class IMMessageManager extends IMManager {
 			return;
 		}
 
-		channel.sendPacket(new MessagePacket(msg));
+		// todo eric, this should be put in ui layer
+		msgInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_LOADDING);
 
-		unackMsgMgr.add(msg, msgInfo);
-
-		logger.i("chat#send packet to server");
+		IMUnAckMsgManager.instance().add(msgInfo);
 		
-		IMRecentSessionManager.instance().insertRecentSession(msg);
+		IMRecentSessionManager.instance().update(msgInfo);
+		IMRecentSessionManager.instance().broadcast();
+		
+		channel.sendPacket(new MessagePacket(msgInfo));
 	}
 
 	private boolean broadcastMessage(MessageEntity msg, String action,
@@ -184,46 +160,21 @@ public class IMMessageManager extends IMManager {
 
 		// todo eric adjust eclipse formatting detail, let .getResponse on the
 		// same line(more characters on 1 line?)
-		MessagePacket.PacketResponse resp = (MessagePacket.PacketResponse) packet
-				.getResponse();
+		MessagePacket.PacketResponse resp = (MessagePacket.PacketResponse) packet.getResponse();
 
 		logger.d("chat#get msg ack:%s", resp.msgAck);
 
-		MessageEntity msg = unackMsgMgr.remove(resp.msgAck.seqNo);
+		MessageInfo msg = IMUnAckMsgManager.instance().remove(resp.msgAck.seqNo);
+		msg.setMsgLoadState(SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
 
-		IMDbManager.instance(ctx).saveMsg(msg, true);
+		IMDbManager.instance(ctx).updateMessageStatus(msg);
 
 		if (broadcastMessage(msg, IMActions.ACTION_MSG_ACK, false)) {
 			logger.d("chat#broadcast receiving ack msg");
 		}
 	}
 
-	private MessageInfo MessageEntity2MessageInfo(MessageEntity msg) {
-		MessageInfo msgInfo = new MessageInfo();
-		msgInfo.setMsgId(msg.seqNo); // todo eric this is right?why i don't use
-										// message id
-		msgInfo.setMsgFromUserId(msg.fromId);
-		msgInfo.setTargetId(msg.toId);
-		msgInfo.setMsgCreateTime(msg.createTime);
-		msgInfo.setMsgType(msg.msgType);
-		// todo eric
-		// msgInfo.setMsgRenderType(msgRenderType);
-		msgInfo.setMsgAttachContent(null);
-
-		if (msg.msgType == ProtocolConstant.MSG_TYPE_P2P_AUDIO) {
-			logger.d("chat#recv audio msg");
-			msgInfo.setAudioContent(msg.msgData);
-		} else if (msg.msgType == ProtocolConstant.MSG_TYPE_GROUP_TEXT) {
-			logger.d("chat#recv text msg");
-		}
-
-		return msgInfo;
-
-	}
-
-	public void onRecvMessage(DataBuffer buffer) {
-		logger.i("chat#onRecvMessage");
-
+	private MessageInfo decodeMessageInfo(DataBuffer buffer) {
 		MessageNotifyPacket packet = new MessageNotifyPacket();
 		packet.decode(buffer);
 
@@ -232,21 +183,55 @@ public class IMMessageManager extends IMManager {
 		// todo eric unify the getResponse to get notify, but low priority, 'cuz
 		// we're gonna make the tool to automatically
 		// generate the packet
-		MessageNotifyPacket.packetNotify notify = (MessageNotifyPacket.packetNotify) packet
-				.getResponse();
+		MessageNotifyPacket.packetNotify notify = (MessageNotifyPacket.packetNotify) packet.getResponse();
 
-		generateMsgSessionInfo(notify.msg, false);
+		MessageEntity msg = notify.msg;
+		logger.d("chat#msg:%s", msg);
 
-		logger.d("chat#msg:%s", notify.msg);
+		return new MessageInfo(msg);
 
-		ackMsg(notify.msg);
+	}
 
-		List<MessageEntity> splitMessageList = IMContactHelper
-				.splitMessage(notify.msg);
+	public void onRecvMessage(DataBuffer buffer) {
+		logger.i("chat#onRecvMessage");
 
-		for (MessageEntity msg : splitMessageList) {
+		MessageInfo msgInfo = decodeMessageInfo(buffer);
+		if (msgInfo == null) {
+			logger.e("chat#decodeMessageInfo failed");
+			return;
+		}
 
-			unreadMsgMgr.add(msg);
+		ackMsg(msgInfo);
+		handleUnreadMsg(msgInfo);
+		IMRecentSessionManager.instance().broadcast();
+	}
+
+	private void setMsgSessionType(MessageInfo msgInfo) {
+		ContactEntity contact = IMContactManager.instance().findContact(msgInfo.sessionId);
+		if (contact != null) {
+			msgInfo.sessionType = IMSession.SESSION_P2P;
+			return;
+		}
+		
+		GroupEntity group = IMGroupManager.instance().findGroup(msgInfo.sessionId);
+		if (group != null) {
+			msgInfo.sessionType = group.type;
+			return;
+		}
+		
+		logger.e("chat#unkown msg session type, could be temp group type");
+		msgInfo.sessionType = IMSession.SESSION_TEMP_GROUP;
+	}
+	
+	private void handleUnreadMsg(MessageInfo msgInfo) {
+		logger.d("chat#handleUnreadMsg");
+		List<MessageInfo> splitMessageList = IMContactHelper.splitMessage(msgInfo);
+
+		for (MessageInfo msg : splitMessageList) {
+			setMsgSessionType(msg);
+			IMUnreadMsgManager.instance().add(msg);
+			
+			IMRecentSessionManager.instance().update(msg);
 
 			if (broadcastMessage(msg, IMActions.ACTION_MSG_RECV, true)) {
 				logger.d("chat#broadcast receiving new msg");
@@ -255,8 +240,7 @@ public class IMMessageManager extends IMManager {
 	}
 
 	private void ackMsg(MessageEntity msg) {
-		logger.d("chat#sendMessageAck -> fromId:%s, seqNo:%d", msg.fromId,
-				seqNo);
+		logger.d("chat#sendMessageAck -> fromId:%s, seqNo:%d", msg.fromId, seqNo);
 
 		SocketThread channel = IMLoginManager.instance().getMsgServerChannel();
 		if (channel == null) {
@@ -270,30 +254,15 @@ public class IMMessageManager extends IMManager {
 
 	}
 
-	// todo eric group id could be == contact id, so session id should be with
-	// unique prefix
-	public MessageEntity getUnreadMsg(String sessionId, String msgId) {
-		logger.d("chat#getUnreadMsg -> sessionId:%s, msgId:%s", sessionId,
-				msgId);
-		return unreadMsgMgr.getUnreadMsg(sessionId, msgId);
-	}
-
-	public MessageEntity popUnreadMsg(String sessionId, String msgId) {
-		logger.d("chat#getUnreadMsg -> sessionId:%s, msgId:%s", sessionId,
-				msgId);
-		return unreadMsgMgr.popUnreadMsg(sessionId, msgId);
-	}
-
 	public void onRepUnreadMsg(DataBuffer buffer) {
 		logger.i("unread#onRepUnreadMsg");
 
 		UnreadMsgPacket packet = new UnreadMsgPacket();
 		packet.decode(buffer);
 
-		UnreadMsgPacket.PacketResponse response = (PacketResponse) packet
-				.getResponse();
+		UnreadMsgPacket.PacketResponse response = (PacketResponse) packet.getResponse();
 
-		handleUnreadMsgs(response.entityList);
+		handleUnreadMsgList(response.entityList);
 	}
 
 	public void onRepGroupUnreadMsg(DataBuffer buffer) {
@@ -302,31 +271,42 @@ public class IMMessageManager extends IMManager {
 		GroupUnreadMsgPacket packet = new GroupUnreadMsgPacket();
 		packet.decode(buffer);
 
-		GroupUnreadMsgPacket.PacketResponse response = (GroupUnreadMsgPacket.PacketResponse) packet
-				.getResponse();
+		GroupUnreadMsgPacket.PacketResponse response = (GroupUnreadMsgPacket.PacketResponse) packet.getResponse();
 
-		handleUnreadMsgs(response.entityList);
+		handleUnreadMsgList(response.entityList);
 	}
 
-	public void handleUnreadMsgs(List<MessageEntity> msgList) {
-		for (MessageEntity msg : msgList) {
-			generateMsgSessionInfo(msg, false);
-			
-			List<MessageEntity> splitMsgList = IMContactHelper.splitMessage(msg);
-			handleUnreadMsgsImpl(splitMsgList);
+	private void handleUnreadMsgList(List<MessageEntity> msgEntitiyList) {
+		for (MessageEntity msgEntity : msgEntitiyList) {
+			MessageInfo msgInfo = new MessageInfo(msgEntity);
+			handleUnreadMsg(msgInfo);
 		}
+		
+		IMRecentSessionManager.instance().broadcast();
 	}
-	
-	private void handleUnreadMsgsImpl(List<MessageEntity> msgList) {
-		for (MessageEntity msg : msgList) {
-			unreadMsgMgr.add(msg);
+
+	public List<MessageInfo> ReadUnreadMsgList(String sessionId, int sessionType) {
+		logger.d("unread#ReadUnreadMsgList sessionid:%s, sessionType:%d", sessionId, sessionType);
+
+		List<MessageInfo> msgList = IMUnreadMsgManager.instance().popUnreadMsgList(sessionId);
+		if (msgList == null || msgList.isEmpty()) {
+			logger.d("unread#no unread msgs");
+			return msgList;
 		}
 
-		IMRecentSessionManager.instance().batchUpdate(msgList);
+		for (MessageInfo msgInfo : msgList) {
+			msgInfo.generateSessionType(sessionType);
+			IMDbManager.instance(ctx).saveMsg(msgInfo, false);
+		}
 
+		if (sessionType == IMSession.SESSION_P2P) {
+			ackUnreadMsgs(sessionId);
+		} else {
+			ackGroupUnreadMsgs(sessionId);
+		}
+
+		return msgList;
 	}
-
-	
 
 	public void ackUnreadMsgs(String contactId) {
 		if (contactId == null) {
@@ -365,45 +345,4 @@ public class IMMessageManager extends IMManager {
 		logger.i("chat#send packet to server");
 
 	}
-
-	public void saveUnreadMsgs(String sessionId) {
-		if (sessionId == null) {
-			return;
-		}
-
-		logger.d("chat#saveUnreadMsgs contactId:%s", sessionId);
-		ConcurrentHashMap<String, MessageEntity> unreadMsgs = unreadMsgMgr
-				.getUnreadMsgs(sessionId);
-		if (unreadMsgs == null) {
-			logger.d("chat#no unreadmsgs for sessionId:%s", sessionId);
-			return;
-		}
-
-		ArrayList<MessageEntity> msgs = new ArrayList<MessageEntity>(
-				unreadMsgs.values());
-		Collections.sort(msgs, new Comparator<MessageEntity>() {
-
-			@Override
-			public int compare(MessageEntity lhs, MessageEntity rhs) {
-				// TODO Auto-generated method stub
-				if (lhs.createTime > rhs.createTime) {
-					return 1;
-				} else if (lhs.createTime == rhs.createTime) {
-					return 0;
-				} else
-					return -1;
-			}
-
-		});
-
-		for (MessageEntity msg : msgs) {
-			IMDbManager.instance(ctx).saveMsg(msg, false);
-		}
-
-		unreadMsgMgr.removeUnreadMsgs(sessionId);
-		IMRecentSessionManager.instance().resetUnreadMsgCnt(sessionId);
-
-		IMRecentSessionManager.instance().broadcast();
-	}
-
 }

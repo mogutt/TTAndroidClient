@@ -1,6 +1,7 @@
 package com.mogujie.tt.ui.activity;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -11,10 +12,10 @@ import android.view.Window;
 
 import com.mogujie.tt.R;
 import com.mogujie.tt.biz.MessageNotifyCenter;
-import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.HandlerConstant;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.conn.NetStateDispach;
+import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.widget.NaviTabButton;
 
 public class MainActivity extends FragmentActivity {
@@ -22,10 +23,23 @@ public class MainActivity extends FragmentActivity {
 
 	private Fragment[] mFragments;
 	private NaviTabButton[] mTabButtons;
+	private Logger logger = Logger.getLogger(MainActivity.class);
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		logger.d("MainActivity#savedInstanceState:%s", savedInstanceState);
+		if (savedInstanceState != null) {
+			logger.w("MainActivity#crashed and restarted, just exit");
+			
+			Intent intent = new Intent(this, LoginActivity.class);
+			startActivity(intent);
+			
+			finish();
+		}
+		
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.tt_activity_main);
 
@@ -37,6 +51,7 @@ public class MainActivity extends FragmentActivity {
 		registEvents();
 	}
 
+	
 	@Override
 	public void onBackPressed() {
 		//don't let it exit

@@ -10,11 +10,8 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 
 import com.mogujie.tt.R;
-import com.mogujie.tt.adapter.GroupManagerAdapter;
-import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
-import com.mogujie.tt.ui.activity.GroupManagermentActivity;
 import com.mogujie.tt.ui.activity.GroupMemberSelectActivity;
 import com.mogujie.tt.ui.base.TTBaseFragment;
 import com.mogujie.tt.ui.utils.IMGroupMemberGridViewHelper;

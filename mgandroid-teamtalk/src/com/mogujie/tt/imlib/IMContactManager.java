@@ -65,7 +65,7 @@ public class IMContactManager extends IMManager {
 			reqGetDepartments();
 			reqGetAllContacts();
 			reqGetRecentContacts();
-			//reqUnreadMsgContactList();
+			reqUnreadMsgContactList();
 		}
 	}
 	

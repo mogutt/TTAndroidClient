@@ -1,8 +1,6 @@
 package com.mogujie.tt.imlib.utils;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
@@ -11,7 +9,6 @@ import com.mogujie.tt.entity.User;
 import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
-import com.mogujie.tt.imlib.proto.MessageEntity;
 import com.mogujie.tt.utils.MessageSplitResult;
 
 public class IMContactHelper {
@@ -55,7 +52,7 @@ public class IMContactHelper {
 
 	public static RecentInfo convertContactEntity2RecentInfo(
 			ContactEntity contact, int recentTalkingTime) {
-		
+
 		RecentInfo recentInfo = new RecentInfo();
 		recentInfo.setAvatar(contact.avatarUrl);
 		recentInfo.setName(contact.name);
@@ -64,15 +61,14 @@ public class IMContactHelper {
 		recentInfo.setLastTime(recentTalkingTime);
 		recentInfo.setNickname(contact.nickName);
 
-//		logger.d("recent#lastTime:%d, lastTimeString:%s", recentTalkingTime,
-//				recentInfo.getLastTimeString());
+		// logger.d("recent#lastTime:%d, lastTimeString:%s", recentTalkingTime,
+		// recentInfo.getLastTimeString());
 
 		return recentInfo;
 	}
-	
-	public static RecentInfo convertGroupEntity2RecentInfo(
-			GroupEntity group) {
-		
+
+	public static RecentInfo convertGroupEntity2RecentInfo(GroupEntity group) {
+
 		RecentInfo recentInfo = new RecentInfo();
 		recentInfo.setAvatar(group.avatarUrl);
 		recentInfo.setName(group.name);
@@ -81,31 +77,24 @@ public class IMContactHelper {
 		recentInfo.setLasttime(group.updated);
 		recentInfo.setNickname(group.name);
 
-//		logger.d("recent#lastTime:%d, lastTimeString:%s", recentTalkingTime,
-//				recentInfo.getLastTimeString());
+		// logger.d("recent#lastTime:%d, lastTimeString:%s", recentTalkingTime,
+		// recentInfo.getLastTimeString());
 
 		return recentInfo;
 	}
-	
+
 	// if windows client sends a message as "[text][picture][text]", we would
-		// split them into 3 different messages, "[text]", "[picture]", "[text]"
-		public static List<MessageEntity> splitMessage(MessageEntity msg) {
-			MessageSplitResult msr = new MessageSplitResult(msg.msgInfo,
-					msg.msgData);
+	// split them into 3 different messages, "[text]", "[picture]", "[text]"
+	public static List<MessageInfo> splitMessage(MessageInfo msg) {
+		MessageSplitResult msr = new MessageSplitResult(msg, msg.msgData);
 
-			msr.decode();
+		msr.decode();
 
-			List<MessageEntity> msgList = new ArrayList<MessageEntity>();
-			Queue<MessageInfo> msgListInfos = msr.getMsgList();
-			for (MessageInfo msgInfo : msgListInfos) {
-				MessageEntity messageEntity = new MessageEntity();
-				messageEntity.copy(msg);
-				messageEntity.msgInfo = msgInfo;
-				msgList.add(messageEntity);
-			}
-			
-			return msgList;
+		List<MessageInfo> msgInfoList = msr.getMsgList();
+		for (MessageInfo msgInfo : msgInfoList) {
+			msgInfo.copy(msg);
 		}
 
-
+		return msgInfoList;
+	}
 }

@@ -3,7 +3,6 @@ package com.mogujie.tt.imlib;
 import org.jboss.netty.buffer.ChannelBuffer;
 
 import com.mogujie.tt.config.ProtocolConstant;
-import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.packet.base.Header;

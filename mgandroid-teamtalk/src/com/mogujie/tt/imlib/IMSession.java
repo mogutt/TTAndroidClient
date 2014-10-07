@@ -3,7 +3,6 @@ package com.mogujie.tt.imlib;
 import com.mogujie.tt.entity.MessageInfo;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
-import com.mogujie.tt.imlib.proto.MessageEntity;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 

@@ -1,20 +1,16 @@
 package com.mogujie.tt.imlib.proto;
 
-import java.sql.Struct;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
-import com.mogujie.tt.entity.User;
-import com.mogujie.tt.imlib.IMLoginManager;
 import com.mogujie.tt.imlib.proto.GroupUnreadMsgPacket.PacketRequest.Entity;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.packet.base.DefaultHeader;
 import com.mogujie.tt.packet.base.Header;
 import com.mogujie.tt.packet.base.Packet;
-import com.mogujie.tt.utils.SequenceNumberMaker;
 
 /**
  * MsgServerPacket:请求(返回)登陆消息服务器 yugui 2014-05-04
@@ -92,11 +88,10 @@ public class GroupUnreadMsgPacket extends Packet {
 				message.createTime = createTime;
 				
 				//todo eric, didn't support group voice?
-				message.msgType = ProtocolConstant.MSG_TYPE_GROUP_TEXT;
+				message.type = ProtocolConstant.MSG_TYPE_GROUP_TEXT;
 				message.msgLen = msgLen;
 				message.msgData = msgData;
 				message.sessionId = message.toId;
-				message.offline = false;
 				
 				res.entityList.add(message);
 

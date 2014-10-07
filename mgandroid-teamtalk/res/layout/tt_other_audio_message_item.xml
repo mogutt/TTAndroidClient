@@ -90,6 +90,14 @@
                 android:contentDescription="@string/message_image_desc"
                 android:src="@drawable/tt_msg_tip"
                 android:visibility="gone" />
+
+            <ProgressBar
+                android:id="@+id/progressBar1"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:visibility="gone" />
         </RelativeLayout>
     </LinearLayout>
 

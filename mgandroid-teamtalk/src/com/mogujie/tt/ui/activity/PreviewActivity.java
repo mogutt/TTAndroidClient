@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -25,11 +26,15 @@ import android.widget.Toast;
 import com.mogujie.tt.R;
 import com.mogujie.tt.adapter.album.ImageGridAdapter;
 import com.mogujie.tt.adapter.album.ImageItem;
+import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
+import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.task.TaskManager;
 import com.mogujie.tt.task.biz.UploadImageTask;
 import com.mogujie.tt.ui.tools.DisplayBitmapCache;
+import com.mogujie.tt.ui.utils.IMServiceHelper;
+import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 import com.mogujie.tt.widget.CustomViewPager;
 import com.mogujie.tt.widget.PinkToast;
 
@@ -38,7 +43,7 @@ import com.mogujie.tt.widget.PinkToast;
  * @author Nana
  * @date 2014-5-9
  */
-public class PreviewActivity extends Activity implements OnPageChangeListener {
+public class PreviewActivity extends Activity implements OnPageChangeListener, OnIMServiceListner {
 
     private CustomViewPager viewPager;
     private ImageView[] tips;
@@ -50,10 +55,15 @@ public class PreviewActivity extends Activity implements OnPageChangeListener {
     private final ImageGridAdapter adapter = ImageGridActivity.getAdapter();
     private Map<Integer, Integer> removePosition = new HashMap<Integer, Integer>();
     private int curImagePosition = -1;
+	private IMServiceHelper imServiceHelper = new IMServiceHelper();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        imServiceHelper.connect(this, null, IMServiceHelper.INTENT_NO_PRIORITY, this);
+
         setContentView(R.layout.tt_activity_preview);
         initView();
         loadView();
@@ -92,8 +102,13 @@ public class PreviewActivity extends Activity implements OnPageChangeListener {
                     ImageGridActivity.setSendText(0);
                     ImageGridActivity.setAdapterSelectedMap(null);
 
+                    int sessionType = -1;
+                    IMUIHelper.SessionInfo sessionInfo = CacheHub.getInstance().getSessionInfo();
+                    if (sessionInfo != null) {
+                    	sessionType = sessionInfo.getSessionType();
+                    }
                     String Dao = "";//TokenManager.getInstance().getDao();
-                    UploadImageTask upTask = new UploadImageTask(
+                    UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), sessionType,
                             SysConstant.UPLOAD_IMAGE_HOST, Dao, messageList);
                     TaskManager.getInstance().trigger(upTask);
                     
@@ -153,7 +168,15 @@ public class PreviewActivity extends Activity implements OnPageChangeListener {
         });
     }
 
-    private void setSendText(int selTotal) {
+    @Override
+	protected void onDestroy() {
+		// TODO Auto-generated method stub
+		super.onDestroy();
+		
+		imServiceHelper.disconnect(this);
+	}
+
+	private void setSendText(int selTotal) {
         if (selTotal > 0) {
             send.setText(getResources().getString(R.string.send) + "("
                     + selTotal + ")");
@@ -277,4 +300,17 @@ public class PreviewActivity extends Activity implements OnPageChangeListener {
             return mImageViews[position];
         }
     }
+
+	@Override
+	public void onAction(String action, Intent intent,
+			BroadcastReceiver broadcastReceiver) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onIMServiceConnected() {
+		// TODO Auto-generated method stub
+		
+	}
 }

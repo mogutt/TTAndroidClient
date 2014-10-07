@@ -1,71 +1,60 @@
 package com.mogujie.tt.imlib;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
-import com.mogujie.tt.imlib.proto.MessageEntity;
+import com.mogujie.tt.entity.MessageInfo;
 import com.mogujie.tt.log.Logger;
 
-public class IMUnreadMsgManager {
+public class IMUnreadMsgManager  extends IMManager {
+	private static IMUnreadMsgManager inst;
+	public static IMUnreadMsgManager instance() {
+		synchronized (IMUnreadMsgManager.class) {
+			if (inst == null) {
+				inst = new IMUnreadMsgManager();
+			}
+
+			return inst;
+		}
+	}
+	
 	private Logger logger = Logger.getLogger(IMUnreadMsgManager.class);
 
 	// key = session_id
-	// sub map key = msg_id
-	private ConcurrentHashMap<String, ConcurrentHashMap<String, MessageEntity>> unreadMsgs = new ConcurrentHashMap<String, ConcurrentHashMap<String, MessageEntity>>();
+	private HashMap<String, List<MessageInfo>> unreadMsgs = new HashMap<String, List<MessageInfo>>();
 
-	public void add(MessageEntity msg) {
-		logger.d("chat#add unread msg:%s", msg);
+	public synchronized void add(MessageInfo msg) {
+		logger.d("unread#unreadMgr#add unread msg:%s", msg);
 
-		ConcurrentHashMap<String, MessageEntity> msgMap = unreadMsgs
-				.get(msg.sessionId);
-		if (msgMap == null) {
-			msgMap = new ConcurrentHashMap<String, MessageEntity>();
+		List<MessageInfo> msgList = unreadMsgs.get(msg.sessionId);
+		if (msgList == null) {
+			msgList = new ArrayList<MessageInfo>();
 		}
 
-		msgMap.put(msg.msgId, msg);
-		unreadMsgs.put(msg.sessionId, msgMap);
+		msgList.add(msg);
+		unreadMsgs.put(msg.sessionId, msgList);
 	}
 
-	public MessageEntity getUnreadMsg(String sessionId, String msgId) {
-		ConcurrentHashMap<String, MessageEntity> msgMap = unreadMsgs
-				.get(sessionId);
-		if (msgMap == null) {
+	public synchronized List<MessageInfo> popUnreadMsgList(String sessionId) {
+		logger.d("unread#getUnreadMsgList sessionId:%s", sessionId);
+
+		List<MessageInfo> msgList = unreadMsgs.remove(sessionId);
+		if (msgList == null) {
+			logger.w("unread# sessionId:%s has no unreadMsgs", sessionId);
 			return null;
 		}
 
-		return msgMap.get(msgId);
+		return msgList;
 	}
 	
-	public MessageEntity popUnreadMsg(String sessionId, String msgId) {
-		ConcurrentHashMap<String, MessageEntity> msgMap = unreadMsgs
-				.get(sessionId);
-		if (msgMap == null) {
-			return null;
+	public synchronized int getUnreadMsgListCnt(String sessionId) {
+		logger.d("unread#getUnreadMsgListCnt sessionId:%s", sessionId);
+		List<MessageInfo> msgList = unreadMsgs.get(sessionId);
+		if (msgList == null) {
+			return 0;
 		}
-
-		return msgMap.remove(msgId);
+		
+		return msgList.size();
 	}
-
-	public ConcurrentHashMap<String, MessageEntity> getUnreadMsgs(
-			String sessionId) {
-
-		return unreadMsgs.get(sessionId);
-	}
-
-	public void removeUnreadMsgs(String sessionId) {
-		unreadMsgs.remove(sessionId);
-	}
-
-	public void remove(String sessionId, String msgId) {
-		logger.d("chat#remove sessionId:%s, msgId:%s", sessionId, msgId);
-
-		ConcurrentHashMap<String, MessageEntity> msgMap = unreadMsgs
-				.get(sessionId);
-
-		if (msgMap == null) {
-			return;
-		}
-
-		msgMap.remove(msgId);
-	}
-
 }

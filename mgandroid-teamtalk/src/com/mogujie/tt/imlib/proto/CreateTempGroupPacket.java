@@ -1,18 +1,15 @@
 package com.mogujie.tt.imlib.proto;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
-import com.mogujie.tt.entity.User;
 import com.mogujie.tt.imlib.IMLoginManager;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.packet.base.DefaultHeader;
 import com.mogujie.tt.packet.base.Header;
 import com.mogujie.tt.packet.base.Packet;
-import com.mogujie.tt.utils.SequenceNumberMaker;
 
 /**
  * MsgServerPacket:请求(返回)登陆消息服务器 yugui 2014-05-04

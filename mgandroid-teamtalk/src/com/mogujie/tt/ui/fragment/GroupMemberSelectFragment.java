@@ -29,7 +29,6 @@ import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
-import com.mogujie.tt.imlib.utils.IMUIHelper.SessionInfo;
 import com.mogujie.tt.ui.base.TTBaseFragment;
 import com.mogujie.tt.ui.utils.EntityList;
 import com.mogujie.tt.ui.utils.IMGroupMemberGridViewHelper;
@@ -102,14 +101,27 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 
 			@Override
 			public void onClick(View arg0) {
+				logger.d("tempgroup#on 'save' btn clicked");
+				
 				IMGroupManager groupMgr = imService.getGroupManager();
 				GroupManagerAdapter adapter = gridViewHelper.getAdapter();
 				
 				int sessionType = GroupMemberSelectFragment.this.sessinInfo.getSessionType();
 				if (sessionType == IMSession.SESSION_P2P) {
 					List<String> memberList = adapter.getMemberList();
+					
+					String loginId = imService.getLoginManager().getLoginId();
+					logger.d("tempgroup#loginId:%s", loginId);
+					memberList.add(loginId);
+					
+					logger.d("tempgroup#memberList size:%d", memberList.size());
+					for (String id : memberList) {
+						logger.d("tempgroup#member:%s", id);
+					}
+					
 					String tempGroupName = generateTempGroupName(memberList);
-					logger.d("tempgroup#name:%s", tempGroupName);
+					logger.d("tempgroup#generateTempGroupName:%s", tempGroupName);
+					
 					groupMgr.reqCreateTempGroup(tempGroupName, memberList);
 
 				} else {
@@ -125,22 +137,36 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 			}
 
 			private String generateTempGroupName(List<String> memberList) {
-				int MAX_NAME_PREFIX_LEN = 8;
+				int MAX_NAME_PREFIX_LEN = 15;
 				
 				String name = "";
 				IMContactManager contactMgr = imService.getContactManager();
+				
+				ContactEntity prevContact = null;
 				for (String id : memberList) {
 					ContactEntity contact = contactMgr.findContact(id);
 					if (contact == null) {
 						continue;
 					}
 					
-					name += contact.name + ",";
+					logger.d("tempgroup#member contact:%s", contact);
+					
+					if (prevContact != null) {
+						name += "," + contact.name;
+					} else {
+						//first element
+						name += contact.name;
+					}
+					
 					if (name.length() >= MAX_NAME_PREFIX_LEN) {
 						name = name.substring(0, MAX_NAME_PREFIX_LEN);
 						name += "...";
+						break;
 					}
+					
+					prevContact = contact;
 				}
+				
 				return name;
 			}
 		});

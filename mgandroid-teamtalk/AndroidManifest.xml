@@ -62,20 +62,7 @@
             android:label="@string/app_name"
             android:screenOrientation="portrait" >
         </activity>
-
-        <receiver android:name=".service.StartImServiceReceiver" >
-            <intent-filter>
-                <action android:name="com.mougjie.im.startService" />
-            </intent-filter>
-        </receiver>
-
-        <service
-            android:name=".service.IMService"
-            android:exported="false" >
-            <intent-filter>
-                <action android:name="com.mogujie.im.framework.service.IMService" />
-            </intent-filter>
-        </service>
+        
         <service
             android:name=".imlib.service.IMService"
             android:exported="false" >

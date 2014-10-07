@@ -1,14 +1,11 @@
 
 package com.mogujie.tt.ui.activity;
 
-import com.mogujie.tt.R;
-import com.mogujie.tt.config.SysConstant;
-import com.mogujie.tt.entity.GroupManagerEntity;
-import com.mogujie.tt.ui.fragment.GroupManagerFragment;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+
+import com.mogujie.tt.R;
 
 public class GroupMemberSelectActivity extends FragmentActivity {
 

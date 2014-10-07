@@ -25,12 +25,20 @@
 
         <ImageView
             android:id="@+id/message_state_failed"
-            android:layout_width="15dp"
-            android:layout_height="15dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:adjustViewBounds="true"
             android:contentDescription="@string/message_image_desc"
             android:src="@drawable/tt_msg_tip"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/progressBar1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            style="?android:attr/progressBarStyleSmall"
             android:visibility="gone" />
 
         <!--
@@ -50,7 +58,7 @@
 
         <TextView
             android:id="@+id/message_content"
-            android:layout_width="200dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
             android:layout_marginTop="15dp"

@@ -18,7 +18,7 @@ public class GroupEntity {
 	public String toString() {
 		 String ret = "GroupEntity [id=" + id + ", name=" + name + ", avatar="
 				+ avatarUrl + ", creatorId=" + creatorId + ", type=" + type
-				+ ", updated=" + updated + ", pinyin=" + pinyin +  "]";
+				+ ", updated=" + updated + ", pinyin=" + pinyin +  "memberCnt=" + memberIdList.size() + "]";
 		 
 		 StringBuilder memberString = new StringBuilder("member ids:");
 		 for (String id: memberIdList) {

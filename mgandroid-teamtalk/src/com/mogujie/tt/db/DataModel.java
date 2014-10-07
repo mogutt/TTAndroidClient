@@ -177,72 +177,73 @@ public class DataModel {
      */
     public int add(MessageInfo msg) {
 
-        if (null == msg || null == msg.getMsgFromUserId()
-                || null == msg.getTargetId()
-                || SysConstant.DEFAULT_MESSAGE_ID == msg.getMsgId()) {
-            return SysConstant.DEFAULT_MESSAGE_ID;
-        }
-        int msgId = msg.getMsgId();
-        int dt = msg.getDisplayType();
-        Long timeNow = Long.valueOf(System.currentTimeMillis());
-        int created = (0 == msg.getCreated()) ? (int) (timeNow / 1000) : msg
-                .getCreated();
-        int updated = (0 == msg.getUpdated()) ? (int) (timeNow / 1000) : msg
-                .getUpdated();
-        msg.setCreated(created);
-        msg.setUpdated(updated);
-        SQLiteDatabase dbMaster = null;
-        try {
-            dbMaster = helper.getWritableDatabase();
-            dbMaster.beginTransaction(); // 每条消息分两张表存储，只能用事务来处理了
-
-            dbMaster.execSQL(
-                    DBHelper.INSERT_MESSAGE_SQL,
-                    new Object[] {
-                            msgId, msg.getMsgParentId(),
-                            msg.getOwnerId(), msg.getRelateId(),
-                            msg.getMsgFromUserId(), msg.getTargetId(),
-                            msg.getMsgType(), msg.getDisplayType(),
-                            msg.getMsgOverview(), msg.getMsgLoadState(),
-                            msg.getMsgReadStatus(), created, updated
-                    });
-
-            if (SysConstant.DISPLAY_TYPE_TEXT == dt) {
-                // 文本类消息
-                dbMaster.execSQL(DBHelper.INSERT_MESSAGE_EXTRA_TEXT,
-                        new Object[] {
-                                msgId, msg.getMsgContent(), created,
-                                updated
-                        });
-            } else if (SysConstant.DISPLAY_TYPE_IMAGE == dt) {
-                // 图片消息
-                dbMaster.execSQL(DBHelper.INSERT_MESSAGE_EXTRA_IMAGE,
-                        new Object[] {
-                                msgId, msg.getSavePath(), msg.getUrl(), created, updated
-                        });
-            } else if (SysConstant.DISPLAY_TYPE_AUDIO == dt) {
-                // 语音消息
-                dbMaster.execSQL(DBHelper.INSERT_MESSAGE_EXTRA_AUDIO,
-                        new Object[] {
-                                msgId, msg.getSavePath(), msg.getUrl(),
-                                msg.getPlayTime(), created, updated
-                        });
-            } else {
-                // 未知消息，为扩展做准备
-                msgId = SysConstant.DEFAULT_MESSAGE_ID; // 为defalutMsgId
-                                                        // -1，即未添加成功
-            }
-            dbMaster.setTransactionSuccessful();
-        } catch (SQLException e) {
-            logger.e(e.toString());
-        } finally {
-            if (null != dbMaster) {
-                dbMaster.endTransaction();
-            }
-            // dbMaster.close();
-        }
-
-        return msgId;
+//        if (null == msg || null == msg.getMsgFromUserId()
+//                || null == msg.getTargetId()
+//                || SysConstant.DEFAULT_MESSAGE_ID == msg.getMsgId()) {
+//            return SysConstant.DEFAULT_MESSAGE_ID;
+//        }
+//        int msgId = msg.getMsgId();
+//        int dt = msg.getDisplayType();
+//        Long timeNow = Long.valueOf(System.currentTimeMillis());
+//        int created = (0 == msg.getCreated()) ? (int) (timeNow / 1000) : msg
+//                .getCreated();
+//        int updated = (0 == msg.getUpdated()) ? (int) (timeNow / 1000) : msg
+//                .getUpdated();
+//        msg.setCreated(created);
+//        msg.setUpdated(updated);
+//        SQLiteDatabase dbMaster = null;
+//        try {
+//            dbMaster = helper.getWritableDatabase();
+//            dbMaster.beginTransaction(); // 每条消息分两张表存储，只能用事务来处理了
+//
+//            dbMaster.execSQL(
+//                    DBHelper.INSERT_MESSAGE_SQL,
+//                    new Object[] {
+//                            msgId, msg.getMsgParentId(),
+//                            msg.getOwnerId(), msg.getRelateId(),
+//                            msg.getMsgFromUserId(), msg.getTargetId(),
+//                            msg.getMsgType(), msg.getDisplayType(),
+//                            msg.getMsgOverview(), msg.getMsgLoadState(),
+//                            msg.getMsgReadStatus(), created, updated
+//                    });
+//
+//            if (SysConstant.DISPLAY_TYPE_TEXT == dt) {
+//                // 文本类消息
+//                dbMaster.execSQL(DBHelper.INSERT_MESSAGE_EXTRA_TEXT,
+//                        new Object[] {
+//                                msgId, msg.getMsgContent(), created,
+//                                updated
+//                        });
+//            } else if (SysConstant.DISPLAY_TYPE_IMAGE == dt) {
+//                // 图片消息
+//                dbMaster.execSQL(DBHelper.INSERT_MESSAGE_EXTRA_IMAGE,
+//                        new Object[] {
+//                                msgId, msg.getSavePath(), msg.getUrl(), created, updated
+//                        });
+//            } else if (SysConstant.DISPLAY_TYPE_AUDIO == dt) {
+//                // 语音消息
+//                dbMaster.execSQL(DBHelper.INSERT_MESSAGE_EXTRA_AUDIO,
+//                        new Object[] {
+//                                msgId, msg.getSavePath(), msg.getUrl(),
+//                                msg.getPlayTime(), created, updated
+//                        });
+//            } else {
+//                // 未知消息，为扩展做准备
+//                msgId = SysConstant.DEFAULT_MESSAGE_ID; // 为defalutMsgId
+//                                                        // -1，即未添加成功
+//            }
+//            dbMaster.setTransactionSuccessful();
+//        } catch (SQLException e) {
+//            logger.e(e.toString());
+//        } finally {
+//            if (null != dbMaster) {
+//                dbMaster.endTransaction();
+//            }
+//            // dbMaster.close();
+//        }
+//
+//        return msgId;
+    	return 0;
     }
 
     /**
@@ -920,75 +921,76 @@ public class DataModel {
      */
     public List<MessageInfo> queryHistoryMsg(String ownerId, int relateId,
             int msgId, int offset, int size) {
-        List<MessageInfo> msgList = new ArrayList<MessageInfo>();
-        if (null == ownerId || 0 == relateId) {
-            return msgList;
-        }
-        Cursor c = null;
-        Cursor ec = null;
-        SQLiteDatabase dbSlaver = null;
-        try {
-            dbSlaver = helper.getReadableDatabase();
-            String msgSql;
-            String msgExtraSql;
-            if (0 < msgId) {
-                msgSql = "SELECT * FROM " + DBHelper.TABLE_MESSAGES + " where "
-                        + DBHelper.COLUMN_OWNER_ID + " = '" + ownerId + "' and "
-                        + DBHelper.COLUMN_RELATE_ID + " = " + relateId + " and "
-                        + DBHelper.COLUMN_MESSAGE_ID + " < " + msgId + " order by "
-                        + DBHelper.COLUMN_MESSAGE_ID + " desc, "
-                        + DBHelper.COLUMN_CREATED + " desc limit " + offset + ", " + size;
-            } else {
-                msgSql = "SELECT * FROM " + DBHelper.TABLE_MESSAGES + " where "
-                        + DBHelper.COLUMN_OWNER_ID + " = '" + ownerId + "' and "
-                        + DBHelper.COLUMN_RELATE_ID + " = " + relateId + " order by "
-                        + DBHelper.COLUMN_MESSAGE_ID + " desc, "
-                        + DBHelper.COLUMN_CREATED + " desc limit " + offset + ", " + size;
-            }
-            c = dbSlaver.rawQuery(msgSql, null);
-            MessageInfo msg = null;
-            while (c.moveToNext()) {
-                msg = setMsgBaseInfo(c);
-                int dt = msg.getDisplayType();
-                // 根据消息类型完善消息具体内容
-                if (SysConstant.DISPLAY_TYPE_TEXT == dt) {
-                    // 文本类消息
-                    msgExtraSql = "SELECT * FROM " + DBHelper.TABLE_EXTRA_TEXT + " where "
-                            + DBHelper.COLUMN_MESSAGE_ID + " = " + msg.getMsgId();
-                } else if (SysConstant.DISPLAY_TYPE_IMAGE == dt) {
-                    // 图片消息
-                    msgExtraSql = "SELECT * FROM " + DBHelper.TABLE_EXTRA_IMAGE + " where "
-                            + DBHelper.COLUMN_MESSAGE_ID + " = " + msg.getMsgId();
-                } else if (SysConstant.DISPLAY_TYPE_AUDIO == dt) {
-                    // 语音消息
-                    msgExtraSql = "SELECT * FROM " + DBHelper.TABLE_EXTRA_AUDIO + " where "
-                            + DBHelper.COLUMN_MESSAGE_ID + " = " + msg.getMsgId();
-                } else {
-                    // 未知消息，为扩展做准备, 暂时用文本消息替代，留个坑，不知道会不会害人
-                    msgExtraSql = "SELECT * FROM " + DBHelper.TABLE_EXTRA_TEXT + " where "
-                            + DBHelper.COLUMN_MESSAGE_ID + " = " + msg.getMsgId();
-                }
-                ec = dbSlaver.rawQuery(msgExtraSql, null);
-                setMsgExtraInfo(dt, msg, ec);
-                msgList.add(0, msg); // 插在前面，给个正序List
-                if (ec != null)
-                {
-                    ec.close();
-                }
-            }
-
-        } catch (SQLException e) {
-            logger.e(e.toString());
-        } finally {
-            if (null != c) {
-                c.close();
-            }
-            if (null != ec) {
-                ec.close();
-            }
-            // dbSlaver.close();
-        }
-        return msgList;
+//        List<MessageInfo> msgList = new ArrayList<MessageInfo>();
+//        if (null == ownerId || 0 == relateId) {
+//            return msgList;
+//        }
+//        Cursor c = null;
+//        Cursor ec = null;
+//        SQLiteDatabase dbSlaver = null;
+//        try {
+//            dbSlaver = helper.getReadableDatabase();
+//            String msgSql;
+//            String msgExtraSql;
+//            if (0 < msgId) {
+//                msgSql = "SELECT * FROM " + DBHelper.TABLE_MESSAGES + " where "
+//                        + DBHelper.COLUMN_OWNER_ID + " = '" + ownerId + "' and "
+//                        + DBHelper.COLUMN_RELATE_ID + " = " + relateId + " and "
+//                        + DBHelper.COLUMN_MESSAGE_ID + " < " + msgId + " order by "
+//                        + DBHelper.COLUMN_MESSAGE_ID + " desc, "
+//                        + DBHelper.COLUMN_CREATED + " desc limit " + offset + ", " + size;
+//            } else {
+//                msgSql = "SELECT * FROM " + DBHelper.TABLE_MESSAGES + " where "
+//                        + DBHelper.COLUMN_OWNER_ID + " = '" + ownerId + "' and "
+//                        + DBHelper.COLUMN_RELATE_ID + " = " + relateId + " order by "
+//                        + DBHelper.COLUMN_MESSAGE_ID + " desc, "
+//                        + DBHelper.COLUMN_CREATED + " desc limit " + offset + ", " + size;
+//            }
+//            c = dbSlaver.rawQuery(msgSql, null);
+//            MessageInfo msg = null;
+//            while (c.moveToNext()) {
+//                msg = setMsgBaseInfo(c);
+//                int dt = msg.getDisplayType();
+//                // 根据消息类型完善消息具体内容
+//                if (SysConstant.DISPLAY_TYPE_TEXT == dt) {
+//                    // 文本类消息
+//                    msgExtraSql = "SELECT * FROM " + DBHelper.TABLE_EXTRA_TEXT + " where "
+//                            + DBHelper.COLUMN_MESSAGE_ID + " = " + msg.getMsgId();
+//                } else if (SysConstant.DISPLAY_TYPE_IMAGE == dt) {
+//                    // 图片消息
+//                    msgExtraSql = "SELECT * FROM " + DBHelper.TABLE_EXTRA_IMAGE + " where "
+//                            + DBHelper.COLUMN_MESSAGE_ID + " = " + msg.getMsgId();
+//                } else if (SysConstant.DISPLAY_TYPE_AUDIO == dt) {
+//                    // 语音消息
+//                    msgExtraSql = "SELECT * FROM " + DBHelper.TABLE_EXTRA_AUDIO + " where "
+//                            + DBHelper.COLUMN_MESSAGE_ID + " = " + msg.getMsgId();
+//                } else {
+//                    // 未知消息，为扩展做准备, 暂时用文本消息替代，留个坑，不知道会不会害人
+//                    msgExtraSql = "SELECT * FROM " + DBHelper.TABLE_EXTRA_TEXT + " where "
+//                            + DBHelper.COLUMN_MESSAGE_ID + " = " + msg.getMsgId();
+//                }
+//                ec = dbSlaver.rawQuery(msgExtraSql, null);
+//                setMsgExtraInfo(dt, msg, ec);
+//                msgList.add(0, msg); // 插在前面，给个正序List
+//                if (ec != null)
+//                {
+//                    ec.close();
+//                }
+//            }
+//
+//        } catch (SQLException e) {
+//            logger.e(e.toString());
+//        } finally {
+//            if (null != c) {
+//                c.close();
+//            }
+//            if (null != ec) {
+//                ec.close();
+//            }
+//            // dbSlaver.close();
+//        }
+//        return msgList;
+    	return null;
     }
 
     /**
@@ -1364,9 +1366,9 @@ public class DataModel {
      * @return Boolean
      */
     public Boolean delete(MessageInfo msg) {
-        if (null != msg && SysConstant.DEFAULT_MESSAGE_ID != msg.getMsgId()) {
-            return deleteMsg(msg.getMsgId(), msg.getDisplayType());
-        }
+//        if (null != msg && SysConstant.DEFAULT_MESSAGE_ID != msg.getMsgId()) {
+//            return deleteMsg(msg.getMsgId(), msg.getDisplayType());
+//        }
         return false;
     }
 
@@ -1572,7 +1574,7 @@ public class DataModel {
             ojMsg = new MessageInfo(); // 每次都新建一个对象
         }
 
-        ojMsg.setMsgId(c.getInt(c.getColumnIndex(DBHelper.COLUMN_MESSAGE_ID)));
+        //ojMsg.setMsgId(c.getInt(c.getColumnIndex(DBHelper.COLUMN_MESSAGE_ID)));
         ojMsg.setMsgParentId(c.getInt(c.getColumnIndex(DBHelper.COLUMN_MESSAGE_PARENT_ID)));
         ojMsg.setRelateId(c.getInt(c.getColumnIndex(DBHelper.COLUMN_RELATE_ID)));
         ojMsg.setMsgFromUserId(c.getString(c.getColumnIndex(DBHelper.COLUMN_MESSAGE_FROM_USER_ID)));

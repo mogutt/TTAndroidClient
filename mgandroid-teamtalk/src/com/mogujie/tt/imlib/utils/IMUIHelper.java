@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.mogujie.tt.R;
 import com.mogujie.tt.adapter.GroupManagerAdapter;
+import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
 import com.mogujie.tt.imlib.IMSession;
@@ -77,6 +78,7 @@ public class IMUIHelper {
 			String sessionId) {
 		Intent i = new Intent(ctx, MessageActivity.class);
 		setSessionInIntent(i, sessionId, sessionType);
+		CacheHub.getInstance().setSessionInfo(new SessionInfo(sessionId, sessionType));
 
 		ctx.startActivity(i);
 	}

@@ -76,10 +76,10 @@ public class MessageDistCenter implements Dispatcher, AutoCloseable, Runnable {
             logger.e("空消息");
             return false;
         }
-        if (SysConstant.DEFAULT_MESSAGE_ID == msginfo.getMsgId()) {
-            logger.e("不合法的消息");
-            return false;
-        }
+//        if (SysConstant.DEFAULT_MESSAGE_ID == msginfo.msgId) {
+//            logger.e("不合法的消息");
+//            return false;
+//        }
         if (msgQueue.size() < SysConstant.MESSAGE_QUEUE_LIMIT) {
             this.msgQueue.add(msginfo);
             return true;

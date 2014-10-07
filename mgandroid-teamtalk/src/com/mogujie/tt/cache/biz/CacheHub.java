@@ -13,6 +13,8 @@ import com.mogujie.tt.db.ContactModel;
 import com.mogujie.tt.db.UserModel;
 import com.mogujie.tt.entity.MessageInfo;
 import com.mogujie.tt.entity.User;
+import com.mogujie.tt.imlib.utils.IMUIHelper;
+import com.mogujie.tt.imlib.utils.IMUIHelper.SessionInfo;
 
 public class CacheHub {
 
@@ -24,6 +26,8 @@ public class CacheHub {
         }
         return instance;
     }
+
+	private SessionInfo sessionInfo;
 
     /**
      * @author shuchen
@@ -37,6 +41,14 @@ public class CacheHub {
      */
     public void clear() {
         CacheModel.getInstance().clear();
+    }
+    
+    public void setSessionInfo(IMUIHelper.SessionInfo sessionIfo) {
+    	this.sessionInfo = sessionIfo;
+    }
+    
+    public SessionInfo getSessionInfo() {
+    	return sessionInfo;
     }
 
     /*
@@ -235,8 +247,9 @@ public class CacheHub {
     /*
      * 根据消息ID更新DB中消息的加载状态
      */
-    public Boolean updateMsgStatus(int msgId, int state) {
-        return CacheModel.getInstance().updateMsgStatus(msgId, state);
+    public Boolean updateMsgStatus(String msgId, int state) {
+        //return CacheModel.getInstance().updateMsgStatus(msgId, state);
+    	return false;
     }
 
     /*
@@ -274,7 +287,7 @@ public class CacheHub {
      * @param friendUserId
      * @return Boolean
      */
-    public Boolean updateMsgImageSavePath(int MsgId, String newPath) {
+    public Boolean updateMsgImageSavePath(String MsgId, String newPath) {
         return CacheModel.getInstance().updateMsgImageSavePath(MsgId, newPath);
     }
 

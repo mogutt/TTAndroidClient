@@ -99,35 +99,36 @@ public class CacheModel {
      */
     private Boolean initLastMessageAndCount(List<String> friendIds,
             String ownerId) {
-        try {
-            if (null == friendIds || 0 == friendIds.size()) {
-                return true;
-            }
-            Iterator<String> itr = friendIds.iterator();
-            int unreadCount = 0;
-            MessageInfo msgInfo = null;
-            while (itr.hasNext()) {
-                String friendUserId = itr.next();
-                unreadCount = dbHelper.getMsgUnreadCount(ownerId, ownerId,
-                        friendUserId);
-                MessageCacheImpl.getInstance().incUnreadCount(friendUserId,
-                        unreadCount);
-
-                msgInfo = dbHelper.pullMsg(ownerId, ownerId, friendUserId);
-                if (null != msgInfo
-                        && SysConstant.DISPLAY_TYPE_TEXT == msgInfo
-                                .getDisplayType()) {
-                    msgInfo = dbHelper.pullMsgById(msgInfo.getMsgId());
-                    MessageCacheImpl.getInstance().set(friendUserId, msgInfo);
-                } else {
-                    MessageCacheImpl.getInstance().set(friendUserId, msgInfo);
-                }
-            }
-            return true;
-        } catch (Exception e) {
-            logger.e(e.getMessage());
-            return false;
-        }
+//        try {
+//            if (null == friendIds || 0 == friendIds.size()) {
+//                return true;
+//            }
+//            Iterator<String> itr = friendIds.iterator();
+//            int unreadCount = 0;
+//            MessageInfo msgInfo = null;
+//            while (itr.hasNext()) {
+//                String friendUserId = itr.next();
+//                unreadCount = dbHelper.getMsgUnreadCount(ownerId, ownerId,
+//                        friendUserId);
+//                MessageCacheImpl.getInstance().incUnreadCount(friendUserId,
+//                        unreadCount);
+//
+//                msgInfo = dbHelper.pullMsg(ownerId, ownerId, friendUserId);
+//                if (null != msgInfo
+//                        && SysConstant.DISPLAY_TYPE_TEXT == msgInfo
+//                                .getDisplayType()) {
+//                    msgInfo = dbHelper.pullMsgById(msgInfo.getMsgId());
+//                    MessageCacheImpl.getInstance().set(friendUserId, msgInfo);
+//                } else {
+//                    MessageCacheImpl.getInstance().set(friendUserId, msgInfo);
+//                }
+//            }
+//            return true;
+//        } catch (Exception e) {
+//            logger.e(e.getMessage());
+//            return false;
+//        }
+    	return false;
     }
 
     /*
@@ -282,29 +283,30 @@ public class CacheModel {
      * @param userId 用户ID
      */
     public MessageInfo getLastMessage(String friendUserId) {
-        try {
-            MessageInfo msgInfo = (MessageInfo) MessageCacheImpl.getInstance().get(
-                    friendUserId);
-            if (null == msgInfo) {
-                if (toPullLasgMsgFromDB(friendUserId)) {
-                    msgInfo = dbHelper.pullMsg(getLoginUserId(), getLoginUserId(),
-                            friendUserId);
-                    if (null != msgInfo
-                            && SysConstant.DISPLAY_TYPE_TEXT == msgInfo
-                                    .getDisplayType()) {
-                        msgInfo = dbHelper.pullMsgById(msgInfo.getMsgId());
-                        MessageCacheImpl.getInstance().set(friendUserId, msgInfo);
-                    } else {
-                        MessageCacheImpl.getInstance().set(friendUserId, msgInfo);
-                    }
-                }
-                return msgInfo;
-            }
-            return msgInfo;
-        } catch (Exception e) {
-            logger.e(e.getMessage());
-            return null;
-        }
+//        try {
+//            MessageInfo msgInfo = (MessageInfo) MessageCacheImpl.getInstance().get(
+//                    friendUserId);
+//            if (null == msgInfo) {
+//                if (toPullLasgMsgFromDB(friendUserId)) {
+//                    msgInfo = dbHelper.pullMsg(getLoginUserId(), getLoginUserId(),
+//                            friendUserId);
+//                    if (null != msgInfo
+//                            && SysConstant.DISPLAY_TYPE_TEXT == msgInfo
+//                                    .getDisplayType()) {
+//                        msgInfo = dbHelper.pullMsgById(msgInfo.getMsgId());
+//                        MessageCacheImpl.getInstance().set(friendUserId, msgInfo);
+//                    } else {
+//                        MessageCacheImpl.getInstance().set(friendUserId, msgInfo);
+//                    }
+//                }
+//                return msgInfo;
+//            }
+//            return msgInfo;
+//        } catch (Exception e) {
+//            logger.e(e.getMessage());
+//            return null;
+//        }
+    	return null;
     }
 
     /*
@@ -393,8 +395,9 @@ public class CacheModel {
      * @param friendUserId
      * @return Boolean
      */
-    public Boolean updateMsgImageSavePath(int MsgId, String newPath) {
-        return dbHelper.updateMsgImageSavePath(MsgId, newPath);
+    public Boolean updateMsgImageSavePath(String MsgId, String newPath) {
+        //return dbHelper.updateMsgImageSavePath(MsgId, newPath);
+    	return false;
     }
 
     public Boolean updateMsgStatus(int msgId, int state) {

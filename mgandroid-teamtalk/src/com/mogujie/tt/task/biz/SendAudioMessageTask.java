@@ -2,19 +2,10 @@
 package com.mogujie.tt.task.biz;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Message;
 
-import com.mogujie.tt.biz.MessageHelper;
-import com.mogujie.tt.config.HandlerConstant;
-import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.TaskConstant;
 import com.mogujie.tt.entity.MessageInfo;
-import com.mogujie.tt.packet.action.ActionCallback;
-import com.mogujie.tt.packet.base.Packet;
 import com.mogujie.tt.task.MAsyncTask;
-import com.mogujie.tt.task.TaskManager;
-import com.mogujie.tt.ui.activity.MessageActivity;
 
 /**
  * @Description 发送语音消息Task

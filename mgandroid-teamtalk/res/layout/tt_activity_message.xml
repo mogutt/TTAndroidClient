@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:background="@color/listview_color"
@@ -9,11 +9,12 @@
         xmlns:ptr="http://schemas.android.com/apk/res-auto"
         android:id="@+id/message_list"
         android:layout_width="match_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:background="#ffffffff"
         android:clipToPadding="false"
         android:divider="@null"
-        android:paddingBottom="70dp"
+        android:paddingBottom="1dp"
         android:transcriptMode="normal"
         ptr:ptrMode="pullFromStart"
         ptr:ptrOverScroll="false" />
@@ -22,8 +23,7 @@
         android:id="@+id/tt_layout_bottom"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@id/message_list"
-        android:layout_alignParentBottom="true" >
+        android:layout_weight="0" >
 
         <RelativeLayout
             android:id="@+id/pannel_container"
@@ -59,7 +59,8 @@
                 android:textCursorDrawable="@drawable/tt_message_cursor"
                 android:textSize="16sp" />
 
-          <!--   <TextView
+            <!--
+                 <TextView
                 android:id="@+id/send_message_btn"
                 android:layout_width="63dp"
                 android:layout_height="33dp"
@@ -71,8 +72,9 @@
                 android:textColor="@android:color/white"
                 android:textSize="15dp"
                 android:visibility="gone" />
- -->            
-              <TextView
+            -->
+
+            <TextView
                 android:id="@+id/send_message_btn"
                 android:layout_width="70dp"
                 android:layout_height="33dp"
@@ -197,4 +199,4 @@
         </LinearLayout>
     </RelativeLayout>
 
-</RelativeLayout>
+</LinearLayout>

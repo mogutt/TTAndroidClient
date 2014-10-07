@@ -1,7 +1,6 @@
 
 package com.mogujie.tt.entity;
 
-import java.util.Comparator;
 import java.util.Date;
 
 import android.text.TextUtils;
@@ -9,7 +8,6 @@ import android.util.Log;
 
 import com.mogujie.tt.R;
 import com.mogujie.tt.config.SysConstant;
-import com.mogujie.tt.imlib.proto.MessagePacket;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.utils.DateUtil;
 

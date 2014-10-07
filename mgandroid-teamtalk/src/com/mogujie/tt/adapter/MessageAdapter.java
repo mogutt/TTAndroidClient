@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
@@ -29,6 +30,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,7 +43,6 @@ import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
 import com.mogujie.tt.entity.TimeTileMessage;
 import com.mogujie.tt.imlib.IMSession;
-import com.mogujie.tt.imlib.proto.MessageEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
@@ -57,8 +58,6 @@ import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.utils.CommonUtil;
 import com.mogujie.tt.utils.DateUtil;
 import com.mogujie.tt.utils.FileUtil;
-import com.mogujie.tt.utils.MsgIdToPositionMap;
-import com.mogujie.tt.utils.StringUtil;
 import com.mogujie.tt.widget.MGProgressbar;
 import com.mogujie.tt.widget.MessageOperatePopup;
 import com.mogujie.tt.widget.PinkToast;
@@ -91,7 +90,8 @@ public class MessageAdapter extends BaseAdapter {
 	@SuppressWarnings("unused")
 	private static int selectedPosition = -1;
 
-	private MsgIdToPositionMap positionSEQNoMap = new MsgIdToPositionMap();
+	// key = msgid, value = the position in messageList
+//	private MsgIdToPositionMap msgIndexMap = new MsgIdToPositionMap();
 
 	private volatile static HashMap<String, AnimationDrawable> audioPathAnimMap = new HashMap<String, AnimationDrawable>();
 	private static String playingPath = null;
@@ -116,10 +116,10 @@ public class MessageAdapter extends BaseAdapter {
 		}
 	}
 
-	public void clearPositionSEQNoMap() {
-		if (null != positionSEQNoMap) {
-			positionSEQNoMap.clear();
-		}
+	public void clearMsgIndexMap() {
+//		if (null != msgIndexMap) {
+//			msgIndexMap.clear();
+//		}
 		mHistoryFirstAdd = true;
 	}
 
@@ -183,7 +183,14 @@ public class MessageAdapter extends BaseAdapter {
 	 * @param fromStart
 	 * @param list
 	 */
-	public void addItem(boolean fromStart, ArrayList<MessageInfo> list) {
+	public void addItem(boolean fromStart, List<MessageInfo> list) {
+		logger.d("debug#dump addItem fromStart msgList");
+		int index = 0;
+		for (MessageInfo msgInfo : list) {
+			logger.d("debug#index:%d, msg:%s", index, msgInfo);
+			++index;
+		}
+		
 		try {
 			if (null == list || list.size() == 0) {
 				return;
@@ -193,10 +200,12 @@ public class MessageAdapter extends BaseAdapter {
 
 			// 先取出需要加进去的数据数量
 			final int count = list.size();
+			logger.d("debug#list size:%d", count);
+			
 			if (fromStart) {
 				// 因为第一次插入历史数据的时候，需要插入一条divider数据，所以后移的偏移量是count + 1
 				// updatePositonSeqMap(0, mHistoryFirstAdd ? count + 1 : count);
-				positionSEQNoMap.fix(0, count);
+//				msgIndexMap.fix(0, count);
 			}
 			// 从加进去的那个info开始，赋值各条消息的状态
 			for (int i = 0; i < count; i++) {
@@ -204,8 +213,7 @@ public class MessageAdapter extends BaseAdapter {
 				if (null == info) {
 					continue;
 				}
-				positionSEQNoMap
-						.put(info.getMsgId(), fromStart ? i : count + i);
+//				msgIndexMap.put(info.msgId, fromStart ? i : count + i);
 			}
 
 			int position = count - 1;
@@ -226,16 +234,16 @@ public class MessageAdapter extends BaseAdapter {
 
 				MessageInfo info = (MessageInfo) obj;
 
-				if (DateUtil.needDisplayTime(
-						null == preInfo ? null : preInfo.getMsgCreateTime(),
-						info.getMsgCreateTime())) {
+				if (DateUtil.needDisplayTime(null == preInfo
+						? null
+						: preInfo.getMsgCreateTime(), info.getMsgCreateTime())) {
 					// 如果当前位置已经有了time title，就不需要再加了
 					if (!(messageList.get(position) instanceof TimeTileMessage)) {
 						TimeTileMessage timeTile = new TimeTileMessage();
 						timeTile.setTime(info.getMsgCreateTime());
 
 						// 更新一下状态位置映射
-						positionSEQNoMap.fix(position, 1);
+//						msgIndexMap.fix(position, 1);
 						messageList.add(position, timeTile);
 					}
 				}
@@ -270,7 +278,7 @@ public class MessageAdapter extends BaseAdapter {
 				return;
 			}
 			messageList.add(info);
-			positionSEQNoMap.put(info.getMsgId(), messageList.size() - 1);
+//			msgIndexMap.put(info.msgId, messageList.size() - 1);
 
 			final int count = messageList.size();
 			MessageInfo preInfo = null;
@@ -281,12 +289,12 @@ public class MessageAdapter extends BaseAdapter {
 				}
 			}
 
-			if (DateUtil.needDisplayTime(
-					null == preInfo ? null : preInfo.getMsgCreateTime(),
-					info.getMsgCreateTime())) {
+			if (DateUtil.needDisplayTime(null == preInfo
+					? null
+					: preInfo.getMsgCreateTime(), info.getMsgCreateTime())) {
 				TimeTileMessage timeTitle = new TimeTileMessage();
 				timeTitle.setTime(info.getMsgCreateTime());
-				positionSEQNoMap.fix(count - 1, 1);
+//				msgIndexMap.fix(count - 1, 1);
 				messageList.add(count - 1, timeTitle);
 			}
 
@@ -297,6 +305,20 @@ public class MessageAdapter extends BaseAdapter {
 		}
 	}
 
+	private MessageInfo getMsgInfo(String msgId) {
+		for (Object obj : messageList) {
+			if (!(obj instanceof MessageInfo)) {
+				continue;
+			}
+			MessageInfo msgInfo = (MessageInfo)obj;
+			
+			if (msgInfo.msgId.equals(msgId)) {
+				return msgInfo;
+			}
+		}
+		
+		return null;
+	}
 	/**
 	 * @Description 由MessageInfo对象修改消息状态(可修改图片文本消息)
 	 * @param messageInfo
@@ -307,20 +329,21 @@ public class MessageAdapter extends BaseAdapter {
 		if (null == messageInfo)
 			return;
 		try {
-			if (messageInfo.getMsgId() < 0
-					|| state < SysConstant.MESSAGE_STATE_UNLOAD
+			if (state < SysConstant.MESSAGE_STATE_UNLOAD
 					|| state > SysConstant.MESSAGE_STATE_FINISH_FAILED
 					|| null == context)
 				return;
 
-			int iTerm = positionSEQNoMap.getPosition(messageInfo.getMsgId());
-			logger.d("debug#iTerm:%d", iTerm);
-			if (iTerm == -1 || null == messageList.get(iTerm))
-				return;
 
-			((MessageInfo) messageList.get(iTerm)).setMsgLoadState(state);
-			CacheHub.getInstance().updateMsgStatus(messageInfo.getMsgId(),
-					state);
+			String msgId = messageInfo.msgId;
+			MessageInfo msgInfo = getMsgInfo(msgId);
+			if (msgInfo == null) {
+				logger.e("chat#error can't find msgInfo:%s", msgId);
+				return;
+			}
+
+			msgInfo.setMsgLoadState(state);
+//			CacheHub.getInstance().updateMsgStatus(msgId, state);
 
 			if (messageInfo.getDisplayType() == SysConstant.DISPLAY_TYPE_IMAGE) {
 				logger.d("debug#this is image");
@@ -329,22 +352,14 @@ public class MessageAdapter extends BaseAdapter {
 					savePath = messageInfo.getSavePath();
 				}
 				logger.d("debug#setsavepath:%s", savePath);
-				((MessageInfo) messageList.get(iTerm)).setSavePath(savePath);
-				((MessageInfo) messageList.get(iTerm))
-						.setMsgReadStatus(SysConstant.MESSAGE_ALREADY_READ);
-				CacheHub.getInstance().updateMsgImageSavePath(
-						messageInfo.getMsgId(), savePath);
+				msgInfo.setSavePath(savePath);
+				msgInfo.setMsgReadStatus(SysConstant.MESSAGE_ALREADY_READ);
+				//CacheHub.getInstance().updateMsgImageSavePath(messageInfo.msgId, savePath);
 
 				if (imServiceHelper != null) {
 					IMService imService = imServiceHelper.getIMService();
 					if (imService != null) {
-
-						// todo eric this is ugly
-						MessageEntity msg = new MessageEntity();
-						msg.msgInfo = messageInfo;
-						msg.fromId = messageInfo.getMsgFromUserId();
-						msg.createTime = messageInfo.getCreated();
-						imService.getDbManager().updatePictureMessagePath(msg);
+						imService.getDbManager().updatePictureMessagePath(messageInfo);
 					}
 				}
 			}
@@ -357,40 +372,40 @@ public class MessageAdapter extends BaseAdapter {
 
 	/**
 	 * @Description 由消息id去修改消息状态（用于只有id的情况）
-	 * @param seqNo
+	 * @param msgId
 	 * @param state
 	 */
-	public void updateItemState(int seqNo, int state) {
+	public void updateItemState(String msgId, int state) {
 		try {
-			if (seqNo <= 0)
-				return;
+			
 
-			int iTerm = positionSEQNoMap.getPosition(seqNo);
+			MessageInfo msgInfo = getMsgInfo(msgId);
+			if (msgInfo == null) {
+				logger.e("chat#error can't find msgInfo:%s", msgId);
+				return;
+			}
 
 			if (null != CacheHub.getInstance()) {
-				CacheHub.getInstance().updateMsgStatus(seqNo, state);
+//				CacheHub.getInstance().updateMsgStatus(msgId, state);
 			}
 
-			if (iTerm != -1 && null != messageList.get(iTerm)) {
-
-				((MessageInfo) messageList.get(iTerm)).setMsgLoadState(state);
-
-				notifyDataSetChanged();
-			}
+			msgInfo.setMsgLoadState(state);
+			logger.d("debug#updateItemState,  msg:%s", msgInfo);
+			notifyDataSetChanged();
 		} catch (Exception e) {
 			logger.e(e.getMessage());
 		}
 	}
 
-	public void updateItemSavePath(int seqNo, String path) {
+	public void updateItemSavePath(String msgId, String path) {
 		try {
-			int p = positionSEQNoMap.getPosition(seqNo);
-			if (p < 0)
+			MessageInfo msgInfo = getMsgInfo(msgId);
+			if (msgInfo == null) {
+				logger.e("chat#error can't find msgInfo:%s", msgId);
 				return;
-			positionSEQNoMap.remove(seqNo);
-			if (p >= messageList.size())
-				return;
-			((MessageInfo) messageList.get(p)).setSavePath(path);
+			}
+			
+			msgInfo.setSavePath(path);
 			notifyDataSetChanged();
 		} catch (Exception e) {
 			logger.e(e.getMessage());
@@ -401,70 +416,52 @@ public class MessageAdapter extends BaseAdapter {
 	public View getView(int position, View convertView, final ViewGroup parent) {
 		try {
 			final int type = getItemViewType(position);
-			logger.d("chat#getView type:%d", type);
 			// 所有需要被赋值的holder都是基于MessageHolderBase的
 			MessageHolderBase holder = null;
 
 			if (null == convertView && null != inflater) {
 				if (type == MESSAGE_TYPE_TIME_TITLE) {
-					convertView = inflater.inflate(
-							R.layout.tt_message_title_time, parent, false);
+					convertView = inflater.inflate(R.layout.tt_message_title_time, parent, false);
 					// 这货是个特殊情况
 					TimeTitleMessageHodler ttHodler = new TimeTitleMessageHodler();
 					convertView.setTag(ttHodler);
-					ttHodler.time_title = (TextView) convertView
-							.findViewById(R.id.time_title);
+					ttHodler.time_title = (TextView) convertView.findViewById(R.id.time_title);
 				} else if (type == MESSAGE_TYPE_HISTORY_DIVIDER) {
 					// 这货只可能有一条，所以不用缓存了
-					convertView = inflater.inflate(
-							R.layout.tt_history_divider_item, parent, false);
+					convertView = inflater.inflate(R.layout.tt_history_divider_item, parent, false);
 				} else if (type == MESSAGE_TYPE_MINE_TETX) {
-					convertView = inflater.inflate(
-							R.layout.tt_mine_text_message_item, parent, false);
+					convertView = inflater.inflate(R.layout.tt_mine_text_message_item, parent, false);
 					holder = new TextMessageHolder();
 					convertView.setTag(holder);
-					fillTextMessageHolder((TextMessageHolder) holder,
-							convertView);
+					fillTextMessageHolder((TextMessageHolder) holder, convertView);
 				} else if (type == MESSAGE_TYPE_MINE_IMAGE) {
-					convertView = inflater.inflate(
-							R.layout.tt_mine_image_message_item, parent, false);
+					convertView = inflater.inflate(R.layout.tt_mine_image_message_item, parent, false);
 					holder = new ImageMessageHolder();
 					convertView.setTag(holder);
-					fillImageMessageHolder((ImageMessageHolder) holder,
-							convertView);
+					fillImageMessageHolder((ImageMessageHolder) holder, convertView);
 				} else if (type == MESSAGE_TYPE_MINE_AUDIO) {
 					logger.d("chat#start inflating audio item");
-					convertView = inflater.inflate(
-							R.layout.tt_mine_audio_message_item, parent, false);
+					convertView = inflater.inflate(R.layout.tt_mine_audio_message_item, parent, false);
 					logger.d("chat#finish inflating audio item");
 					holder = new AudioMessageHolder();
 					convertView.setTag(holder);
-					fillAudioMessageHolder((AudioMessageHolder) holder,
-							convertView);
+					fillAudioMessageHolder((AudioMessageHolder) holder, convertView);
 					logger.d("chat#after fillAudioMessageHolder");
 				} else if (type == MESSAGE_TYPE_OTHER_TEXT) {
-					convertView = inflater.inflate(
-							R.layout.tt_other_text_message_item, parent, false);
+					convertView = inflater.inflate(R.layout.tt_other_text_message_item, parent, false);
 					holder = new TextMessageHolder();
 					convertView.setTag(holder);
-					fillTextMessageHolder((TextMessageHolder) holder,
-							convertView);
+					fillTextMessageHolder((TextMessageHolder) holder, convertView);
 				} else if (type == MESSAGE_TYPE_OTHER_IMAGE) {
-					convertView = inflater
-							.inflate(R.layout.tt_other_image_message_item,
-									parent, false);
+					convertView = inflater.inflate(R.layout.tt_other_image_message_item, parent, false);
 					holder = new ImageMessageHolder();
 					convertView.setTag(holder);
-					fillImageMessageHolder((ImageMessageHolder) holder,
-							convertView);
+					fillImageMessageHolder((ImageMessageHolder) holder, convertView);
 				} else if (type == MESSAGE_TYPE_OTHER_AUDIO) {
-					convertView = inflater
-							.inflate(R.layout.tt_other_audio_message_item,
-									parent, false);
+					convertView = inflater.inflate(R.layout.tt_other_audio_message_item, parent, false);
 					holder = new AudioMessageHolder();
 					convertView.setTag(holder);
-					fillAudioMessageHolder((AudioMessageHolder) holder,
-							convertView);
+					fillAudioMessageHolder((AudioMessageHolder) holder, convertView);
 				}
 			} else {
 				if (type != MESSAGE_TYPE_TIME_TITLE) {
@@ -479,59 +476,73 @@ public class MessageAdapter extends BaseAdapter {
 			}
 
 			if (type == MESSAGE_TYPE_TIME_TITLE) {
-				TimeTileMessage msg = (TimeTileMessage) messageList
-						.get(position);
-				((TimeTitleMessageHodler) convertView.getTag()).time_title
-						.setText(DateUtil.getTimeDiffDesc(msg.getTime()));
+				TimeTileMessage msg = (TimeTileMessage) messageList.get(position);
+				((TimeTitleMessageHodler) convertView.getTag()).time_title.setText(DateUtil.getTimeDiffDesc(msg.getTime()));
 
 				return convertView;
 			}
 
 			final MessageInfo info = (MessageInfo) messageList.get(position);
-
-			IMUIHelper.setMessageOwnerAvatar(logger, session, info,
-					holder.portrait);
+			holder.msgInfo = info;
+			
+			IMUIHelper.setMessageOwnerAvatar(logger, session, info, holder.portrait);
+			logger.d("1");
 			IMUIHelper.setMessageOwnerName(logger, session, info, holder.name);
+			logger.d("2");
 
 			final View baseView = getBaseViewForMenu(holder, info);
+			logger.d("3");
 
 			if (info.getMsgLoadState() == SysConstant.MESSAGE_STATE_FINISH_FAILED) {
+				logger.d("4");
+
 				holder.messageFailed.setVisibility(View.VISIBLE);
-				holder.messageFailed
-						.setOnClickListener(new View.OnClickListener() {
-							@Override
-							public void onClick(View arg0) {
-								int menuType = getMenuType(info);
-								if (menuType > 0) {
-									showMenu(context, menuType, parent, info,
-											baseView);
-								}
-							}
-						});
+				logger.d("5");
+
+				holder.messageFailed.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View arg0) {
+						int menuType = getMenuType(info);
+						if (menuType > 0) {
+							showMenu(context, menuType, parent, info, baseView);
+						}
+					}
+				});
 			} else {
+				logger.d("6");
+
 				holder.messageFailed.setVisibility(View.GONE);
 			}
+			
+			logger.d("7");
 
+			if (info.getMsgLoadState() == SysConstant.MESSAGE_STATE_LOADDING && !info.isPictureType()) {
+				logger.d("8");
+
+				holder.loadingProgressBar.setVisibility(View.VISIBLE);
+			} else {
+				logger.d("9");
+				holder.loadingProgressBar.setVisibility(View.GONE);
+			}
+			
+			logger.d("10");
+ 
 			if (type == MESSAGE_TYPE_MINE_TETX
 					|| type == MESSAGE_TYPE_OTHER_TEXT) {
 				handleTextMessage((TextMessageHolder) holder, info, parent);
 			} else if (type == MESSAGE_TYPE_MINE_IMAGE) {
-				handleImageMessage((ImageMessageHolder) holder, info, position,
-						true, parent);
+				handleImageMessage((ImageMessageHolder) holder, info, position, true, parent);
 			} else if (type == MESSAGE_TYPE_OTHER_IMAGE) {
-				handleImageMessage((ImageMessageHolder) holder, info, position,
-						false, parent);
+				handleImageMessage((ImageMessageHolder) holder, info, position, false, parent);
 			} else if (type == MESSAGE_TYPE_MINE_AUDIO) {
-				handleAudioMessage((AudioMessageHolder) holder, info, true,
-						parent, position);
+				handleAudioMessage((AudioMessageHolder) holder, info, true, parent, position);
 			} else if (type == MESSAGE_TYPE_OTHER_AUDIO) {
-				handleAudioMessage((AudioMessageHolder) holder, info, false,
-						parent, position);
+				handleAudioMessage((AudioMessageHolder) holder, info, false, parent, position);
 			}
 			return convertView;
 		} catch (Exception e) {
 			if (null != e && null != logger) {
-				logger.e(e.getMessage());
+				logger.e("exception:%s", e.getMessage());
 			}
 			return null;
 		}
@@ -552,8 +563,7 @@ public class MessageAdapter extends BaseAdapter {
 				return MESSAGE_TYPE_HISTORY_DIVIDER;
 			} else {
 				MessageInfo info = (MessageInfo) obj;
-				if (info.getMsgFromUserId().equals(
-						CacheHub.getInstance().getLoginUserId())) {
+				if (info.getMsgFromUserId().equals(CacheHub.getInstance().getLoginUserId())) {
 					if (info.getDisplayType() == SysConstant.DISPLAY_TYPE_TEXT) {
 						return MESSAGE_TYPE_MINE_TETX;
 					} else if (info.getDisplayType() == SysConstant.DISPLAY_TYPE_IMAGE) {
@@ -615,10 +625,9 @@ public class MessageAdapter extends BaseAdapter {
 
 	private void fillBaseMessageholder(MessageHolderBase holder,
 			View convertView) {
-		holder.portrait = (MGWebImageView) convertView
-				.findViewById(R.id.user_portrait);
-		holder.messageFailed = (ImageView) convertView
-				.findViewById(R.id.message_state_failed);
+		holder.portrait = (MGWebImageView) convertView.findViewById(R.id.user_portrait);
+		holder.messageFailed = (ImageView) convertView.findViewById(R.id.message_state_failed);
+		holder.loadingProgressBar = (ProgressBar)convertView.findViewById(R.id.progressBar1);
 
 		holder.name = (TextView) convertView.findViewById(R.id.name);
 		logger.d("name#holder.name:%s", holder.name);
@@ -628,18 +637,15 @@ public class MessageAdapter extends BaseAdapter {
 			View convertView) {
 		fillBaseMessageholder(holder, convertView);
 
-		holder.message_content = (TextView) convertView
-				.findViewById(R.id.message_content);
+		holder.message_content = (TextView) convertView.findViewById(R.id.message_content);
 	}
 
 	private void fillImageMessageHolder(ImageMessageHolder holder,
 			View convertView) {
 		fillBaseMessageholder(holder, convertView);
 		holder.message_layout = convertView.findViewById(R.id.message_layout);
-		holder.message_image = (ImageView) convertView
-				.findViewById(R.id.message_image);
-		holder.image_progress = (MGProgressbar) convertView
-				.findViewById(R.id.tt_image_progress);
+		holder.message_image = (ImageView) convertView.findViewById(R.id.message_image);
+		holder.image_progress = (MGProgressbar) convertView.findViewById(R.id.tt_image_progress);
 		holder.image_progress.setShowText(false);
 	}
 
@@ -649,10 +655,8 @@ public class MessageAdapter extends BaseAdapter {
 
 		holder.message_layout = convertView.findViewById(R.id.message_layout);
 		holder.audio_antt_view = convertView.findViewById(R.id.audio_antt_view);
-		holder.audio_duration = (TextView) convertView
-				.findViewById(R.id.audio_duration);
-		holder.audio_unread_notify = convertView
-				.findViewById(R.id.audio_unread_notify);
+		holder.audio_duration = (TextView) convertView.findViewById(R.id.audio_duration);
+		holder.audio_unread_notify = convertView.findViewById(R.id.audio_unread_notify);
 	}
 
 	private void handleTextMessage(final TextMessageHolder holder,
@@ -660,19 +664,16 @@ public class MessageAdapter extends BaseAdapter {
 		if (null == holder || null == info) {
 			return;
 		}
-		holder.message_content.setText(Emoparser.getInstance(context)
-				.emoCharsequence(info.getMsgContent()));
+		holder.message_content.setText(Emoparser.getInstance(context).emoCharsequence(info.getMsgContent()));
 
-		holder.message_content
-				.setOnLongClickListener(new View.OnLongClickListener() {
+		holder.message_content.setOnLongClickListener(new View.OnLongClickListener() {
 
-					@Override
-					public boolean onLongClick(View v) {
-						showMenu(context, SysConstant.POPUP_MENU_TYPE_TEXT,
-								parent, info, holder.message_content);
-						return true;
-					}
-				});
+			@Override
+			public boolean onLongClick(View v) {
+				showMenu(context, SysConstant.POPUP_MENU_TYPE_TEXT, parent, info, holder.message_content);
+				return true;
+			}
+		});
 
 		holder.message_content.setOnClickListener(new View.OnClickListener() {
 
@@ -681,8 +682,7 @@ public class MessageAdapter extends BaseAdapter {
 				CommonUtil.skipLink(context, info.getMsgContent());
 			}
 		});
-		holder.message_content.setOnTouchListener(new onDoubleClick(info
-				.getMsgContent()));
+		holder.message_content.setOnTouchListener(new onDoubleClick(info.getMsgContent()));
 	}
 
 	/**
@@ -704,8 +704,7 @@ public class MessageAdapter extends BaseAdapter {
 
 			if (isMine) {
 				logger.d("chat#is mine");
-				holder.message_image.setOnClickListener(new BtnImageListener(
-						info, position, isMine));
+				holder.message_image.setOnClickListener(new BtnImageListener(info, position, isMine));
 			}
 
 			String path = info.getSavePath();
@@ -719,140 +718,110 @@ public class MessageAdapter extends BaseAdapter {
 			if (!TextUtils.isEmpty(path)) {
 				bmp = MessageBitmapCache.getInstance().get(path);
 				if (isMine) {
-					bmp = BubbleImageHelper.getInstance(context)
-							.getBubbleImageBitmap(bmp,
-									R.drawable.tt_mine_image_default_bk);
+					bmp = BubbleImageHelper.getInstance(context).getBubbleImageBitmap(bmp, R.drawable.tt_mine_image_default_bk);
 				} else {
-					bmp = BubbleImageHelper.getInstance(context)
-							.getBubbleImageBitmap(bmp,
-									R.drawable.tt_other_image_default_bk);
+					bmp = BubbleImageHelper.getInstance(context).getBubbleImageBitmap(bmp, R.drawable.tt_other_image_default_bk);
 				}
 			}
 
 			int msgLoadState = info.getMsgLoadState();
-			logger.d("chat#msgloadState:%d", msgLoadState);
+			logger.d("chat#msgloadState:%d, msgId:%s, msg:%s", msgLoadState, info.msgId, info);
 
 			switch (msgLoadState) {
-			case SysConstant.MESSAGE_STATE_UNLOAD: {
-				holder.message_image
-						.setImageResource(R.drawable.tt_default_message_image);
-				setBackground = true;
-				holder.image_progress.showProgress();
-				if (!isMine) {
-					logger.d("chat#not mine,  need donwload");
-					downLoadImage(info);
-				} else {
-					holder.message_image
-							.setLayoutParams(new FrameLayout.LayoutParams(
-									LayoutParams.MATCH_PARENT,
-									LayoutParams.MATCH_PARENT));
-					holder.message_layout.setBackgroundResource(0);
-					holder.message_image.setImageBitmap(bmp);
-					holder.image_progress.hideProgress();
-					setBackground = false;
-				}
-			}
-				break;
-
-			case SysConstant.MESSAGE_STATE_LOADDING: {
-				if (null != bmp) {
-					holder.message_image
-							.setLayoutParams(new FrameLayout.LayoutParams(
-									LayoutParams.MATCH_PARENT,
-									LayoutParams.MATCH_PARENT));
-					holder.message_layout.setBackgroundResource(0);
-					holder.message_image.setImageBitmap(bmp);
-					setBackground = false;
-				} else {
-					holder.message_image
-							.setImageResource(R.drawable.tt_default_message_image);
+				case SysConstant.MESSAGE_STATE_UNLOAD : {
+					logger.d("chat#pic#MESSAGE_STATE_UNLOAD");
+					holder.message_image.setImageResource(R.drawable.tt_default_message_image);
 					setBackground = true;
-				}
-				holder.image_progress.showProgress();
-			}
-				break;
-
-			case SysConstant.MESSAGE_STATE_FINISH_SUCCESSED: {
-				if (null != bmp) {
-					holder.message_image
-							.setLayoutParams(new FrameLayout.LayoutParams(
-									LayoutParams.MATCH_PARENT,
-									LayoutParams.MATCH_PARENT));
-					holder.message_layout.setBackgroundResource(0);
-					holder.message_image.setImageBitmap(bmp);
+					holder.image_progress.showProgress();
 					if (!isMine) {
-						holder.message_image
-								.setOnClickListener(new BtnImageListener(info,
-										position, isMine));
+						logger.d("chat#pic#not mine,  need donwload");
+						downLoadImage(info);
+					} else {
+						holder.message_image.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+						holder.message_layout.setBackgroundResource(0);
+						holder.message_image.setImageBitmap(bmp);
+						holder.image_progress.hideProgress();
+						setBackground = false;
 					}
-					setBackground = false;
-				} else {
-					holder.message_image
-							.setImageResource(R.drawable.tt_default_message_error_image);
-					setBackground = true;
 				}
-				holder.image_progress.hideProgress();
+					break;
 
-			}
-				break;
-
-			case SysConstant.MESSAGE_STATE_FINISH_FAILED: {
-				holder.message_image.setOnClickListener(new BtnImageListener(
-						info, position, isMine));
-				if (null != bmp) {
-					holder.message_image
-							.setLayoutParams(new FrameLayout.LayoutParams(
-									LayoutParams.MATCH_PARENT,
-									LayoutParams.MATCH_PARENT));
-					holder.message_layout.setBackgroundResource(0);
-					holder.message_image.setImageBitmap(bmp);
-					setBackground = false;
-				} else {
-					holder.message_image
-							.setImageResource(R.drawable.tt_default_message_error_image);
-					setBackground = true;
+				case SysConstant.MESSAGE_STATE_LOADDING : {
+					if (null != bmp) {
+						holder.message_image.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+						holder.message_layout.setBackgroundResource(0);
+						holder.message_image.setImageBitmap(bmp);
+						setBackground = false;
+					} else {
+						holder.message_image.setImageResource(R.drawable.tt_default_message_image);
+						setBackground = true;
+					}
+					holder.image_progress.showProgress();
 				}
-				holder.image_progress.hideProgress();
-			}
-				break;
+					break;
 
-			default: {
-				holder.message_image
-						.setImageResource(R.drawable.tt_default_message_error_image);
-				setBackground = true;
-				holder.image_progress.hideProgress();
-			}
-				break;
+				case SysConstant.MESSAGE_STATE_FINISH_SUCCESSED : {
+					if (null != bmp) {
+						holder.message_image.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+						holder.message_layout.setBackgroundResource(0);
+						holder.message_image.setImageBitmap(bmp);
+						if (!isMine) {
+							holder.message_image.setOnClickListener(new BtnImageListener(info, position, isMine));
+						}
+						setBackground = false;
+					} else {
+						holder.message_image.setImageResource(R.drawable.tt_default_message_error_image);
+						setBackground = true;
+					}
+					holder.image_progress.hideProgress();
+
+				}
+					break;
+
+				case SysConstant.MESSAGE_STATE_FINISH_FAILED : {
+					holder.message_image.setOnClickListener(new BtnImageListener(info, position, isMine));
+					if (null != bmp) {
+						holder.message_image.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+						holder.message_layout.setBackgroundResource(0);
+						holder.message_image.setImageBitmap(bmp);
+						setBackground = false;
+					} else {
+						holder.message_image.setImageResource(R.drawable.tt_default_message_error_image);
+						setBackground = true;
+					}
+					holder.image_progress.hideProgress();
+				}
+					break;
+
+				default : {
+					holder.message_image.setImageResource(R.drawable.tt_default_message_error_image);
+					setBackground = true;
+					holder.image_progress.hideProgress();
+				}
+					break;
 			}
 
 			if (setBackground) {
-				FrameLayout.LayoutParams imageLayout = new FrameLayout.LayoutParams(
-						FrameLayout.LayoutParams.WRAP_CONTENT,
-						FrameLayout.LayoutParams.WRAP_CONTENT);
+				FrameLayout.LayoutParams imageLayout = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
 				if (isMine) {
-					holder.message_layout
-							.setBackgroundResource(R.drawable.tt_mine_item_bg);
+					holder.message_layout.setBackgroundResource(R.drawable.tt_mine_item_bg);
 					imageLayout.rightMargin = 9;
 				} else {
-					holder.message_layout
-							.setBackgroundResource(R.drawable.tt_other_default_image_bk);
+					holder.message_layout.setBackgroundResource(R.drawable.tt_other_default_image_bk);
 					imageLayout.leftMargin = 9;
 				}
 				imageLayout.gravity = Gravity.CENTER;
 				holder.message_image.setLayoutParams(imageLayout);
 			}
 
-			holder.message_image
-					.setOnLongClickListener(new View.OnLongClickListener() {
+			holder.message_image.setOnLongClickListener(new View.OnLongClickListener() {
 
-						@Override
-						public boolean onLongClick(View v) {
-							showMenu(context,
-									SysConstant.POPUP_MENU_TYPE_IMAGE, parent,
-									info, holder.message_layout);
-							return true;
-						}
-					});
+				@Override
+				public boolean onLongClick(View v) {
+					showMenu(context, SysConstant.POPUP_MENU_TYPE_IMAGE, parent, info, holder.message_layout);
+					return true;
+				}
+			});
 		} catch (Exception e) {
 			logger.e(e.getMessage());
 		}
@@ -871,14 +840,12 @@ public class MessageAdapter extends BaseAdapter {
 			int position) {
 		logger.d("chat#handleAudioMessage");
 		try {
-			holder.message_layout.setOnClickListener(new BtnImageListener(info,
-					position, isMine));
+			holder.message_layout.setOnClickListener(new BtnImageListener(info, position, isMine));
 			if (null != info.getSavePath()) {
-				holder.audio_antt_view
-						.setBackgroundResource(isMine ? R.anim.tt_voice_play_mine
-								: R.anim.tt_voice_play_other);
-				AnimationDrawable animationDrawable = (AnimationDrawable) holder.audio_antt_view
-						.getBackground();
+				holder.audio_antt_view.setBackgroundResource(isMine
+						? R.anim.tt_voice_play_mine
+						: R.anim.tt_voice_play_other);
+				AnimationDrawable animationDrawable = (AnimationDrawable) holder.audio_antt_view.getBackground();
 				if (null != playingPath
 						&& playingPath.equals(info.getSavePath())) {
 					animationDrawable.start();
@@ -896,8 +863,7 @@ public class MessageAdapter extends BaseAdapter {
 					holder.audio_unread_notify.setVisibility(View.GONE);
 				}
 
-				holder.audio_duration
-						.setText(String.valueOf(info.getPlayTime()) + '"');
+				holder.audio_duration.setText(String.valueOf(info.getPlayTime()) + '"');
 
 				// holder.message_layout
 				// .setOnLongClickListener(new View.OnLongClickListener() {
@@ -910,17 +876,12 @@ public class MessageAdapter extends BaseAdapter {
 				// return true;
 				// }
 				// });
-				RelativeLayout.LayoutParams layoutParam = new RelativeLayout.LayoutParams(
-						CommonUtil.getAudioBkSize(info.getPlayTime(), context),
-						LayoutParams.WRAP_CONTENT);
+				RelativeLayout.LayoutParams layoutParam = new RelativeLayout.LayoutParams(CommonUtil.getAudioBkSize(info.getPlayTime(), context), LayoutParams.WRAP_CONTENT);
 				holder.message_layout.setLayoutParams(layoutParam);
 				if (isMine) {
-					layoutParam.addRule(RelativeLayout.RIGHT_OF,
-							R.id.audio_duration);
-					RelativeLayout.LayoutParams param = (android.widget.RelativeLayout.LayoutParams) holder.audio_duration
-							.getLayoutParams();
-					param.addRule(RelativeLayout.RIGHT_OF,
-							R.id.message_state_failed);
+					layoutParam.addRule(RelativeLayout.RIGHT_OF, R.id.audio_duration);
+					RelativeLayout.LayoutParams param = (android.widget.RelativeLayout.LayoutParams) holder.audio_duration.getLayoutParams();
+					param.addRule(RelativeLayout.RIGHT_OF, R.id.message_state_failed);
 				}
 			}
 
@@ -947,17 +908,12 @@ public class MessageAdapter extends BaseAdapter {
 			try {
 				if (msgInfo.getDisplayType() == SysConstant.DISPLAY_TYPE_AUDIO) {
 					if (!new File(msgInfo.getSavePath()).exists()) {
-						PinkToast.makeText(
-								context,
-								context.getResources().getString(
-										R.string.notfound_audio_file),
-								Toast.LENGTH_LONG).show();
+						PinkToast.makeText(context, context.getResources().getString(R.string.notfound_audio_file), Toast.LENGTH_LONG).show();
 						return;
 					}
 					if (msgInfo.getMsgReadStatus() < SysConstant.MESSAGE_DISPLAYED) {
 
-						updateItemReadState(msgInfo.getMsgId(),
-								SysConstant.MESSAGE_DISPLAYED);
+						updateItemReadState(msgInfo.msgId, SysConstant.MESSAGE_DISPLAYED);
 					}
 
 					if (AudioPlayerHandler.getInstance().isPlaying()) {
@@ -967,10 +923,8 @@ public class MessageAdapter extends BaseAdapter {
 						}
 					}
 
-					final AnimationDrawable animationDrawable = (AnimationDrawable) v
-							.findViewById(R.id.audio_antt_view).getBackground();
-					audioPathAnimMap.put(msgInfo.getSavePath(),
-							animationDrawable);
+					final AnimationDrawable animationDrawable = (AnimationDrawable) v.findViewById(R.id.audio_antt_view).getBackground();
+					audioPathAnimMap.put(msgInfo.getSavePath(), animationDrawable);
 					playingPath = msgInfo.getSavePath();
 
 					// 延迟播放
@@ -978,8 +932,7 @@ public class MessageAdapter extends BaseAdapter {
 						public void run() {
 							try {
 								Thread.sleep(500);
-								AudioPlayerHandler.getInstance().startPlay(
-										msgInfo.getSavePath());
+								AudioPlayerHandler.getInstance().startPlay(msgInfo.getSavePath());
 								animationDrawable.start();
 							} catch (Exception e) {
 								e.printStackTrace();
@@ -995,27 +948,20 @@ public class MessageAdapter extends BaseAdapter {
 							&& !isMine) {
 
 						if (FileUtil.isSdCardAvailuable()) {
-							updateItemState(msgInfo.getMsgId(),
-									SysConstant.MESSAGE_STATE_UNLOAD);
+							updateItemState(msgInfo.msgId, SysConstant.MESSAGE_STATE_UNLOAD);
 						} else {
-							PinkToast
-									.makeText(
-											context,
-											context.getString(R.string.sdcard_unavaluable),
-											Toast.LENGTH_LONG).show();
+							PinkToast.makeText(context, context.getString(R.string.sdcard_unavaluable), Toast.LENGTH_LONG).show();
 						}
 
 					} else {
-						positionSEQNoMap.put(msgInfo.getMsgId(), position);
-						Intent i = new Intent(context,
-								DisplayImageActivity.class);
+//						msgIndexMap.put(msgInfo.msgId, position);
+						Intent i = new Intent(context, DisplayImageActivity.class);
 						Bundle bundle = new Bundle();
 						bundle.putSerializable(SysConstant.CUR_MESSAGE, msgInfo);
 						bundle.putBoolean("ISMINE", isMine);
 						i.putExtras(bundle);
 						context.startActivity(i);
-						context.overridePendingTransition(
-								R.anim.tt_image_enter, R.anim.tt_stay);
+						context.overridePendingTransition(R.anim.tt_image_enter, R.anim.tt_stay);
 					}
 				}
 			} catch (Exception e) {
@@ -1034,8 +980,12 @@ public class MessageAdapter extends BaseAdapter {
 		 * 消息状态
 		 */
 		ImageView messageFailed;
+		
+		ProgressBar loadingProgressBar;
 
 		TextView name;
+		
+		MessageInfo msgInfo;
 	}
 
 	private static class TextMessageHolder extends MessageHolderBase {
@@ -1097,10 +1047,8 @@ public class MessageAdapter extends BaseAdapter {
 	 */
 	private void showMenu(Context cxt, int menuType, View parent,
 			MessageInfo msg, View layout) {
-		boolean bIsSelf = msg.getMsgFromUserId().equals(
-				CacheHub.getInstance().getLoginUserId());
-		OperateItemClickListener listener = new OperateItemClickListener(
-				menuType);
+		boolean bIsSelf = msg.getMsgFromUserId().equals(CacheHub.getInstance().getLoginUserId());
+		OperateItemClickListener listener = new OperateItemClickListener(menuType);
 		if (null == mOperatePopup) {
 			if (null != parent) {
 				mOperatePopup = new MessageOperatePopup(context, parent);
@@ -1114,8 +1062,9 @@ public class MessageAdapter extends BaseAdapter {
 
 	}
 
-	private class OperateItemClickListener implements
-			MessageOperatePopup.OnItemClickListener {
+	private class OperateItemClickListener
+			implements
+				MessageOperatePopup.OnItemClickListener {
 
 		private MessageInfo mMsgInfo;
 		/*
@@ -1136,12 +1085,11 @@ public class MessageAdapter extends BaseAdapter {
 		@Override
 		public void onCopyClick() {
 			try {
-				ClipboardManager manager = (ClipboardManager) context
-						.getSystemService(Context.CLIPBOARD_SERVICE);
+				ClipboardManager manager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
 
+				logger.d("menu#onCopyClick content:%s", mMsgInfo.getMsgContent());
 				if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
-					ClipData data = ClipData.newPlainText("data",
-							mMsgInfo.getMsgContent());
+					ClipData data = ClipData.newPlainText("data", mMsgInfo.getMsgContent());
 					manager.setPrimaryClip(data);
 				} else {
 					manager.setText(mMsgInfo.getMsgContent());
@@ -1170,13 +1118,11 @@ public class MessageAdapter extends BaseAdapter {
 					String Dao = "";// TokenManager.getInstance().getDao();
 					List<MessageInfo> messageList = new ArrayList<MessageInfo>();
 					messageList.add(mMsgInfo);
-					UploadImageTask upTask = new UploadImageTask(
-							SysConstant.UPLOAD_IMAGE_HOST, Dao, messageList);
+					UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), session.getType(), SysConstant.UPLOAD_IMAGE_HOST, Dao, messageList);
 					TaskManager.getInstance().trigger(upTask);
 				}
 				mMsgInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_LOADDING);
-				updateItemState(mMsgInfo.getMsgId(),
-						SysConstant.MESSAGE_STATE_LOADDING);
+				updateItemState(mMsgInfo.msgId, SysConstant.MESSAGE_STATE_LOADDING);
 			} catch (Exception e) {
 				logger.e(e.getMessage());
 			}
@@ -1186,17 +1132,11 @@ public class MessageAdapter extends BaseAdapter {
 		@Override
 		public void onSpeakerClick() {
 			if (MessageActivity.getAudioMode() == SysConstant.AUDIO_PLAY_MODE_NORMAL) {
-				MessageActivity
-						.setAudioMode(SysConstant.AUDIO_PLAY_MODE_IN_CALL);
-				SpeekerToast.show(context,
-						context.getText(R.string.audio_in_call),
-						Toast.LENGTH_SHORT);
+				MessageActivity.setAudioMode(SysConstant.AUDIO_PLAY_MODE_IN_CALL);
+				SpeekerToast.show(context, context.getText(R.string.audio_in_call), Toast.LENGTH_SHORT);
 			} else {
-				MessageActivity
-						.setAudioMode(SysConstant.AUDIO_PLAY_MODE_NORMAL);
-				SpeekerToast.show(context,
-						context.getText(R.string.audio_in_speeker),
-						Toast.LENGTH_SHORT);
+				MessageActivity.setAudioMode(SysConstant.AUDIO_PLAY_MODE_NORMAL);
+				SpeekerToast.show(context, context.getText(R.string.audio_in_speeker), Toast.LENGTH_SHORT);
 			}
 		}
 	}
@@ -1216,79 +1156,77 @@ public class MessageAdapter extends BaseAdapter {
 				return;
 
 			messageInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_LOADDING);
-			updateItemState(messageInfo.getMsgId(),
-					SysConstant.MESSAGE_STATE_LOADDING);
+			updateItemState(messageInfo.msgId, SysConstant.MESSAGE_STATE_LOADDING);
 
 			// todo eric
-			final String smallImageUrl = "http://122.225.68.125:8600/" + messageInfo.getUrl();// StringUtil.getSmallerImageLink(messageInfo.getUrl());
+			final String smallImageUrl = "http://122.225.68.125:8600/"
+					+ messageInfo.getUrl();// StringUtil.getSmallerImageLink(messageInfo.getUrl());
+			
+			logger.d("chat#pic#download image ulr:%s", smallImageUrl);
 
-			String smallImagePath = CommonUtil.getMd5Path(smallImageUrl,
-					SysConstant.FILE_SAVE_TYPE_IMAGE);
+			String smallImagePath = CommonUtil.getMd5Path(smallImageUrl, SysConstant.FILE_SAVE_TYPE_IMAGE);
+			
+			logger.d("chat#pic#image save path:%s", smallImagePath);
 
 			messageInfo.setSavePath(smallImagePath);
 
 			File myFile = new File(smallImagePath);
 			if (myFile.exists()) {
-				updateMessageState(messageInfo,
-						SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
+				logger.d("chat#pic#image file already exists");
+				updateMessageState(messageInfo, SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
 				return;
 			}
 
 			final MessageInfo messageInfoFinal = messageInfo;
 
-			MGWebImageView.fetchBitmap(context, smallImageUrl,
-					new MGWebImageView.TargetCallback() {
-						@Override
-						public void onPrepareLoad(Drawable placeHolderDrawable) {
+			MGWebImageView.fetchBitmap(context, smallImageUrl, new MGWebImageView.TargetCallback() {
+				@Override
+				public void onPrepareLoad(Drawable placeHolderDrawable) {
+				}
+
+				@Override
+				public void onBitmapLoaded(Bitmap bitmap, LoadedFrom from) {
+					logger.d("chat#pic#onBitmapLoaded");
+					String smallImagePath = CommonUtil.getMd5Path(smallImageUrl, SysConstant.FILE_SAVE_TYPE_IMAGE);
+					File myFile = new File(smallImagePath);
+					if (myFile.exists()) {
+						logger.d("chat#pic#image already exists, no need to save");
+						return;
+					}
+					BufferedOutputStream bos = null;
+					try {
+						if (null != bitmap) {
+							FileOutputStream fout = new FileOutputStream(myFile);
+							bos = new BufferedOutputStream(fout);
+							bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
+							bos.flush();
+							bos.close();
+							bos = null;
+							logger.d("chat#pic#save image ok");
+							updateMessageState(messageInfoFinal, SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
 						}
-
-						@Override
-						public void onBitmapLoaded(Bitmap bitmap,
-								LoadedFrom from) {
-							String smallImagePath = CommonUtil.getMd5Path(
-									smallImageUrl,
-									SysConstant.FILE_SAVE_TYPE_IMAGE);
-							File myFile = new File(smallImagePath);
-							if (myFile.exists())
-								return;
-							BufferedOutputStream bos = null;
-							try {
-								if (null != bitmap) {
-									FileOutputStream fout = new FileOutputStream(
-											myFile);
-									bos = new BufferedOutputStream(fout);
-									bitmap.compress(Bitmap.CompressFormat.JPEG,
-											100, bos);
-									bos.flush();
-									bos.close();
-									bos = null;
-									updateMessageState(
-											messageInfoFinal,
-											SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
-								}
-							} catch (Exception e) {
-								logger.e(e.getMessage());
-							} finally {
-								try {
-									if (null != bos) {
-										bos.flush();
-										bos.close();
-									}
-								} catch (IOException e) {
-									e.printStackTrace();
-
-								}
+					} catch (Exception e) {
+						logger.e("chat#pic#downloading image got exception:%s", e.getMessage());
+					} finally {
+						try {
+							if (null != bos) {
+								bos.flush();
+								bos.close();
 							}
-							logger.d("download success");
-						}
+						} catch (IOException e) {
+							e.printStackTrace();
 
-						@Override
-						public void onBitmapFailed(Drawable errorDrawable) {
-							updateMessageState(messageInfoFinal,
-									SysConstant.MESSAGE_STATE_FINISH_FAILED);
-							logger.d("download failed");
 						}
-					});
+					}
+				}
+
+				@Override
+				public void onBitmapFailed(Drawable errorDrawable) {
+					logger.d("chat#pic#onBitmapFailed");
+					updateMessageState(messageInfoFinal, SysConstant.MESSAGE_STATE_FINISH_FAILED);
+					logger.d("download failed");
+				}
+			});
 
 		} catch (Exception e) {
 			logger.e(e.getMessage());
@@ -1300,18 +1238,18 @@ public class MessageAdapter extends BaseAdapter {
 	 * @param msgId
 	 * @param readStatus
 	 */
-	private void updateItemReadState(int msgId, int readStatus) {
+	private void updateItemReadState(String msgId, int readStatus) {
 		try {
-			if (msgId < 0)
+			
+			MessageInfo msgInfo = getMsgInfo(msgId);
+			if (msgInfo == null) {
+				logger.e("chat#error can't find msgInfo:%s", msgId);
 				return;
-			int iTerm = positionSEQNoMap.getPosition(msgId);
+			}
 
-			if (iTerm == -1 || null == messageList.get(iTerm))
-				return;
+			msgInfo.setMsgReadStatus(readStatus);
 
-			((MessageInfo) messageList.get(iTerm)).setMsgReadStatus(readStatus);
-
-			CacheHub.getInstance().updateMsgReadStatus(msgId, readStatus);
+//			CacheHub.getInstance().updateMsgReadStatus(msgId, readStatus);
 
 			notifyDataSetChanged();
 		} catch (Exception e) {
@@ -1330,7 +1268,7 @@ public class MessageAdapter extends BaseAdapter {
 
 			mHistoryFirstAdd = false;
 
-			positionSEQNoMap.fix(0, 1);
+//			msgIndexMap.fix(0, 1);
 
 			messageList.add(0, HISTORY_DIVIDER_TAG);
 		} catch (Exception e) {
@@ -1384,10 +1322,8 @@ public class MessageAdapter extends BaseAdapter {
 					secClick = (int) System.currentTimeMillis();
 					if (secClick - firClick < 1000) {
 						if (v.getId() == R.id.message_content) {
-							Intent intent = new Intent(context,
-									PreviewTextActivity.class);
-							intent.putExtra(SysConstant.PREVIEW_TEXT_CONTENT,
-									content);
+							Intent intent = new Intent(context, PreviewTextActivity.class);
+							intent.putExtra(SysConstant.PREVIEW_TEXT_CONTENT, content);
 							context.startActivity(intent);
 						}
 					}

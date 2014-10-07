@@ -14,17 +14,12 @@ import android.os.Message;
 import android.text.TextUtils;
 
 import com.mogujie.tt.cache.biz.CacheHub;
-import com.mogujie.tt.config.HandlerConstant;
-import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
 import com.mogujie.tt.entity.RecentInfo;
 import com.mogujie.tt.entity.User;
 import com.mogujie.tt.log.Logger;
-import com.mogujie.tt.packet.action.ActionCallback;
 import com.mogujie.tt.packet.base.Packet;
-import com.mogujie.tt.task.TaskManager;
-import com.mogujie.tt.task.biz.PushActionToQueueTask;
 
 /**
  * @Description 联系人界面的公用业务逻辑处理

@@ -13,8 +13,8 @@ import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -109,18 +109,18 @@ public class DisplayImageActivity extends TTBaseActivity {
                                             messageInfo
                                                     .setMsgLoadState(SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
                                             MessageActivity.updateMessageSavePath(
-                                                    messageInfo.getMsgId(),
+                                                    messageInfo.msgId,
                                                     bigImagePath);
 
                                             CacheHub.getInstance()
                                                     .updateMsgImageSavePath(
                                                             messageInfo
-                                                                    .getMsgId(),
+                                                                    .msgId,
                                                             bigImagePath);
                                             CacheHub.getInstance()
                                                     .updateMsgStatus(
                                                             messageInfo
-                                                                    .getMsgId(),
+                                                                    .msgId,
                                                             SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
                                             Bitmap bmp = DisplayBitmapCache
                                                     .getInstance(DisplayImageActivity.this).get(

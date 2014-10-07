@@ -1,38 +1,29 @@
 package com.mogujie.tt.adapter;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import com.mogujie.tt.R;
-import com.mogujie.tt.cache.biz.CacheHub;
-import com.mogujie.tt.config.SysConstant;
-import com.mogujie.tt.entity.ContactSortEntity;
-import com.mogujie.tt.entity.User;
-import com.mogujie.tt.imlib.IMSession;
-import com.mogujie.tt.imlib.proto.ContactEntity;
-import com.mogujie.tt.imlib.proto.DepartmentEntity;
-import com.mogujie.tt.imlib.proto.GroupEntity;
-import com.mogujie.tt.imlib.utils.IMContactHelper;
-import com.mogujie.tt.imlib.utils.IMUIHelper;
-import com.mogujie.tt.log.Logger;
-import com.mogujie.tt.ui.activity.LoginActivity;
-import com.mogujie.tt.ui.activity.MessageActivity;
-import com.mogujie.tt.utils.ContactUtils;
-import com.mogujie.widget.imageview.MGWebImageView;
-
 import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
+
+import com.mogujie.tt.R;
+import com.mogujie.tt.entity.ContactSortEntity;
+import com.mogujie.tt.imlib.IMSession;
+import com.mogujie.tt.imlib.proto.ContactEntity;
+import com.mogujie.tt.imlib.proto.DepartmentEntity;
+import com.mogujie.tt.imlib.proto.GroupEntity;
+import com.mogujie.tt.imlib.utils.IMUIHelper;
+import com.mogujie.tt.log.Logger;
+import com.mogujie.tt.utils.ContactUtils;
+import com.mogujie.widget.imageview.MGWebImageView;
 
 public class ContactAllAdapter extends BaseAdapter implements SectionIndexer,
 		ContactBaseAdapter {

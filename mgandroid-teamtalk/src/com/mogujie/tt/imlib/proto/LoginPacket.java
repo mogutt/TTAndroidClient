@@ -1,8 +1,6 @@
 
 package com.mogujie.tt.imlib.proto;
 
-import java.nio.charset.Charset;
-
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.User;

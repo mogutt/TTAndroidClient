@@ -1,4 +1,3 @@
-
 package com.mogujie.tt.utils;
 
 import java.util.HashMap;
@@ -9,90 +8,103 @@ import com.mogujie.tt.log.Logger;
 
 public class MsgIdToPositionMap {
 
-    private Map<Integer, Integer> msgIdToPositionMap = new HashMap<Integer, Integer>();
+	private Map<String, Integer> msgIdToPositionMap = new HashMap<String, Integer>();
 
-    public MsgIdToPositionMap() {
+	public MsgIdToPositionMap() {
 
-    }
+	}
 
-    private Logger logger = Logger.getLogger(MsgIdToPositionMap.class);
+	private Logger logger = Logger.getLogger(MsgIdToPositionMap.class);
 
-    public void put(int msgId, int pos) {
-        synchronized (msgIdToPositionMap) {
-            if (msgIdToPositionMap.containsKey(msgId) || msgId < 0 || pos < 0)
-                return;
-            msgIdToPositionMap.put(msgId, pos);
+	@Override
+	public String toString() {
+		StringBuilder ret = new StringBuilder();
+		for (Entry<String, Integer> entry : msgIdToPositionMap.entrySet()) {
+			ret.append(String.format("(%s, %d) ", entry.getKey(), entry.getValue()));
+		}
+		
+		return ret.toString();
+	}
 
-            logger.d("put key = " + msgId + " , value = " + pos);
-        }
-    }
+	public void put(String msgId, int pos) {
+		synchronized (msgIdToPositionMap) {
+			if (msgIdToPositionMap.containsKey(msgId) || pos < 0)
+				return;
+			msgIdToPositionMap.put(msgId, pos);
 
-    /****
-     * @Desc 修正位置，因为有些新的插入可以影响原有的位置信息
-     * @param pos
-     * @param offset
-     */
-    public void fix(int pos, int offset) {
-        synchronized (msgIdToPositionMap) {
+			logger.d("put key = " + msgId + " , value = " + pos);
+		}
+	}
 
-            for (Entry<Integer, Integer> entry : msgIdToPositionMap.entrySet()) {
-                int value = entry.getValue();
-                if (value >= pos) {
-                    entry.setValue(value + offset);
-                }
-            }
-        }
-    }
+	/****
+	 * @Desc 修正位置，因为有些新的插入可以影响原有的位置信息
+	 * @param pos
+	 * @param offset
+	 */
+	public void fix(int pos, int offset) {
+		synchronized (msgIdToPositionMap) {
 
-    /****
-     * @param msgId
-     * @return
-     */
-    public int getPosition(int msgId) {
-        synchronized (msgIdToPositionMap) {
-            if (msgIdToPositionMap.containsKey(msgId)) {
-                return msgIdToPositionMap.get(msgId);
-            } else {
-                return -1;
-            }
-        }
-    }
+			for (Entry<String, Integer> entry : msgIdToPositionMap.entrySet()) {
+				int value = entry.getValue();
 
-    public int size() {
-        synchronized (msgIdToPositionMap) {
-            return msgIdToPositionMap.size();
-        }
-    }
+				// todo eric
+				// if (value >= pos) {
+				if (value == pos) {
+					entry.setValue(value + offset);
+				}
+			}
+		}
+	}
 
-    public void clear() {
-        synchronized (msgIdToPositionMap) {
-            msgIdToPositionMap.clear();
-            logger.d("clear, now count = " + msgIdToPositionMap.size());
-        }
-    }
+	/****
+	 * @param msgId
+	 * @return
+	 */
+	public int getPosition(String msgId) {
+		synchronized (msgIdToPositionMap) {
+			if (msgIdToPositionMap.containsKey(msgId)) {
+				return msgIdToPositionMap.get(msgId);
+			} else {
+				return -1;
+			}
+		}
+	}
 
-    public void remove(int msgId) {
-        synchronized (msgIdToPositionMap) {
-            if (msgIdToPositionMap.containsKey(msgId)) {
-                msgIdToPositionMap.remove(msgId);
-            }
-        }
-    }
+	public int size() {
+		synchronized (msgIdToPositionMap) {
+			return msgIdToPositionMap.size();
+		}
+	}
 
-    public Boolean contains(int msgId) {
-        synchronized (msgIdToPositionMap) {
-            return msgIdToPositionMap.containsKey(msgId);
-        }
-    }
+	public void clear() {
+		synchronized (msgIdToPositionMap) {
+			msgIdToPositionMap.clear();
+			logger.d("clear, now count = " + msgIdToPositionMap.size());
+		}
+	}
 
-    public void printMap() {
-        synchronized (msgIdToPositionMap) {
+	public void remove(String msgId) {
+		synchronized (msgIdToPositionMap) {
+			if (msgIdToPositionMap.containsKey(msgId)) {
+				msgIdToPositionMap.remove(msgId);
+			}
+		}
+	}
 
-            for (Entry<Integer, Integer> entry : msgIdToPositionMap.entrySet()) {
-                int key = entry.getKey();
-                int value = entry.getValue();
-                logger.d("key = " + key + " , value = " + value);
-            }
-        }
-    }
+	public Boolean contains(String msgId) {
+		synchronized (msgIdToPositionMap) {
+			return msgIdToPositionMap.containsKey(msgId);
+		}
+	}
+
+	public void printMap() {
+		synchronized (msgIdToPositionMap) {
+
+			for (Entry<String, Integer> entry : msgIdToPositionMap.entrySet()) {
+				String key = entry.getKey();
+				int value = entry.getValue();
+				logger.d("key = " + key + " , value = " + value);
+			}
+		}
+	}
 }

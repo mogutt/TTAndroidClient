@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -30,13 +31,17 @@ import android.widget.Toast;
 
 import com.mogujie.tt.R;
 import com.mogujie.tt.adapter.album.ImageGridAdapter;
-import com.mogujie.tt.adapter.album.ImageItem;
 import com.mogujie.tt.adapter.album.ImageGridAdapter.TextCallback;
+import com.mogujie.tt.adapter.album.ImageItem;
 import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
+import com.mogujie.tt.imlib.utils.IMUIHelper;
+import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.task.TaskManager;
 import com.mogujie.tt.task.biz.UploadImageTask;
+import com.mogujie.tt.ui.utils.IMServiceHelper;
+import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 import com.mogujie.tt.widget.PinkToast;
 
 /**
@@ -44,7 +49,7 @@ import com.mogujie.tt.widget.PinkToast;
  * @author Nana
  * @date 2014-5-9
  */
-public class ImageGridActivity extends Activity implements OnTouchListener {
+public class ImageGridActivity extends Activity implements OnTouchListener, OnIMServiceListner {
     private List<ImageItem> dataList = null;
     private GridView gridView = null;
     private TextView title = null;
@@ -56,6 +61,10 @@ public class ImageGridActivity extends Activity implements OnTouchListener {
     private static Context context = null;
     private static String CHAT_USER_ID = null;
     private static ImageGridAdapter adapter = null;
+	private Logger logger = Logger.getLogger(ImageGridActivity.class);
+	private IMServiceHelper imServiceHelper = new IMServiceHelper();
+	
+
 
     private Handler mHandler = new Handler() {
         @Override
@@ -100,6 +109,7 @@ public class ImageGridActivity extends Activity implements OnTouchListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        imServiceHelper.connect(this, null, IMServiceHelper.INTENT_NO_PRIORITY, this);
         setContentView(R.layout.tt_activity_image_grid);
         context = this;
         name = (String) getIntent().getSerializableExtra(
@@ -163,7 +173,7 @@ public class ImageGridActivity extends Activity implements OnTouchListener {
         finish.setOnClickListener(new OnClickListener() {
 
             public void onClick(View v) {
-
+            	logger.d("pic#click send image btn");
                 if (adapter.getSelectMap().size() > 0) {
 
 //                    if (!StateManager.getInstance().isOnline()) {
@@ -194,7 +204,13 @@ public class ImageGridActivity extends Activity implements OnTouchListener {
                     ImageGridActivity.this.finish();
                     
                     String Dao = "";//TokenManager.getInstance().getDao();
-                    UploadImageTask upTask = new UploadImageTask(
+					int sessionType = -1;
+					IMUIHelper.SessionInfo sessionInfo = CacheHub.getInstance().getSessionInfo();
+					if (sessionInfo != null) {
+						sessionType = sessionInfo.getSessionType();
+					}
+                    
+                    UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), sessionType,
                             SysConstant.UPLOAD_IMAGE_HOST, Dao, messageList);
                     TaskManager.getInstance().trigger(upTask);
                 } else {
@@ -241,10 +257,13 @@ public class ImageGridActivity extends Activity implements OnTouchListener {
     @Override
     protected void onDestroy() {
         setAdapterSelectedMap(null);
+        imServiceHelper.disconnect(this);
         super.onStop();
     }
 
     public static MessageInfo drawMessageInfo(Activity activity, ImageItem item) {
+    	Logger.getLogger(ImageGridActivity.class).d("chat#pic#create picture messageinfo");
+    	
         MessageInfo msg = new MessageInfo();
         if (new File(item.getImagePath()).exists()) {
             msg.setSavePath(item.getImagePath());
@@ -268,8 +287,8 @@ public class ImageGridActivity extends Activity implements OnTouchListener {
         msg.setMsgLoadState(SysConstant.MESSAGE_STATE_LOADDING);
         msg.setMsgReadStatus(SysConstant.MESSAGE_ALREADY_READ);
 
-        int messageSendRequestNo = CacheHub.getInstance().obtainMsgId();
-        msg.setMsgId(messageSendRequestNo);
+        //int messageSendRequestNo = CacheHub.getInstance().obtainMsgId();
+        //msg.setMsgId(messageSendRequestNo);
         CacheHub.getInstance().pushMsg(msg);
         MessageActivity.addItem(msg);
         return msg;
@@ -321,4 +340,17 @@ public class ImageGridActivity extends Activity implements OnTouchListener {
         }
         return false;
     }
+
+	@Override
+	public void onAction(String action, Intent intent,
+			BroadcastReceiver broadcastReceiver) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onIMServiceConnected() {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -2,7 +2,7 @@
 package com.mogujie.tt.utils;
 
 import java.util.LinkedList;
-import java.util.Queue;
+import java.util.List;
 
 import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.ProtocolConstant;
@@ -87,7 +87,7 @@ public class MessageSplitResult {
     }
 
     private MessageInfo originMsgInfo = null;
-    private Queue<MessageInfo> MsgList = new LinkedList<MessageInfo>();
+    private List<MessageInfo> MsgList = new LinkedList<MessageInfo>();
     private byte[] originContent = null;
     private int nMsgParentId = -1;
 
@@ -127,15 +127,15 @@ public class MessageSplitResult {
                 msgInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_FINISH_FAILED);
             }
 
-            int newId = CacheHub.getInstance().obtainMsgId();
-            if (newId > 0) {
-                msgInfo.setMsgId(newId);
-                CacheHub.getInstance().pushMsg(msgInfo);
-                logger.d("push to db, success");
-            }
-            if (nMsgParentId == -1) {
-                nMsgParentId = newId;
-            }
+//            int newId = CacheHub.getInstance().obtainMsgId();
+//            if (newId > 0) {
+//                msgInfo.setMsgId(newId);
+//                CacheHub.getInstance().pushMsg(msgInfo);
+//                logger.d("push to db, success");
+//            }
+//            if (nMsgParentId == -1) {
+//                nMsgParentId = newId;
+//            }
 
             MsgList.add(msgInfo);
 
@@ -149,15 +149,16 @@ public class MessageSplitResult {
             logger.d("recv a text message, content = " + strContent);
             // int newId =
             // IMDBManager.getInstance(Login.context).pushMsg(msgInfo);
-            int newId = CacheHub.getInstance().obtainMsgId();
-            if (newId > 0) {
-                msgInfo.setMsgId(newId);
-                CacheHub.getInstance().pushMsg(msgInfo);
-                logger.d("push to db, success");
-            }
-            if (nMsgParentId == -1) {
-                nMsgParentId = newId;
-            }
+            
+//            int newId = CacheHub.getInstance().obtainMsgId();
+//            if (newId > 0) {
+//                msgInfo.setMsgId(newId);
+//                CacheHub.getInstance().pushMsg(msgInfo);
+//                logger.d("push to db, success");
+//            }
+//            if (nMsgParentId == -1) {
+//                nMsgParentId = newId;
+//            }
 
             MsgList.add(msgInfo);
         }
@@ -205,25 +206,25 @@ public class MessageSplitResult {
 
         }
         audioMessageInfo.setMsgParentId(nMsgParentId);
-        int newId = CacheHub.getInstance().obtainMsgId();
-        if (newId > 0) {
-            audioMessageInfo.setMsgId(newId);
-            CacheHub.getInstance().pushMsg(audioMessageInfo);
-        }
-
-        if (nMsgParentId == -1) {
-            nMsgParentId = newId;
-        }
+//        int newId = CacheHub.getInstance().obtainMsgId();
+//        if (newId > 0) {
+//            audioMessageInfo.setMsgId(newId);
+//            CacheHub.getInstance().pushMsg(audioMessageInfo);
+//        }
+//
+//        if (nMsgParentId == -1) {
+//            nMsgParentId = newId;
+//        }
 
         MsgList.add(audioMessageInfo);
 
     }
 
-    public Queue<MessageInfo> getMsgList() {
+    public List<MessageInfo> getMsgList() {
         return MsgList;
     }
 
-    public void setMsgList(Queue<MessageInfo> msgList) {
+    public void setMsgList(List<MessageInfo> msgList) {
         MsgList = msgList;
     }
 }

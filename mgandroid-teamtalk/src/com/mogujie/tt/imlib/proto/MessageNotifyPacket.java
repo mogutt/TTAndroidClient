@@ -1,18 +1,12 @@
 package com.mogujie.tt.imlib.proto;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
-import com.mogujie.tt.entity.User;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.packet.base.DefaultHeader;
 import com.mogujie.tt.packet.base.Header;
 import com.mogujie.tt.packet.base.Packet;
-import com.mogujie.tt.utils.SequenceNumberMaker;
 
 /**
  * MsgServerPacket:请求(返回)登陆消息服务器 yugui 2014-05-04
@@ -59,15 +53,12 @@ public class MessageNotifyPacket extends Packet {
 
 	@Override
 	public void decode(DataBuffer buffer) {
-		logger.d("chat#1");
 		if (null == buffer) {
-			logger.d("chat#2");
 			return;
 		}
 			
 		try {
 			packetNotify res = new packetNotify();
-			logger.d("chat#3");
 
 			Header header = new Header();
 			header.decode(buffer);
@@ -79,7 +70,7 @@ public class MessageNotifyPacket extends Packet {
 			msg.fromId = buffer.readString();
 			msg.toId = buffer.readString();
 			msg.createTime = buffer.readInt();
-			msg.msgType = buffer.readByte();
+			msg.type = buffer.readByte();
 			
 			//todo eric check the acutual remaining buffer length first, to refuse bug like notorious ssl heartbleed one
 			//todo eric test:modify the incoming packet, and see if the client can handle wrong packet, and should be no crash 
@@ -89,8 +80,6 @@ public class MessageNotifyPacket extends Packet {
 			}
 			
 			msg.attach = buffer.readString();
-			
-			logger.d("chat#decode msg:%s", msg);
 			
 			mResponse = res;
 		} catch (Exception e) {

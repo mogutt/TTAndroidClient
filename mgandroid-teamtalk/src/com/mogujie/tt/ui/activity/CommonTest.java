@@ -1,10 +1,6 @@
 package com.mogujie.tt.ui.activity;
 
 import java.net.InetSocketAddress;
-import java.nio.Buffer;
-import java.nio.channels.Channels;
-import java.security.PublicKey;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -23,9 +19,6 @@ import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.WriteCompletionEvent;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-
-import android.os.Handler;
-import android.os.HandlerThread;
 
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.utils.Md5Helper;

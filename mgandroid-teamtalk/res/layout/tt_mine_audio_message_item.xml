@@ -62,13 +62,20 @@
 
         <ImageView
             android:id="@+id/message_state_failed"
-            android:layout_width="15dp"
-            android:layout_height="15dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_marginRight="5dp"
             android:adjustViewBounds="true"
             android:contentDescription="@string/message_image_desc"
             android:src="@drawable/tt_msg_tip"
+            android:visibility="gone" />
+         <ProgressBar
+            android:id="@+id/progressBar1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            style="?android:attr/progressBarStyleSmall"
             android:visibility="gone" />
     </RelativeLayout>
 

@@ -2,37 +2,32 @@ package com.mogujie.tt.biz;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
+
+import android.content.Context;
+import android.content.Intent;
+import android.os.Handler;
+import android.os.Message;
+import android.text.TextUtils;
 
 import com.mogujie.tt.cache.BlockTargetCache;
 import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.HandlerConstant;
-import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
 import com.mogujie.tt.entity.User;
 import com.mogujie.tt.imlib.IMMessageManager;
-import com.mogujie.tt.imlib.proto.MessageEntity;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.action.ActionCallback;
 import com.mogujie.tt.packet.base.Packet;
 import com.mogujie.tt.task.TaskCallback;
 import com.mogujie.tt.task.TaskManager;
 import com.mogujie.tt.task.biz.CheckUserBlockTask;
-import com.mogujie.tt.task.biz.PushActionToQueueTask;
 import com.mogujie.tt.ui.activity.MessageActivity;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.utils.CommonUtil;
 import com.mogujie.tt.utils.FileUtil;
-import com.mogujie.tt.utils.MessageSplitResult;
-
-import android.content.Context;
-import android.os.Handler;
-import android.os.Message;
-import android.text.TextUtils;
 
 /**
  * @Description 消息界面的公用业务逻辑处理
@@ -81,8 +76,7 @@ public class MessageHelper {
 
 			@Override
 			public void onTimeout(Packet packet) {
-				uiHandler
-						.sendEmptyMessage(HandlerConstant.REQUEST_CUSTOM_SERVICE_FAILED);
+				uiHandler.sendEmptyMessage(HandlerConstant.REQUEST_CUSTOM_SERVICE_FAILED);
 			}
 
 			@Override
@@ -120,42 +114,36 @@ public class MessageHelper {
 		// }
 	}
 
-	public static void onReceiveMessage2(MessageEntity msg,
+	public static void onReceiveMessage2(MessageInfo messageInfo,
 			IMServiceHelper imServiceHelper) {
-		// MessageSplitResult msr = new MessageSplitResult(msg.msgInfo,
-		// msg.msgData);
+		// // MessageSplitResult msr = new MessageSplitResult(msg.msgInfo,
+		// // msg.msgData);
+		// //
+		// // msr.decode();
+		// //
+		// // Queue<MessageInfo> msgListInfos = msr.getMsgList();
 		//
-		// msr.decode();
 		//
-		// Queue<MessageInfo> msgListInfos = msr.getMsgList();
-
-
-		MessageInfo messageInfo = msg.msgInfo;
+		// MessageInfo messageInfo = msg.msgInfo;
 
 		if (messageInfo != null) {
 
 			if (messageInfo.getDisplayType() != SysConstant.DISPLAY_TYPE_IMAGE) {
-				messageInfo
-						.setMsgLoadState(SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
-				CacheHub.getInstance().updateMsgStatus(messageInfo.getMsgId(),
-						SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
+				messageInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
+				// CacheHub.getInstance().updateMsgStatus(messageInfo.getMsgId(),
+				// SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
 			} else {
 				if (!FileUtil.isSdCardAvailuable()) {
-					messageInfo
-							.setMsgLoadState(SysConstant.MESSAGE_STATE_FINISH_FAILED);
-					CacheHub.getInstance().updateMsgStatus(
-							messageInfo.getMsgId(),
-							SysConstant.MESSAGE_STATE_FINISH_FAILED);
+					messageInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_FINISH_FAILED);
+					// CacheHub.getInstance().updateMsgStatus(
+					// messageInfo.getMsgId(),
+					// SysConstant.MESSAGE_STATE_FINISH_FAILED);
 				}
 			}
 
 			logger.d("chat#start addItem");
 			MessageActivity.addItem(messageInfo);
-
-			msg.msgInfo = messageInfo;
-			imServiceHelper.getIMService().getDbManager().saveMsg(msg, false);
 		}
-
 	}
 
 	// /**
@@ -245,25 +233,23 @@ public class MessageHelper {
 	// }
 	// }
 
-	public static void onReceiveMsgACK2(MessageEntity msg) {
-		logger.d("chat#onReceiveMsgACK2");
-
-		if (msg == null) {
-			logger.e("chat#msg is null");
+	public static void onReceiveMsgACK2(Intent intent) {
+		if (intent == null) {
 			return;
 		}
+		
+		String msgId = intent.getStringExtra(SysConstant.MSG_ID_KEY);
+		logger.d("chat#onReceiveMsgACK2, msgId:%s", msgId);
 
-		MessageActivity.updateMessageState(msg.seqNo,
-				SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
+		MessageActivity.updateMessageState(msgId, SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
 
-		MessageInfo messageInfo = msg.msgInfo;
-		if (null == messageInfo)
-			return;
-
-		if (messageInfo.getDisplayType() == SysConstant.DISPLAY_TYPE_IMAGE) {
-			MessageActivity.updateMessageState(messageInfo,
-					SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
-		}
+//		MessageInfo messageInfo = msg.msgInfo;
+//		if (null == messageInfo)
+//			return;
+//
+//		if (messageInfo.getDisplayType() == SysConstant.DISPLAY_TYPE_IMAGE) {
+//			MessageActivity.updateMessageState(messageInfo, SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
+//		}
 	}
 
 	/**
@@ -284,19 +270,16 @@ public class MessageHelper {
 				public void callback(Object result) {
 					boolean isBlcok = (Boolean) result;
 					if (isBlcok) {
-						uiHandler
-								.sendEmptyMessage(HandlerConstant.SHOULD_BLOCK_USER);
+						uiHandler.sendEmptyMessage(HandlerConstant.SHOULD_BLOCK_USER);
 					} else {
-						uiHandler
-								.sendEmptyMessage(HandlerConstant.SHOULD_NOT_BLOCK_USER);
+						uiHandler.sendEmptyMessage(HandlerConstant.SHOULD_NOT_BLOCK_USER);
 					}
 				}
 			});
 			try {
 				TaskManager.getInstance().trigger(checkTask);
 			} catch (Exception e) {
-				uiHandler
-						.sendEmptyMessage(HandlerConstant.SHOULD_NOT_BLOCK_USER);
+				uiHandler.sendEmptyMessage(HandlerConstant.SHOULD_NOT_BLOCK_USER);
 				logger.e(e.getMessage());
 			}
 		}
@@ -341,6 +324,7 @@ public class MessageHelper {
 	 */
 	public static void onImageUploadFinish(Object obj, Handler uiHandler,
 			Handler msgHandler, IMMessageManager msgManager, int sessionType) {
+		logger.d("chat#pic#onImageUploadFinish");
 		if (null == obj)
 			return;
 
@@ -368,7 +352,7 @@ public class MessageHelper {
 			uiHandler.sendMessage(msg);
 			return;
 		}
-		
+
 		messageInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
 
 		messageInfo.setMsgContent(SysConstant.MESSAGE_IMAGE_LINK_START
@@ -376,8 +360,7 @@ public class MessageHelper {
 
 		// MessageHelper.doSendTask(messageInfo, uiHandler, msgHandler);
 		logger.d("pic#send pic message, content:%s", messageInfo.getMsgContent());
-		msgManager.sendText(messageInfo.getTargetId(),
-				messageInfo.getMsgContent(), sessionType, messageInfo);
+		msgManager.sendText(messageInfo.getTargetId(), messageInfo.getMsgContent(), sessionType, messageInfo);
 	}
 
 	/**
@@ -491,8 +474,8 @@ public class MessageHelper {
 		byte msgType = 1;
 		msg.setMsgType(msgType);
 		msg.setMsgAttachContent("");
-		int messageSendRequestNo = CacheHub.getInstance().obtainMsgId();
-		msg.setMsgId(messageSendRequestNo);
+//		int messageSendRequestNo = CacheHub.getInstance().obtainMsgId();
+//		msg.setMsgId(messageSendRequestNo);
 		return msg;
 	}
 
@@ -504,6 +487,8 @@ public class MessageHelper {
 	 */
 	public static MessageInfo obtainTextMessage(String targetUserId,
 			String content) {
+		logger.d("chat#text#generating text message, toId:%s, content:%s", targetUserId, content);
+		
 		if (TextUtils.isEmpty(content) || TextUtils.isEmpty(targetUserId)) {
 			return null;
 		}

@@ -1,11 +1,6 @@
 
 package com.mogujie.tt.widget;
 
-import com.mogujie.tt.R;
-import com.mogujie.tt.imlib.IMContactManager;
-import com.mogujie.tt.log.Logger;
-import com.mogujie.tt.utils.CommonUtil;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -18,6 +13,9 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
+
+import com.mogujie.tt.R;
+import com.mogujie.tt.log.Logger;
 
 public class SortSideBar extends View {
     private OnTouchingLetterChangedListener onTouchingLetterChangedListener;

@@ -72,12 +72,10 @@ import com.mogujie.tt.entity.User;
 import com.mogujie.tt.imlib.IMActions;
 import com.mogujie.tt.imlib.IMContactManager;
 import com.mogujie.tt.imlib.IMGroupManager;
-import com.mogujie.tt.imlib.IMMessageManager;
 import com.mogujie.tt.imlib.IMSession;
-import com.mogujie.tt.imlib.db.IMDbManager;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
-import com.mogujie.tt.imlib.proto.MessageEntity;
+import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.MessageDispatchCenter;
 import com.mogujie.tt.task.TaskCallback;
@@ -89,7 +87,6 @@ import com.mogujie.tt.ui.tools.ImageTool;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 import com.mogujie.tt.utils.CommonUtil;
-import com.mogujie.tt.utils.FileUtil;
 import com.mogujie.tt.widget.EmoGridView;
 import com.mogujie.tt.widget.EmoGridView.OnEmoGridViewItemClick;
 import com.mogujie.tt.widget.MGProgressbar;
@@ -102,20 +99,25 @@ import com.mogujie.tt.widget.PinkToast;
  * @author Nana
  * @date 2014-7-15
  */
-public class MessageActivity extends TTBaseActivity implements
-		OnRefreshListener2<ListView>, View.OnClickListener, OnTouchListener,
-		TextWatcher, SensorEventListener, OnIMServiceListner {
+public class MessageActivity extends TTBaseActivity
+		implements
+			OnRefreshListener2<ListView>,
+			View.OnClickListener,
+			OnTouchListener,
+			TextWatcher,
+			SensorEventListener,
+			OnIMServiceListner {
 	@Override
 	public void onIMServiceConnected() {
-		logger.d("chat#onIMServiceConnected");
 		logger.d("messageactivity#onIMServiceConnected");
 
+		imService = imServiceHelper.getIMService();
+
+		// todo eric, this is unnecessary check, just assignment it
 		int sessionType = 0;
 		String sessionId = "";
 		if (session.getSessionId().isEmpty()) {
-			// TODO Auto-generated method stub
-			sessionType = getIntent().getIntExtra(SysConstant.SESSION_TYPE_KEY,
-					0);
+			sessionType = getIntent().getIntExtra(SysConstant.SESSION_TYPE_KEY, 0);
 			sessionId = getIntent().getStringExtra(SysConstant.SESSION_ID_KEY);
 
 			session.setType(sessionType);
@@ -125,98 +127,109 @@ public class MessageActivity extends TTBaseActivity implements
 			sessionId = session.getSessionId();
 		}
 
-		// String sessionId = session.getSessionId();
-		// int sessionType = session.getType();
-
 		handleUnreadMsgs(sessionId, sessionType);
 
 		setTitleByUser2(sessionId, sessionType);
 
-		fillMessageViewByContact(getIntent());
-
-		// loadHistoryMessage(sessionId);
+		loadHistoryMessage(sessionId);
 	}
 
-	private void handleUnreadMsgs(String entityId, int sessionType) {
-		logger.d("handleUnreadMsgs entityId:%s", entityId);
+	private void handleUnreadMsgs(String sessionId, int sessionType) {
+		logger.d("messageacitivity#handleUnreadMsgs sessionId:%s", sessionId);
 
-		IMMessageManager msgMgr = imServiceHelper.getIMService()
-				.getMessageManager();
-		if (sessionType == IMSession.SESSION_P2P) {
-			msgMgr.ackUnreadMsgs(entityId);
-		} else {
-			msgMgr.ackGroupUnreadMsgs(entityId);
+		IMService imService = imServiceHelper.getIMService();
+		if (imService != null) {
+			imService.getRecentSessionManager().resetUnreadMsgCnt(sessionId);
+			imService.getMessageManager().ReadUnreadMsgList(sessionId, sessionType);
 		}
-
-		msgMgr.saveUnreadMsgs(entityId);
 	}
 
 	// todo eric timeout and failed 2 statuses
 	private void onMsgAck(Intent intent) {
-		logger.d("chat#onMsgAck");
+		logger.d("messageactivity#onMsgAck");
 
-		Bundle extras = intent.getExtras();
-		MessageEntity msg = (MessageEntity) extras
-				.getSerializable(SysConstant.MSG_KEY);
-		if (msg == null) {
-			logger.e("chat#msg is null");
-			return;
-		}
-
-		String curChatId = CacheHub.getInstance().getChatUser().getUserId();
-		if (!msg.toId.equals(curChatId)) {
-			logger.d("chat#toid:%s is not current userid:%s, ignore", msg.toId,
-					curChatId);
-			return;
-
-		}
-
-		MessageHelper.onReceiveMsgACK2(msg);
+		// Bundle extras = intent.getExtras();
+		// MessageEntity msg = (MessageEntity)
+		// extras.getSerializable(SysConstant.MSG_KEY);
+		// if (msg == null) {
+		// logger.e("messageactivity#msg is null");
+		// return;
+		// }
+		//
+		// String curChatId = CacheHub.getInstance().getChatUser().getUserId();
+		// if (!msg.toId.equals(curChatId)) {
+		// logger.d("messageactivity#toid:%s is not current userid:%s, ignore",
+		// msg.toId, curChatId);
+		// return;
+		//
+		// }
+		//
+		MessageHelper.onReceiveMsgACK2(intent);
+		adapter.notifyDataSetChanged();
 
 	}
 
 	private void onMsgRecv(Intent intent, BroadcastReceiver broadcastReceiver) {
-		logger.d("chat#onMsgRecv");
+		logger.d("messageactivity#onMsgRecv");
 		String sessionId = intent.getStringExtra(SysConstant.SESSION_ID_KEY);
 		if (!sessionId.equals(session.getSessionId())) {
-			logger.d("chat#not this session msg -> id:%s", sessionId);
+			logger.d("messageactivity#not this session msg -> id:%s", sessionId);
 			return;
 		}
 
-		String msgId = intent.getStringExtra(SysConstant.MSG_ID_KEY);
-		logger.d("chat#msg belongs to this session, sessionId:%s, msgId:%s",
-				sessionId, msgId);
+		// //todo eric this is meaningless param right
+		// String msgId = intent.getStringExtra(SysConstant.MSG_ID_KEY);
+		// logger.d("messageactivity#msg belongs to this session, sessionId:%s, msgId:%s",
+		// sessionId, msgId);
 
 		// eat the message, so there woould be no notification in notification
 		// bar
 		broadcastReceiver.abortBroadcast();
 
-		MessageEntity msg = imServiceHelper.getIMService().getMessageManager()
-				.popUnreadMsg(sessionId, msgId);
-		if (msg == null) {
-			logger.e("chat#can't get unread msg");
+		if (imService == null) {
 			return;
 		}
 
-		IMDbManager.instance(this).saveMsg(msg, false);
+		List<MessageInfo> msgList = imService.getMessageManager().ReadUnreadMsgList(sessionId, session.getType());
+		if (msgList == null) {
+			logger.e("messageactivity#no any unread MessageInfo list");
+			return;
+		}
 
-		MessageHelper.onReceiveMessage2(msg, imServiceHelper);
+		for (MessageInfo msgInfo : msgList) {
+			MessageHelper.onReceiveMessage2(msgInfo, imServiceHelper);
+		}
 
 		scrollToBottomListItem();
-
 	}
 
 	@Override
 	public void onAction(String action, Intent intent,
 			BroadcastReceiver broadcastReceiver) {
-		logger.d("chat#onAction -> action:%s", action);
+		logger.d("messageactivity#onAction -> action:%s", action);
+
 		if (action.equals(IMActions.ACTION_MSG_ACK)) {
 			onMsgAck(intent);
+		} else if (action.equals(IMActions.ACTION_MSG_UNACK_TIMEOUT)) {
+			onMsgUnAckTimeout(intent);
 		} else if (action.equals(IMActions.ACTION_MSG_RECV)) {
+			if (!imServiceConnectionEnabled) {
+				logger.w("messageactivity#imServiceConnection Disabled, do nothing");
+				return;
+			}
+
 			onMsgRecv(intent, broadcastReceiver);
 		}
 	}
-
+	
+	private void onMsgUnAckTimeout(Intent intent) {
+		String msgId = intent.getStringExtra(SysConstant.MSG_ID_KEY);
+		logger.d("chat#onMsgUnAckTimeout, msgId:%s", msgId);
+		
+		updateMessageState(msgId, SysConstant.MESSAGE_STATE_FINISH_FAILED);
+	}
+	
+	
 	private static Handler uiHandler = null;// 处理界面消息
 	private static Handler msgHandler = null;// 处理协议消息
 	private PullToRefreshListView lvPTR = null;
@@ -247,16 +260,18 @@ public class MessageActivity extends TTBaseActivity implements
 	static private SensorManager sensorManager = null;
 	static private Sensor sensor = null;
 	static private int audioPlayMode = SysConstant.AUDIO_PLAY_MODE_NORMAL;
-	private int preAudioPlayMode = SysConstant.AUDIO_PLAY_MODE_NORMAL;
+	// private int preAudioPlayMode = SysConstant.AUDIO_PLAY_MODE_NORMAL;
 	private String takePhotoSavePath = "";
 	// 避免用户信息与商品详情的重复请求
 	public static boolean requestingGoodsDetail = false;
 	public static boolean requestingUserInfo = false;
 	private Logger logger = Logger.getLogger(MessageActivity.class);
-	IMServiceHelper imServiceHelper = new IMServiceHelper();
+	private IMServiceHelper imServiceHelper = new IMServiceHelper();
+	private IMService imService;
 	private IMSession session = new IMSession(imServiceHelper);
 	private int MSG_CNT_PER_PAGE = 15;
 	private int firstHistoryMsgTime = -1;
+	private boolean imServiceConnectionEnabled = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -267,6 +282,13 @@ public class MessageActivity extends TTBaseActivity implements
 		registEvents();
 		initAudioSensor();
 		IMEntrance.getInstance().setContext(MessageActivity.this);
+
+		ArrayList<String> actions = new ArrayList<String>();
+		actions.add(IMActions.ACTION_MSG_ACK);
+		actions.add(IMActions.ACTION_MSG_RECV);
+		actions.add(IMActions.ACTION_MSG_UNACK_TIMEOUT);
+		imServiceHelper.connect(this, actions, IMServiceHelper.INTENT_MAX_PRIORITY, this);
+		logger.d("messageactivity#register im service");
 	}
 
 	@Override
@@ -274,19 +296,14 @@ public class MessageActivity extends TTBaseActivity implements
 		logger.d("messageactivity#onresume");
 		super.onResume();
 
+		imServiceConnectionEnabled = true;
+
 		firstHistoryMsgTime = 0;
 
 		NotificationManager notifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		if (notifyMgr != null) {
 			notifyMgr.cancelAll();
 		}
-
-		ArrayList<String> actions = new ArrayList<String>();
-		actions.add(IMActions.ACTION_MSG_ACK);
-		actions.add(IMActions.ACTION_MSG_RECV);
-		imServiceHelper.connect(this, actions,
-				IMServiceHelper.INTENT_MAX_PRIORITY, this);
-		logger.d("messageactivity#register im service");
 
 		// 从联系人切换到消息界面时设置聊天界面信息
 		// fillMessageViewByContact(getIntent());
@@ -296,8 +313,7 @@ public class MessageActivity extends TTBaseActivity implements
 		// 修改消息状态
 		setMessageState();
 		// 修改消息状态修改后，通知联系人列表更新列表信息
-		MessageNotifyCenter.getInstance().doNotify(
-				SysConstant.EVENT_RECENT_INFO_CHANGED);
+		MessageNotifyCenter.getInstance().doNotify(SysConstant.EVENT_RECENT_INFO_CHANGED);
 		// 检测是否被踢下线
 		checkKickOff();
 		// 下面的标志用于防止用户信息与商品详情的重复请求
@@ -320,13 +336,13 @@ public class MessageActivity extends TTBaseActivity implements
 		// }
 
 		switch (requestCode) {
-		case SysConstant.CAMERA_WITH_DATA:
-			handleTakePhotoData(data);
-			break;
-		case SysConstant.ALBUM_BACK_DATA:
-			logger.d("pic#ALBUM_BACK_DATA");
-			setIntent(data);
-			break;
+			case SysConstant.CAMERA_WITH_DATA :
+				handleTakePhotoData(data);
+				break;
+			case SysConstant.ALBUM_BACK_DATA :
+				logger.d("pic#ALBUM_BACK_DATA");
+				setIntent(data);
+				break;
 		}
 		super.onActivityResult(requestCode, resultCode, data);
 	}
@@ -359,75 +375,68 @@ public class MessageActivity extends TTBaseActivity implements
 			public void handleMessage(Message msg) {
 				super.handleMessage(msg);
 				switch (msg.what) {
-				case HandlerConstant.HANDLER_RECORD_FINISHED:
-					onRecordVoiceEnd((Float) msg.obj);
-					break;
-				case HandlerConstant.HANDLER_NET_STATE_DISCONNECTED:
-					setTitle(getString(R.string.disconnected));
-					break;
-				case HandlerConstant.HANDLER_LOGIN_MSG_SERVER:
-					MessageHelper.onConnectedMsgServer(msgHandler, uiHandler);
-					break;
-				case HandlerConstant.HANDLER_IMAGE_UPLOAD_FAILD:
-					onUploadImageFaild(msg.obj);
-					break;
-				case HandlerConstant.HANDLER_IMAGE_UPLOAD_SUCESS:
-					logger.d("pic#upload image ok");
-					MessageHelper.onImageUploadFinish(msg.obj, uiHandler,
-							msgHandler, imServiceHelper.getIMService()
-									.getMessageManager(), session.getType());
-					adapter.notifyDataSetChanged();
-					break;
-				case HandlerConstant.HANDLER_LOGIN_KICK:
-					if (CommonUtil.isTopActivy(MessageActivity.this,
-							SysConstant.MESSAGE_ACTIVITY)) {
-						checkKickOff();
-					}
-					break;
-				case HandlerConstant.HANDLER_STOP_PLAY:
-					adapter.stopVoicePlayAnim((String) msg.obj);
-					break;
-				case HandlerConstant.RECEIVE_MAX_VOLUME:
-					onReceiveMaxVolume((Integer) msg.obj);
-					break;
-				case HandlerConstant.RECORD_AUDIO_TOO_LONG:
-					doFinishRecordAudio();
-					break;
-				case HandlerConstant.HANDLER_MESSAGES_NEW_MESSAGE_COME:
-					if (CommonUtil.isTopActivy(MessageActivity.this,
-							SysConstant.MESSAGE_ACTIVITY)) {
-						// 设置消息状态并通知联系人列表更新列表信息
-						setMessageState();
-						MessageNotifyCenter.getInstance().doNotify(
-								SysConstant.EVENT_RECENT_INFO_CHANGED);
-					}
-					break;
-				case HandlerConstant.HANDLER_SEND_MESSAGE_TIMEOUT:
-					adapter.updateMessageState((MessageInfo) msg.obj,
-							SysConstant.MESSAGE_STATE_FINISH_FAILED);
-					break;
-				case HandlerConstant.HANDLER_SEND_MESSAGE_FAILED:
-					adapter.updateMessageState((MessageInfo) msg.obj,
-							SysConstant.MESSAGE_STATE_FINISH_FAILED);
-					break;
-				case HandlerConstant.SHOULD_BLOCK_USER:
-					blockUser(true);
-					break;
-				case HandlerConstant.SHOULD_NOT_BLOCK_USER:
-					blockUser(false);
-					break;
-				case HandlerConstant.START_BLOCK_CHECK:
-					onStartBlockCheck();
-					break;
-				case HandlerConstant.SET_TITLE:
-					enableBottomView(true);
-					setTitleByUser((User) msg.obj);
-					break;
-				case HandlerConstant.REQUEST_CUSTOM_SERVICE_FAILED:
-					onRequestCustomServiceFailed();
-					break;
-				default:
-					break;
+					case HandlerConstant.HANDLER_RECORD_FINISHED :
+						onRecordVoiceEnd((Float) msg.obj);
+						break;
+					case HandlerConstant.HANDLER_NET_STATE_DISCONNECTED :
+						setTitle(getString(R.string.disconnected));
+						break;
+					case HandlerConstant.HANDLER_LOGIN_MSG_SERVER :
+						MessageHelper.onConnectedMsgServer(msgHandler, uiHandler);
+						break;
+					case HandlerConstant.HANDLER_IMAGE_UPLOAD_FAILD :
+						onUploadImageFaild(msg.obj);
+						break;
+					case HandlerConstant.HANDLER_IMAGE_UPLOAD_SUCESS :
+						logger.d("pic#upload image ok");
+						MessageHelper.onImageUploadFinish(msg.obj, uiHandler, msgHandler, imServiceHelper.getIMService().getMessageManager(), session.getType());
+						adapter.notifyDataSetChanged();
+						break;
+					case HandlerConstant.HANDLER_LOGIN_KICK :
+						if (CommonUtil.isTopActivy(MessageActivity.this, SysConstant.MESSAGE_ACTIVITY)) {
+							checkKickOff();
+						}
+						break;
+					case HandlerConstant.HANDLER_STOP_PLAY :
+						adapter.stopVoicePlayAnim((String) msg.obj);
+						break;
+					case HandlerConstant.RECEIVE_MAX_VOLUME :
+						onReceiveMaxVolume((Integer) msg.obj);
+						break;
+					case HandlerConstant.RECORD_AUDIO_TOO_LONG :
+						doFinishRecordAudio();
+						break;
+					case HandlerConstant.HANDLER_MESSAGES_NEW_MESSAGE_COME :
+						if (CommonUtil.isTopActivy(MessageActivity.this, SysConstant.MESSAGE_ACTIVITY)) {
+							// 设置消息状态并通知联系人列表更新列表信息
+							setMessageState();
+							MessageNotifyCenter.getInstance().doNotify(SysConstant.EVENT_RECENT_INFO_CHANGED);
+						}
+						break;
+					case HandlerConstant.HANDLER_SEND_MESSAGE_TIMEOUT :
+						adapter.updateMessageState((MessageInfo) msg.obj, SysConstant.MESSAGE_STATE_FINISH_FAILED);
+						break;
+					case HandlerConstant.HANDLER_SEND_MESSAGE_FAILED :
+						adapter.updateMessageState((MessageInfo) msg.obj, SysConstant.MESSAGE_STATE_FINISH_FAILED);
+						break;
+					case HandlerConstant.SHOULD_BLOCK_USER :
+						blockUser(true);
+						break;
+					case HandlerConstant.SHOULD_NOT_BLOCK_USER :
+						blockUser(false);
+						break;
+					case HandlerConstant.START_BLOCK_CHECK :
+						onStartBlockCheck();
+						break;
+					case HandlerConstant.SET_TITLE :
+						enableBottomView(true);
+						setTitleByUser((User) msg.obj);
+						break;
+					case HandlerConstant.REQUEST_CUSTOM_SERVICE_FAILED :
+						onRequestCustomServiceFailed();
+						break;
+					default :
+						break;
 				}
 			}
 		};
@@ -471,9 +480,7 @@ public class MessageActivity extends TTBaseActivity implements
 	 */
 	private void registEvents() {
 		// 接收未读消息提示
-		MessageNotifyCenter.getInstance().register(
-				SysConstant.EVENT_UNREAD_MSG, getUiHandler(),
-				HandlerConstant.HANDLER_MESSAGES_NEW_MESSAGE_COME);
+		MessageNotifyCenter.getInstance().register(SysConstant.EVENT_UNREAD_MSG, getUiHandler(), HandlerConstant.HANDLER_MESSAGES_NEW_MESSAGE_COME);
 
 		// // 接收网络状态通知
 		// NetStateDispach.getInstance()
@@ -485,21 +492,17 @@ public class MessageActivity extends TTBaseActivity implements
 	 */
 	private void unregistEvents() {
 		MessageDispatchCenter.getInstance().unRegister(uiHandler);
-		MessageNotifyCenter.getInstance().unregister(
-				SysConstant.EVENT_UNREAD_MSG, getUiHandler(),
-				HandlerConstant.HANDLER_MESSAGES_NEW_MESSAGE_COME);
+		MessageNotifyCenter.getInstance().unregister(SysConstant.EVENT_UNREAD_MSG, getUiHandler(), HandlerConstant.HANDLER_MESSAGES_NEW_MESSAGE_COME);
 	}
 
 	/**
 	 * @Description 初始化AudioManager，用于访问控制音量和钤声模式
 	 */
 	private void initAudioSensor() {
-		audioManager = (AudioManager) this
-				.getSystemService(Context.AUDIO_SERVICE);
+		audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
 		sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		sensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-		sensorManager.registerListener(this, sensor,
-				SensorManager.SENSOR_DELAY_NORMAL);
+		sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
 	}
 
 	/**
@@ -531,18 +534,14 @@ public class MessageActivity extends TTBaseActivity implements
 			}
 		});
 		// 绑定布局资源(注意放所有资源初始化之前)
-		LayoutInflater.from(this).inflate(R.layout.tt_activity_message,
-				topContentView);
+		LayoutInflater.from(this).inflate(R.layout.tt_activity_message, topContentView);
 		// 右上角联系人图标
 		setRightButton(R.drawable.tt_top_right_group_manager);
 
 		// 未读消息提示
 		unreadMessageNotifyView = new View(this);
-		unreadMessageNotifyView
-				.setBackgroundResource(R.drawable.tt_unread_message_notify_bg);
-		final int width = (int) TypedValue.applyDimension(
-				TypedValue.COMPLEX_UNIT_DIP, 10, getResources()
-						.getDisplayMetrics());
+		unreadMessageNotifyView.setBackgroundResource(R.drawable.tt_unread_message_notify_bg);
+		final int width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, getResources().getDisplayMetrics());
 		FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(width, width);
 		lp.gravity = Gravity.TOP | Gravity.RIGHT;
 		lp.topMargin = width - 4;
@@ -560,24 +559,19 @@ public class MessageActivity extends TTBaseActivity implements
 			@Override
 			public void onItemClick(int facesPos, int viewIndex) {
 				int deleteId = (++viewIndex) * (SysConstant.pageSize - 1);
-				if (deleteId > Emoparser.getInstance(MessageActivity.this)
-						.getResIdList().length) {
-					deleteId = Emoparser.getInstance(MessageActivity.this)
-							.getResIdList().length;
+				if (deleteId > Emoparser.getInstance(MessageActivity.this).getResIdList().length) {
+					deleteId = Emoparser.getInstance(MessageActivity.this).getResIdList().length;
 				}
 				if (deleteId == facesPos) {
 					String msgContent = messageEdt.getText().toString();
 					if (msgContent.isEmpty())
 						return;
 					if (msgContent.contains("["))
-						msgContent = msgContent.substring(0,
-								msgContent.lastIndexOf("["));
+						msgContent = msgContent.substring(0, msgContent.lastIndexOf("["));
 					messageEdt.setText(msgContent);
 				} else {
-					int resId = Emoparser.getInstance(MessageActivity.this)
-							.getResIdList()[facesPos];
-					String pharse = Emoparser.getInstance(MessageActivity.this)
-							.getIdPhraseMap().get(resId);
+					int resId = Emoparser.getInstance(MessageActivity.this).getResIdList()[facesPos];
+					String pharse = Emoparser.getInstance(MessageActivity.this).getIdPhraseMap().get(resId);
 					int startIndex = messageEdt.getSelectionStart();
 					Editable edit = messageEdt.getEditableText();
 					if (startIndex < 0 || startIndex >= edit.length()) {
@@ -600,41 +594,32 @@ public class MessageActivity extends TTBaseActivity implements
 		// 列表控件(开源PTR)
 		lvPTR = (PullToRefreshListView) this.findViewById(R.id.message_list);
 
-		Drawable loadingDrawable = getResources().getDrawable(
-				R.drawable.pull_to_refresh_indicator);
-		final int indicatorWidth = (int) TypedValue.applyDimension(
-				TypedValue.COMPLEX_UNIT_DIP, 29, getResources()
-						.getDisplayMetrics());
-		loadingDrawable
-				.setBounds(new Rect(0, indicatorWidth, 0, indicatorWidth));
+		Drawable loadingDrawable = getResources().getDrawable(R.drawable.pull_to_refresh_indicator);
+		final int indicatorWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 29, getResources().getDisplayMetrics());
+		loadingDrawable.setBounds(new Rect(0, indicatorWidth, 0, indicatorWidth));
 		lvPTR.getLoadingLayoutProxy().setLoadingDrawable(loadingDrawable);
 
 		lvPTR.getRefreshableView().setCacheColorHint(Color.WHITE);
 		lvPTR.getRefreshableView().setSelector(new ColorDrawable(Color.WHITE));
-		lvPTR.getRefreshableView().setOnTouchListener(
-				new View.OnTouchListener() {
+		lvPTR.getRefreshableView().setOnTouchListener(new View.OnTouchListener() {
 
-					@Override
-					public boolean onTouch(View v, MotionEvent event) {
-						if (event.getAction() == MotionEvent.ACTION_DOWN) {
-							if (emoGridView.getVisibility() == View.VISIBLE) {
-								emoGridView.setVisibility(View.GONE);
-							}
-
-							if (addOthersPanelView.getVisibility() == View.VISIBLE) {
-								addOthersPanelView.setVisibility(View.GONE);
-							}
-							inputManager.hideSoftInputFromWindow(
-									messageEdt.getWindowToken(), 0);
-						}
-						return false;
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				if (event.getAction() == MotionEvent.ACTION_DOWN) {
+					if (emoGridView.getVisibility() == View.VISIBLE) {
+						emoGridView.setVisibility(View.GONE);
 					}
-				});
 
-		lvPTR.getRefreshableView().addHeaderView(
-				LayoutInflater.from(this).inflate(
-						R.layout.tt_messagelist_header,
-						lvPTR.getRefreshableView(), false));
+					if (addOthersPanelView.getVisibility() == View.VISIBLE) {
+						addOthersPanelView.setVisibility(View.GONE);
+					}
+					inputManager.hideSoftInputFromWindow(messageEdt.getWindowToken(), 0);
+				}
+				return false;
+			}
+		});
+
+		lvPTR.getRefreshableView().addHeaderView(LayoutInflater.from(this).inflate(R.layout.tt_messagelist_header, lvPTR.getRefreshableView(), false));
 		adapter = new MessageAdapter(this);
 		adapter.setSession(session);
 		adapter.setIMServiceHelper(imServiceHelper);
@@ -646,30 +631,27 @@ public class MessageActivity extends TTBaseActivity implements
 		recordAudioBtn = (Button) this.findViewById(R.id.record_voice_btn);
 		audioInputImg = (ImageView) this.findViewById(R.id.voice_btn);
 		messageEdt = (EditText) this.findViewById(R.id.message_text);
-		RelativeLayout.LayoutParams param = (LayoutParams) messageEdt
-				.getLayoutParams();
+		RelativeLayout.LayoutParams param = (LayoutParams) messageEdt.getLayoutParams();
 		param.addRule(RelativeLayout.LEFT_OF, R.id.show_add_photo_btn);
 		param.addRule(RelativeLayout.RIGHT_OF, R.id.show_emo_btn);
-		messageEdt
-				.setOnFocusChangeListener(new android.view.View.OnFocusChangeListener() {
-					@Override
-					public void onFocusChange(View v, boolean hasFocus) {
-						if (hasFocus) {
-							scrollToBottomListItem();
-							if (emoGridView.getVisibility() == View.VISIBLE) {
-								emoGridView.setVisibility(View.GONE);
-							}
-
-							if (addOthersPanelView.getVisibility() == View.VISIBLE) {
-								addOthersPanelView.setVisibility(View.GONE);
-							}
-						}
+		messageEdt.setOnFocusChangeListener(new android.view.View.OnFocusChangeListener() {
+			@Override
+			public void onFocusChange(View v, boolean hasFocus) {
+				if (hasFocus) {
+					scrollToBottomListItem();
+					if (emoGridView.getVisibility() == View.VISIBLE) {
+						emoGridView.setVisibility(View.GONE);
 					}
-				});
+
+					if (addOthersPanelView.getVisibility() == View.VISIBLE) {
+						addOthersPanelView.setVisibility(View.GONE);
+					}
+				}
+			}
+		});
 		messageEdt.setOnClickListener(this);
 
-		keyboardInputImg = (ImageView) this
-				.findViewById(R.id.show_keyboard_btn);
+		keyboardInputImg = (ImageView) this.findViewById(R.id.show_keyboard_btn);
 		addPhotoBtn = (ImageView) this.findViewById(R.id.show_add_photo_btn);
 		addPhotoBtn.setOnClickListener(this);
 		addEmoBtn = (ImageView) this.findViewById(R.id.show_emo_btn);
@@ -683,12 +665,9 @@ public class MessageActivity extends TTBaseActivity implements
 		takeCameraBtn.setOnClickListener(this);
 
 		// 初始化滚动条(注意放到最后)
-		View view = LayoutInflater.from(MessageActivity.this).inflate(
-				R.layout.tt_progress_ly, null);
+		View view = LayoutInflater.from(MessageActivity.this).inflate(R.layout.tt_progress_ly, null);
 		progressbar = (MGProgressbar) view.findViewById(R.id.tt_progress);
-		LayoutParams pgParms = new LayoutParams(
-				ViewGroup.LayoutParams.MATCH_PARENT,
-				ViewGroup.LayoutParams.MATCH_PARENT);
+		LayoutParams pgParms = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 		pgParms.bottomMargin = 50;
 		addContentView(view, pgParms);
 
@@ -708,28 +687,19 @@ public class MessageActivity extends TTBaseActivity implements
 	private void initSoundVolumeDlg() {
 		soundVolumeDialog = new Dialog(this, R.style.SoundVolumeStyle);
 		soundVolumeDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-		soundVolumeDialog.getWindow().setFlags(
-				WindowManager.LayoutParams.FLAG_FULLSCREEN,
-				WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		soundVolumeDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		soundVolumeDialog.setContentView(R.layout.tt_sound_volume_dialog);
 		soundVolumeDialog.setCanceledOnTouchOutside(true);
-		soundVolumeImg = (ImageView) soundVolumeDialog
-				.findViewById(R.id.sound_volume_img);
-		soundVolumeLayout = (LinearLayout) soundVolumeDialog
-				.findViewById(R.id.sound_volume_bk);
+		soundVolumeImg = (ImageView) soundVolumeDialog.findViewById(R.id.sound_volume_img);
+		soundVolumeLayout = (LinearLayout) soundVolumeDialog.findViewById(R.id.sound_volume_bk);
 	}
 
 	private List<MessageInfo> loadHistory() {
-		List<MessageInfo> historyMsgInfo = imServiceHelper
-				.getIMService()
-				.getDbManager()
-				.getHistoryMsg(session.getSessionId(), 0, MSG_CNT_PER_PAGE,
-						firstHistoryMsgTime);
+		List<MessageInfo> historyMsgInfo = imServiceHelper.getIMService().getDbManager().getHistoryMsg(session.getSessionId(), session.getType(), 0, MSG_CNT_PER_PAGE, firstHistoryMsgTime);
 
 		if (historyMsgInfo != null && !historyMsgInfo.isEmpty()) {
 			firstHistoryMsgTime = historyMsgInfo.get(0).getCreated();
-			logger.d("chat#db#got the fristHistoryMsgTime:%d",
-					firstHistoryMsgTime);
+			logger.d("messageactivity#db#got the fristHistoryMsgTime:%d", firstHistoryMsgTime);
 		}
 
 		return historyMsgInfo;
@@ -738,68 +708,48 @@ public class MessageActivity extends TTBaseActivity implements
 
 	private void loadHistoryMessage(String sessionId) {
 		if (imServiceHelper.getIMService() == null) {
-			logger.d("chat#still not connected im");
+			logger.d("messageactivity#still not connected im");
 			return;
 		}
 
 		adapter.clearItem();
-		adapter.clearPositionSEQNoMap();
+		adapter.clearMsgIndexMap();
 
 		List<MessageInfo> historyMsgInfo = loadHistory();
 
 		if (!historyMsgInfo.isEmpty()) {
-			logger.d("chat#got historyMessage");
+			logger.d("messageactivity#got historyMessage");
 			adapter.addHistoryDivideTag();
-			// 处理一些特殊情况SDCARD不可用
-			if (!FileUtil.isSdCardAvailuable()) {
-				for (MessageInfo info : historyMsgInfo) {
-					if (info.getDisplayType() == SysConstant.DISPLAY_TYPE_IMAGE) {
-						info.setMsgLoadState(SysConstant.MESSAGE_STATE_FINISH_FAILED);
-						CacheHub.getInstance().updateMsgStatus(info.getMsgId(),
-								SysConstant.MESSAGE_STATE_FINISH_FAILED);
-					}
-				}
-			}
+
+			// // 处理一些特殊情况SDCARD不可用
+			// if (!FileUtil.isSdCardAvailuable()) {
+			// for (MessageInfo info : historyMsgInfo) {
+			// if (info.getDisplayType() == SysConstant.DISPLAY_TYPE_IMAGE) {
+			// info.setMsgLoadState(SysConstant.MESSAGE_STATE_FINISH_FAILED);
+			// // CacheHub.getInstance().updateMsgStatus(info.getMsgId(),
+			// // SysConstant.MESSAGE_STATE_FINISH_FAILED);
+			// }
+			// }
+			// }
 		}
-		adapter.addItem(true, (ArrayList<MessageInfo>) historyMsgInfo);
+		adapter.addItem(true, historyMsgInfo);
 		adapter.notifyDataSetChanged();
 
 		scrollToBottomListItem();
-
-		// // 加载未读消息
-		// List<MessageInfo> unReadMsgInfo = CacheHub.getInstance().pullMsg(
-		// CacheHub.getInstance().getLoginUserId(),
-		// chatUser.getUserId(), 0, 0, readCount);
-		// for (int i = 0; i < unReadMsgInfo.size(); i++) {
-		// adapter.addItem(unReadMsgInfo.get(i));
-		// }
-		// adapter.notifyDataSetChanged();
-
 	}
 
-	/**
-	 * @Description 判断如果是从联系人界面切换到消息界面，则根据需要渲染消息界面
-	 * @param intent
-	 */
-	private void fillMessageViewByContact(Intent intent) {
-		logger.d("fillMessageViewByContact");
-
-		if (null == intent)
-			return;
-		// int sessionType = intent.getIntExtra(SysConstant.SESSION_TYPE_KEY,
-		// 0);
-		// String sessionId = intent.getStringExtra(SysConstant.SESSION_ID_KEY);
-		//
-		// session.setType(sessionType);
-		// session.setSessionId(sessionId);
-
-		loadHistoryMessage(session.getSessionId());
-
-		// // 设置消息界面的标题
-		// setTitleByUser2(sessionId, sessionType);
-		// loadHistoryMessage(sessionId);
-
-	}
+	// /**
+	// * @Description 判断如果是从联系人界面切换到消息界面，则根据需要渲染消息界面
+	// * @param intent
+	// */
+	// private void fillMessageViewByContact(Intent intent) {
+	// logger.d("fillMessageViewByContact");
+	//
+	// if (null == intent)
+	// return;
+	//
+	// loadHistoryMessage(session.getSessionId());
+	// }
 
 	/**
 	 * @Description 设置会话对象设置消息标题
@@ -820,15 +770,14 @@ public class MessageActivity extends TTBaseActivity implements
 	}
 
 	private void setTitleByGroup(String sessionId) {
-		IMGroupManager groupMgr = imServiceHelper.getIMService()
-				.getGroupManager();
+		IMGroupManager groupMgr = imServiceHelper.getIMService().getGroupManager();
 		if (groupMgr == null) {
 			return;
 		}
 
 		GroupEntity group = groupMgr.findGroup(sessionId);
 		if (sessionId == null) {
-			logger.e("chat#findGroup failed.sessionid:%s", sessionId);
+			logger.e("messageactivity#findGroup failed.sessionid:%s", sessionId);
 			return;
 		}
 
@@ -838,15 +787,13 @@ public class MessageActivity extends TTBaseActivity implements
 
 	// todo eric
 	private void setTitleByUser2(String sessionId, int sessionType) {
-		logger.d("setTitleByUser sessionId:%s,  sessionType:%d", sessionId,
-				sessionType);
+		logger.d("setTitleByUser sessionId:%s,  sessionType:%d", sessionId, sessionType);
 
 		if (sessionType == IMSession.SESSION_P2P) {
-			IMContactManager contactManager = imServiceHelper.getIMService()
-					.getContactManager();
+			IMContactManager contactManager = imServiceHelper.getIMService().getContactManager();
 			ContactEntity contact = contactManager.findContact(sessionId);
 			if (contact == null) {
-				logger.e("chat#findContact failed.sessionid:%s", sessionId);
+				logger.e("messageactivity#findContact failed.sessionid:%s", sessionId);
 				return;
 			}
 
@@ -864,8 +811,7 @@ public class MessageActivity extends TTBaseActivity implements
 		User chatUser = CacheHub.getInstance().getChatUser();
 		if (null != loginUser && null != chatUser) {
 			CacheHub.getInstance().clearUnreadCount(chatUser.getUserId());
-			CacheHub.getInstance().updateMsgReadStatus(loginUser.getUserId(),
-					chatUser.getUserId(), SysConstant.MESSAGE_ALREADY_READ);
+			CacheHub.getInstance().updateMsgReadStatus(loginUser.getUserId(), chatUser.getUserId(), SysConstant.MESSAGE_ALREADY_READ);
 		}
 		if (0 < CacheHub.getInstance().getUnreadCount()) {
 			unreadMessageNotifyView.setVisibility(View.VISIBLE);
@@ -897,8 +843,7 @@ public class MessageActivity extends TTBaseActivity implements
 	private void blockUser(boolean block) {
 		hideProgress();
 		if (block) {
-			PinkToast.makeText(MessageActivity.this,
-					getString(R.string.block_chat), Toast.LENGTH_LONG).show();
+			PinkToast.makeText(MessageActivity.this, getString(R.string.block_chat), Toast.LENGTH_LONG).show();
 			Timer timer = new Timer();
 			timer.schedule(new TimerTask() {
 				public void run() {
@@ -915,14 +860,14 @@ public class MessageActivity extends TTBaseActivity implements
 	 * @param msgId
 	 * @param path
 	 */
-	public static void updateMessageSavePath(int msgId, String path) {
+	public static void updateMessageSavePath(String msgId, String path) {
 		adapter.updateItemSavePath(msgId, path);
 	}
 
 	/**
 	 * @Description 修改消息状态
 	 */
-	public static void updateMessageState(int msgId, int state) {
+	public static void updateMessageState(String msgId, int state) {
 		adapter.updateItemState(msgId, state);
 	}
 
@@ -973,11 +918,9 @@ public class MessageActivity extends TTBaseActivity implements
 				soundVolumeDialog.dismiss();
 			}
 
-			recordAudioBtn
-					.setBackgroundResource(R.drawable.tt_pannel_btn_voiceforward_normal);
+			recordAudioBtn.setBackgroundResource(R.drawable.tt_pannel_btn_voiceforward_normal);
 
-			audioRecorderInstance
-					.setRecordTime(SysConstant.MAX_SOUND_RECORD_TIME);
+			audioRecorderInstance.setRecordTime(SysConstant.MAX_SOUND_RECORD_TIME);
 			onRecordVoiceEnd(SysConstant.MAX_SOUND_RECORD_TIME);
 		} catch (Exception e) {
 		}
@@ -1010,11 +953,11 @@ public class MessageActivity extends TTBaseActivity implements
 	 * @param obj
 	 */
 	private void onUploadImageFaild(Object obj) {
+		logger.d("chat#pic#onUploadImageFaild");
 		if (obj == null)
 			return;
 		MessageInfo messageInfo = (MessageInfo) obj;
-		adapter.updateMessageState(messageInfo,
-				SysConstant.MESSAGE_STATE_FINISH_FAILED);
+		adapter.updateMessageState(messageInfo, SysConstant.MESSAGE_STATE_FINISH_FAILED);
 	}
 
 	@Override
@@ -1049,8 +992,8 @@ public class MessageActivity extends TTBaseActivity implements
 		msg.setTargetId(session.getSessionId());
 		msg.setMsgReadStatus(SysConstant.MESSAGE_ALREADY_READ);
 		msg.setMsgLoadState(SysConstant.MESSAGE_STATE_LOADDING);
-		int messageSendRequestNo = CacheHub.getInstance().obtainMsgId();
-		msg.setMsgId(messageSendRequestNo);
+		// int messageSendRequestNo = CacheHub.getInstance().obtainMsgId();
+		// msg.msgId(messageSendRequestNo);
 		CacheHub.getInstance().pushMsg(msg);
 
 		addItem(msg);
@@ -1058,8 +1001,7 @@ public class MessageActivity extends TTBaseActivity implements
 		List<MessageInfo> messageList = new ArrayList<MessageInfo>();
 		messageList.add(msg);
 		String Dao = "";// TokenManager.getInstance().getDao();
-		UploadImageTask upTask = new UploadImageTask(
-				SysConstant.UPLOAD_IMAGE_HOST, Dao, messageList);
+		UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), session.getType(), SysConstant.UPLOAD_IMAGE_HOST, Dao, messageList);
 		TaskManager.getInstance().trigger(upTask);
 	}
 
@@ -1068,7 +1010,7 @@ public class MessageActivity extends TTBaseActivity implements
 	 * @param audioLen
 	 */
 	private void onRecordVoiceEnd(float audioLen) {
-		logger.d("chat#audio#onRecordVoiceEnd audioLen:%f", audioLen);
+		logger.d("messageactivity#chat#audio#onRecordVoiceEnd audioLen:%f", audioLen);
 
 		// User chatUser = CacheHub.getInstance().getChatUser();
 		// if (chatUser == null) {
@@ -1079,11 +1021,6 @@ public class MessageActivity extends TTBaseActivity implements
 		// return;
 		// }
 		// 语音时长
-
-		if (!imServiceHelper.getIMService().getLoginManager().isLoggined()) {
-			Toast.makeText(this, "已和服务器断开连接,无法发送", Toast.LENGTH_LONG).show();
-			return;
-		}
 
 		int tLen = (int) (audioLen + 0.5);
 		tLen = tLen < 1 ? 1 : tLen;
@@ -1109,17 +1046,13 @@ public class MessageActivity extends TTBaseActivity implements
 		byte msgType = SysConstant.MESSAGE_TYPE_AUDIO;
 		msg.setMsgType(msgType);
 
-		int messageSendRequestNo = CacheHub.getInstance().obtainMsgId();
-		msg.setMsgId(messageSendRequestNo);
+		// int messageSendRequestNo = CacheHub.getInstance().obtainMsgId();
+		// msg.setMsgId(messageSendRequestNo);
 		CacheHub.getInstance().pushMsg(msg);
 
 		addItem(msg);
 
-		imServiceHelper
-				.getIMService()
-				.getMessageManager()
-				.sendVoice(msg.getTargetId(), msg.getAudioContent(),
-						session.getType(), msg);
+		imServiceHelper.getIMService().getMessageManager().sendVoice(msg.getTargetId(), msg.getAudioContent(), session.getType(), msg);
 
 		// 设置语音内容,发送
 		// if (StateManager.getInstance().isOnline()) {
@@ -1147,6 +1080,8 @@ public class MessageActivity extends TTBaseActivity implements
 
 	@Override
 	protected void onDestroy() {
+		imServiceHelper.disconnect(this);
+
 		unregistEvents();
 		adapter.clearItem();
 		super.onDestroy();
@@ -1168,19 +1103,20 @@ public class MessageActivity extends TTBaseActivity implements
 				// || CacheHub.getInstance().getLoginUser() == null) {
 				// return;
 				// }
-				MessageInfo msgInfo = null;
-				for (int i = 0; i < adapter.getCount(); i++) {
-					if (adapter.getItem(i) instanceof MessageInfo) {
-						msgInfo = (MessageInfo) adapter.getItem(i);
-						break;
-					}
-				}
+				// MessageInfo msgInfo = null;
+				// for (int i = 0; i < adapter.getCount(); i++) {
+				// if (adapter.getItem(i) instanceof MessageInfo) {
+				// msgInfo = (MessageInfo) adapter.getItem(i);
+				// break;
+				// }
+				// }
 
 				// todo eric what is startMsgId is here?
-				int startMsgId = (null == msgInfo) ? 0 : msgInfo.getMsgId(); // 如果为空，则从最近一条消息拉取
+				// int startMsgId = (null == msgInfo) ? 0 : msgInfo.getMsgId();
+				// // 如果为空，则从最近一条消息拉取
 				List<MessageInfo> historyMsgInfo = loadHistory();
 
-				adapter.addItem(true, (ArrayList<MessageInfo>) historyMsgInfo);
+				adapter.addItem(true, historyMsgInfo);
 				adapter.notifyDataSetChanged();
 				ListView mlist = lvPTR.getRefreshableView();
 				if (!(mlist).isStackFromBottom()) {
@@ -1200,49 +1136,46 @@ public class MessageActivity extends TTBaseActivity implements
 		} else if (id == R.id.right_btn) {
 			showGroupManageActivity(true);
 		} else if (id == R.id.show_add_photo_btn) {
-			scrollToBottomListItem();
+
 			if (addOthersPanelView.getVisibility() == View.VISIBLE) {
 				addOthersPanelView.setVisibility(View.GONE);
 			} else if (addOthersPanelView.getVisibility() == View.GONE) {
 				addOthersPanelView.setVisibility(View.VISIBLE);
-				inputManager.hideSoftInputFromWindow(
-						messageEdt.getWindowToken(), 0);
+				inputManager.hideSoftInputFromWindow(messageEdt.getWindowToken(), 0);
 			}
 			if (null != emoGridView
 					&& emoGridView.getVisibility() == View.VISIBLE) {
 				emoGridView.setVisibility(View.GONE);
 			}
-		} else if (id == R.id.take_photo_btn) {
+
 			scrollToBottomListItem();
+
+		} else if (id == R.id.take_photo_btn) {
 			if (albumList.size() < 1) {
-				PinkToast.makeText(MessageActivity.this,
-						getResources().getString(R.string.not_found_album),
-						Toast.LENGTH_LONG).show();
+				PinkToast.makeText(MessageActivity.this, getResources().getString(R.string.not_found_album), Toast.LENGTH_LONG).show();
 				return;
 			}
-			Intent intent = new Intent(MessageActivity.this,
-					PickPhotoActivity.class);
-			intent.putExtra(SysConstant.EXTRA_CHAT_USER_ID,
-					session.getSessionId());
+			Intent intent = new Intent(MessageActivity.this, PickPhotoActivity.class);
+			intent.putExtra(SysConstant.EXTRA_CHAT_USER_ID, session.getSessionId());
 			startActivityForResult(intent, SysConstant.ALBUM_BACK_DATA);
-			MessageActivity.this.overridePendingTransition(
-					R.anim.tt_album_enter, R.anim.tt_stay);
+			MessageActivity.this.overridePendingTransition(R.anim.tt_album_enter, R.anim.tt_stay);
 
 			addOthersPanelView.setVisibility(View.GONE);
-		} else if (id == R.id.take_camera_btn) {
+
 			scrollToBottomListItem();
+		} else if (id == R.id.take_camera_btn) {
+
 			Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-			takePhotoSavePath = CommonUtil.getImageSavePath(String
-					.valueOf(System.currentTimeMillis()) + ".jpg");
-			intent.putExtra(MediaStore.EXTRA_OUTPUT,
-					Uri.fromFile(new File(takePhotoSavePath)));
+			takePhotoSavePath = CommonUtil.getImageSavePath(String.valueOf(System.currentTimeMillis())
+					+ ".jpg");
+			intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(takePhotoSavePath)));
 			startActivityForResult(intent, SysConstant.CAMERA_WITH_DATA);
 			addOthersPanelView.setVisibility(View.GONE);
-		} else if (id == R.id.show_emo_btn) {
+
 			scrollToBottomListItem();
 
-			inputManager
-					.hideSoftInputFromWindow(messageEdt.getWindowToken(), 0);
+		} else if (id == R.id.show_emo_btn) {
+			inputManager.hideSoftInputFromWindow(messageEdt.getWindowToken(), 0);
 			if (emoGridView.getVisibility() == View.GONE) {
 				emoGridView.setVisibility(View.VISIBLE);
 			} else if (emoGridView.getVisibility() == View.VISIBLE) {
@@ -1252,9 +1185,10 @@ public class MessageActivity extends TTBaseActivity implements
 			if (addOthersPanelView.getVisibility() == View.VISIBLE) {
 				addOthersPanelView.setVisibility(View.GONE);
 			}
-		} else if (id == R.id.send_message_btn) {
+
 			scrollToBottomListItem();
 
+		} else if (id == R.id.send_message_btn) {
 			// todo eric
 			// if (!StateManager.getInstance().isOnline()) {
 			// PinkToast.makeText(
@@ -1266,24 +1200,15 @@ public class MessageActivity extends TTBaseActivity implements
 			// return;
 			// }
 
-			if (!imServiceHelper.getIMService().getLoginManager().isLoggined()) {
-				Toast.makeText(this, "已和服务器断开连接,无法发送", Toast.LENGTH_LONG)
-						.show();
-				return;
-			}
-
-			logger.d("chat#send btn clicked");
+			logger.d("messageactivity#send btn clicked");
 
 			String content = messageEdt.getText().toString();
-			logger.e("chat#chat content:%s", content);
+			logger.e("messageactivity#chat content:%s", content);
 			if (content.trim().equals("")) {
-				PinkToast.makeText(MessageActivity.this,
-						getResources().getString(R.string.message_null),
-						Toast.LENGTH_LONG).show();
+				PinkToast.makeText(MessageActivity.this, getResources().getString(R.string.message_null), Toast.LENGTH_LONG).show();
 				return;
 			}
-			MessageInfo msg = MessageHelper.obtainTextMessage(
-					session.getSessionId(), content);
+			MessageInfo msg = MessageHelper.obtainTextMessage(session.getSessionId(), content);
 			if (msg != null) {
 				addItem(msg);
 
@@ -1295,9 +1220,10 @@ public class MessageActivity extends TTBaseActivity implements
 				// emoGridView.setVisibility(View.GONE);
 			}
 
+			scrollToBottomListItem();
+
 		} else if (id == R.id.voice_btn) {
-			inputManager
-					.hideSoftInputFromWindow(messageEdt.getWindowToken(), 0);
+			inputManager.hideSoftInputFromWindow(messageEdt.getWindowToken(), 0);
 			messageEdt.setVisibility(View.GONE);
 			audioInputImg.setVisibility(View.GONE);
 			recordAudioBtn.setVisibility(View.VISIBLE);
@@ -1330,52 +1256,44 @@ public class MessageActivity extends TTBaseActivity implements
 				if (AudioPlayerHandler.getInstance().isPlaying())
 					AudioPlayerHandler.getInstance().stopPlayer();
 				y1 = event.getY();
-				recordAudioBtn
-						.setBackgroundResource(R.drawable.tt_pannel_btn_voiceforward_pressed);
-				recordAudioBtn.setText(MessageActivity.this.getResources()
-						.getString(R.string.release_to_send_voice));
+				recordAudioBtn.setBackgroundResource(R.drawable.tt_pannel_btn_voiceforward_pressed);
+				recordAudioBtn.setText(MessageActivity.this.getResources().getString(R.string.release_to_send_voice));
 
 				soundVolumeImg.setImageResource(R.drawable.tt_sound_volume_01);
 				soundVolumeImg.setVisibility(View.VISIBLE);
-				soundVolumeLayout
-						.setBackgroundResource(R.drawable.tt_sound_volume_default_bk);
+				soundVolumeLayout.setBackgroundResource(R.drawable.tt_sound_volume_default_bk);
 				soundVolumeDialog.show();
-				audioSavePath = CommonUtil.getAudioSavePath(CacheHub
-						.getInstance().getLoginUserId());
-				audioRecorderInstance = new AudioRecordHandler(audioSavePath,
-						new TaskCallback() {
+				audioSavePath = CommonUtil.getAudioSavePath(CacheHub.getInstance().getLoginUserId());
+				audioRecorderInstance = new AudioRecordHandler(audioSavePath, new TaskCallback() {
 
-							@Override
-							public void callback(Object result) {
-								logger.d("chat#audio#in callback");
-								if (audioReday) {
-									if (msgHandler != null) {
-										logger.d("chat#audio#send record finish message");
+					@Override
+					public void callback(Object result) {
+						logger.d("messageactivity#audio#in callback");
+						if (audioReday) {
+							if (msgHandler != null) {
+								logger.d("messageactivity#audio#send record finish message");
 
-										Message msg = uiHandler.obtainMessage();
-										msg.what = HandlerConstant.HANDLER_RECORD_FINISHED;
-										msg.obj = audioRecorderInstance
-												.getRecordTime();
-										uiHandler.sendMessage(msg);
-									}
-								}
+								Message msg = uiHandler.obtainMessage();
+								msg.what = HandlerConstant.HANDLER_RECORD_FINISHED;
+								msg.obj = audioRecorderInstance.getRecordTime();
+								uiHandler.sendMessage(msg);
 							}
-						});
+						}
+					}
+				});
 				audioRecorderThread = new Thread(audioRecorderInstance);
 				audioReday = false;
 				audioRecorderInstance.setRecording(true);
-				logger.d("chat#audio#audio record thread starts");
+				logger.d("messageactivity#audio#audio record thread starts");
 				audioRecorderThread.start();
 			} else if (event.getAction() == MotionEvent.ACTION_MOVE) {
 				y2 = event.getY();
 				if (y1 - y2 > 50) {
 					soundVolumeImg.setVisibility(View.GONE);
-					soundVolumeLayout
-							.setBackgroundResource(R.drawable.tt_sound_volume_cancel_bk);
+					soundVolumeLayout.setBackgroundResource(R.drawable.tt_sound_volume_cancel_bk);
 				} else {
 					soundVolumeImg.setVisibility(View.VISIBLE);
-					soundVolumeLayout
-							.setBackgroundResource(R.drawable.tt_sound_volume_default_bk);
+					soundVolumeLayout.setBackgroundResource(R.drawable.tt_sound_volume_default_bk);
 				}
 			} else if (event.getAction() == MotionEvent.ACTION_UP) {
 
@@ -1396,10 +1314,8 @@ public class MessageActivity extends TTBaseActivity implements
 				if (soundVolumeDialog.isShowing()) {
 					soundVolumeDialog.dismiss();
 				}
-				recordAudioBtn
-						.setBackgroundResource(R.drawable.tt_pannel_btn_voiceforward_normal);
-				recordAudioBtn.setText(MessageActivity.this.getResources()
-						.getString(R.string.tip_for_voice_forward));
+				recordAudioBtn.setBackgroundResource(R.drawable.tt_pannel_btn_voiceforward_normal);
+				recordAudioBtn.setText(MessageActivity.this.getResources().getString(R.string.tip_for_voice_forward));
 				if (y1 - y2 <= 50) {
 					if (audioRecorderInstance.getRecordTime() >= 0.5) {
 						if (audioRecorderInstance.getRecordTime() < SysConstant.MAX_SOUND_RECORD_TIME) {
@@ -1407,8 +1323,7 @@ public class MessageActivity extends TTBaseActivity implements
 						}
 					} else {
 						soundVolumeImg.setVisibility(View.GONE);
-						soundVolumeLayout
-								.setBackgroundResource(R.drawable.tt_sound_volume_short_tip_bk);
+						soundVolumeLayout.setBackgroundResource(R.drawable.tt_sound_volume_short_tip_bk);
 						soundVolumeDialog.show();
 						Timer timer = new Timer();
 						timer.schedule(new TimerTask() {
@@ -1427,8 +1342,6 @@ public class MessageActivity extends TTBaseActivity implements
 
 	@Override
 	protected void onStop() {
-		imServiceHelper.disconnect(this);
-
 		if (null != adapter) {
 			adapter.hidePopup();
 		}
@@ -1452,8 +1365,7 @@ public class MessageActivity extends TTBaseActivity implements
 		scrollToBottomListItem();
 		if (s.length() > 0) {
 			String strMsg = messageEdt.getText().toString();
-			CharSequence emoCharSeq = Emoparser.getInstance(
-					MessageActivity.this).emoCharsequence(strMsg);
+			CharSequence emoCharSeq = Emoparser.getInstance(MessageActivity.this).emoCharsequence(strMsg);
 			if (!textChanged) {
 				textChanged = true;
 				messageEdt.setText(emoCharSeq);
@@ -1465,14 +1377,12 @@ public class MessageActivity extends TTBaseActivity implements
 				textChanged = false;
 			}
 			sendBtn.setVisibility(View.VISIBLE);
-			RelativeLayout.LayoutParams param = (LayoutParams) messageEdt
-					.getLayoutParams();
+			RelativeLayout.LayoutParams param = (LayoutParams) messageEdt.getLayoutParams();
 			param.addRule(RelativeLayout.LEFT_OF, R.id.send_message_btn);
 			addPhotoBtn.setVisibility(View.GONE);
 		} else {
 			addPhotoBtn.setVisibility(View.VISIBLE);
-			RelativeLayout.LayoutParams param = (LayoutParams) messageEdt
-					.getLayoutParams();
+			RelativeLayout.LayoutParams param = (LayoutParams) messageEdt.getLayoutParams();
 			param.addRule(RelativeLayout.LEFT_OF, R.id.show_add_photo_btn);
 			sendBtn.setVisibility(View.GONE);
 		}
@@ -1482,15 +1392,20 @@ public class MessageActivity extends TTBaseActivity implements
 	 * @Description 滑动到列表底部
 	 */
 	private void scrollToBottomListItem() {
+
+		// todo eric, why use the last one index + 2 can real scroll to the
+		// bottom?
 		ListView lv = lvPTR.getRefreshableView();
 		if (lv != null) {
-			lv.setSelection(adapter.getCount() - 1);
+			lv.setSelection(adapter.getCount() + 1);
 		}
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
+
+		imServiceConnectionEnabled = false;
 	}
 
 	@Override

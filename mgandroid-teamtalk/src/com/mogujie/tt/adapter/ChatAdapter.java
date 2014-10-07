@@ -1,8 +1,6 @@
 package com.mogujie.tt.adapter;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -15,9 +13,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.mogujie.tt.R;
-import com.mogujie.tt.biz.ContactHelper;
 import com.mogujie.tt.entity.RecentInfo;
-import com.mogujie.tt.entity.User;
 import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
