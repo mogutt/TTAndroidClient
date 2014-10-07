@@ -14,12 +14,25 @@
         android:background="@drawable/tt_page_item_bk"
         android:padding="15dp" >
 
-        <ImageView
+        <!--
+             <ImageView
             android:id="@+id/user_portrait"
             android:layout_width="65dp"
             android:layout_height="65dp"
             android:layout_alignParentLeft="true"
             android:src="@drawable/tt_default_user_portrait_corner" />
+        -->
+
+        <com.mogujie.widget.imageview.MGWebImageView
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/user_portrait"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:layout_alignParentLeft="true"
+            android:background="@drawable/tt_default_user_portrait_corner"
+            android:scaleType="centerCrop"
+            app:cornerSize="2dp"
+            app:shape="round_corner" />
 
         <RelativeLayout
             android:layout_width="wrap_content"
@@ -70,6 +83,7 @@
                 android:textSize="15sp" />
 
             <TextView
+                android:id="@+id/position"
                 android:layout_height="45dp"
                 android:layout_column="1"
                 android:layout_marginLeft="15dp"
@@ -97,6 +111,7 @@
                 android:textSize="15sp" />
 
             <TextView
+                android:id="@+id/department"
                 android:layout_height="45dp"
                 android:layout_marginLeft="15dp"
                 android:gravity="left|center_vertical"
@@ -123,6 +138,7 @@
                 android:textSize="15sp" />
 
             <TextView
+                android:id="@+id/telno"
                 android:layout_height="45dp"
                 android:layout_marginLeft="15dp"
                 android:gravity="left|center_vertical"
@@ -137,6 +153,7 @@
             android:layout_height="0.5dp"
             android:background="@color/default_line_color" />
 
+        <!--
         <TableRow>
 
             <TextView
@@ -149,6 +166,7 @@
                 android:textSize="15sp" />
 
             <TextView
+                android:id="@+id/birthday"
                 android:layout_height="45dp"
                 android:layout_marginLeft="15dp"
                 android:gravity="left|center_vertical"
@@ -162,6 +180,7 @@
             android:layout_width="fill_parent"
             android:layout_height="0.5dp"
             android:background="@color/default_line_color" />
+        -->
 
         <TableRow>
 
@@ -175,6 +194,7 @@
                 android:textSize="15sp" />
 
             <TextView
+                android:id="@+id/email"
                 android:layout_height="45dp"
                 android:layout_marginLeft="15dp"
                 android:gravity="left|center_vertical"

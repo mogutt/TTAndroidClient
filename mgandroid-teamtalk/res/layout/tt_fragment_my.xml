@@ -13,12 +13,25 @@
         android:background="@drawable/tt_page_item_bk"
         android:padding="15dp" >
 
-        <ImageView
+        <!--
+             <ImageView
             android:id="@+id/user_portrait"
             android:layout_width="65dp"
             android:layout_height="65dp"
             android:layout_alignParentLeft="true"
             android:src="@drawable/tt_default_user_portrait_corner" />
+        -->
+
+        <com.mogujie.widget.imageview.MGWebImageView
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/user_portrait"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:layout_alignParentLeft="true"
+            android:background="@drawable/tt_default_user_portrait_corner"
+            android:scaleType="centerCrop"
+            app:cornerSize="2dp"
+            app:shape="round_corner" />
 
         <RelativeLayout
             android:layout_width="wrap_content"
@@ -31,20 +44,20 @@
                 android:id="@+id/nickName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="18sp"
+                android:text="纳纳"
                 android:textColor="@android:color/black"
-                android:textStyle="bold"
-                android:text="纳纳" />
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/userName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/nickName"
-                android:textColor="@color/default_light_grey_color"
                 android:layout_marginTop="5dp"
-                android:textSize="15sp"
-                android:text="席晓纳" />
+                android:text="席晓纳"
+                android:textColor="@color/default_light_grey_color"
+                android:textSize="15sp" />
         </RelativeLayout>
 
         <ImageView
@@ -73,11 +86,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:textSize="16sp"
-            android:textColor="@android:color/black"
             android:layout_marginLeft="15dp"
             android:layout_toRightOf="@id/setting_image"
-            android:text="@string/page_setting" />
+            android:text="@string/page_setting"
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
 
         <ImageView
             android:layout_width="15dp"
