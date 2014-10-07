@@ -11,6 +11,9 @@ public interface IMActions {
 	
 	String ACTION_GROUP_READY = "com.mogujie.tt.imlib.action.group.ready";
 	
+	String ACTION_GROUP_CREATE_TEMP_GROUP_RESULT = "com.mogujie.tt.imlib.action.group.crate_temp_group_result";
+
+	
 	
 	String ACTION_ADD_RECENT_CONTACT_OR_GROUP = "com.mogujie.tt.imlib.action.add_recent_contact_or_group";
 	

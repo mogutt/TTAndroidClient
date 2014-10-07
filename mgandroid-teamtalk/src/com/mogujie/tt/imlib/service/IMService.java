@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 
+import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.imlib.IMActions;
 import com.mogujie.tt.imlib.IMContactManager;
 import com.mogujie.tt.imlib.IMGroupManager;
@@ -185,28 +186,28 @@ public class IMService extends Service implements OnIMServiceListner {
 	public void onAction(String action, Intent intent,
 			BroadcastReceiver broadcastReceiver) {
 		// TODO Auto-generated method stub
-//
-//		if (action.equals(IMActions.ACTION_MSG_RECV)) {
-//			logger.d("notification#recv unhandled message");
-//
-//			logger.d("notification#onMsgRecv");
-//			String sessionId = intent
-//					.getStringExtra(SysConstant.SESSION_ID_KEY);
-//			String msgId = intent.getStringExtra(SysConstant.MSG_ID_KEY);
-//			logger.d("notification#msg no one handled, sessionId:%s, msgId:%s",
-//					sessionId, msgId);
-//
-//			MessageEntity msg = getMessageManager().getUnreadMsg(sessionId,
-//					msgId);
-//			if (msg == null) {
-//				logger.e("chat#can't get unread msg");
-//				return;
-//			}
-//
+
+		if (action.equals(IMActions.ACTION_MSG_RECV)) {
+			logger.d("notification#recv unhandled message");
+
+			logger.d("notification#onMsgRecv");
+			String sessionId = intent
+					.getStringExtra(SysConstant.SESSION_ID_KEY);
+			String msgId = intent.getStringExtra(SysConstant.MSG_ID_KEY);
+			logger.d("notification#msg no one handled, sessionId:%s, msgId:%s",
+					sessionId, msgId);
+
+			MessageEntity msg = IMUnreadMsgManager.instance().getUnreadMsg(sessionId,
+					msgId);
+			if (msg == null) {
+				logger.e("notification#can't get unread msg");
+				return;
+			}
+
 //			updateRecentList(msg);
-//
-//			showInNotificationBar(msg, sessionId, msg.sessionType);
-//		} 
+
+			showInNotificationBar(msg, sessionId, msg.sessionType);
+		} 
 
 	}
 
@@ -358,6 +359,7 @@ public class IMService extends Service implements OnIMServiceListner {
 		// rolling text
 		notification.tickerText = getRollingText(msg, false);
 		notification.defaults = Notification.DEFAULT_SOUND;
+		
 
 		Intent intent = new Intent(this, MessageActivity.class);
 		IMUIHelper.setSessionInIntent(intent, sessionId, sessionType);
@@ -367,7 +369,7 @@ public class IMService extends Service implements OnIMServiceListner {
 		notification.setLatestEventInfo(getApplicationContext(),
 				getNotificationTitle(msg),
 				getNotificationContentText(msg), pendingIntent);
-		notifyMgr.notify(0, notification);
+		notifyMgr.notify(Integer.parseInt(sessionId), notification);
 	}
 
 	@Override

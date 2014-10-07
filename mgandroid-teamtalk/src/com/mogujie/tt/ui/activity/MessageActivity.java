@@ -116,21 +116,26 @@ public class MessageActivity extends TTBaseActivity
 		// todo eric, this is unnecessary check, just assignment it
 		int sessionType = 0;
 		String sessionId = "";
-		if (session.getSessionId().isEmpty()) {
-			sessionType = getIntent().getIntExtra(SysConstant.SESSION_TYPE_KEY, 0);
-			sessionId = getIntent().getStringExtra(SysConstant.SESSION_ID_KEY);
-
-			session.setType(sessionType);
-			session.setSessionId(sessionId);
-		} else {
-			sessionType = session.getType();
-			sessionId = session.getSessionId();
-		}
-
-		handleUnreadMsgs(sessionId, sessionType);
+		// if (session.getSessionId().isEmpty()) {
+		// sessionType = getIntent().getIntExtra(SysConstant.SESSION_TYPE_KEY,
+		// 0);
+		// sessionId = getIntent().getStringExtra(SysConstant.SESSION_ID_KEY);
+		//
+		// session.setType(sessionType);
+		// session.setSessionId(sessionId);
+		// } else {
+		sessionType = session.getType();
+		sessionId = session.getSessionId();
+		// }
 
 		setTitleByUser2(sessionId, sessionType);
-
+		handleOnResume();
+	}
+	
+	private void handleOnResume() {
+		int sessionType = session.getType();;
+		String sessionId = session.getSessionId();
+		handleUnreadMsgs(sessionId, sessionType);
 		loadHistoryMessage(sessionId);
 	}
 
@@ -190,6 +195,7 @@ public class MessageActivity extends TTBaseActivity
 			return;
 		}
 
+		imService.getRecentSessionManager().resetUnreadMsgCnt(sessionId);
 		List<MessageInfo> msgList = imService.getMessageManager().ReadUnreadMsgList(sessionId, session.getType());
 		if (msgList == null) {
 			logger.e("messageactivity#no any unread MessageInfo list");
@@ -221,15 +227,14 @@ public class MessageActivity extends TTBaseActivity
 			onMsgRecv(intent, broadcastReceiver);
 		}
 	}
-	
+
 	private void onMsgUnAckTimeout(Intent intent) {
 		String msgId = intent.getStringExtra(SysConstant.MSG_ID_KEY);
 		logger.d("chat#onMsgUnAckTimeout, msgId:%s", msgId);
-		
+
 		updateMessageState(msgId, SysConstant.MESSAGE_STATE_FINISH_FAILED);
 	}
-	
-	
+
 	private static Handler uiHandler = null;// 处理界面消息
 	private static Handler msgHandler = null;// 处理协议消息
 	private PullToRefreshListView lvPTR = null;
@@ -289,6 +294,12 @@ public class MessageActivity extends TTBaseActivity
 		actions.add(IMActions.ACTION_MSG_UNACK_TIMEOUT);
 		imServiceHelper.connect(this, actions, IMServiceHelper.INTENT_MAX_PRIORITY, this);
 		logger.d("messageactivity#register im service");
+
+		int sessionType = getIntent().getIntExtra(SysConstant.SESSION_TYPE_KEY, 0);
+		String sessionId = getIntent().getStringExtra(SysConstant.SESSION_ID_KEY);
+
+		session.setType(sessionType);
+		session.setSessionId(sessionId);
 	}
 
 	@Override
@@ -302,7 +313,13 @@ public class MessageActivity extends TTBaseActivity
 
 		NotificationManager notifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		if (notifyMgr != null) {
-			notifyMgr.cancelAll();
+			// notifyMgr.cancelAll();
+			notifyMgr.cancel(Integer.parseInt(session.getSessionId()));
+		}
+		
+		//not the first time
+		if (imServiceHelper.getIMService() != null) {
+			handleOnResume();
 		}
 
 		// 从联系人切换到消息界面时设置聊天界面信息

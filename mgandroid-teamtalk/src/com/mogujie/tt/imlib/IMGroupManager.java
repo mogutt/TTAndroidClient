@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import android.content.Intent;
 
 import com.mogujie.tt.config.ProtocolConstant;
+import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.RecentInfo;
 import com.mogujie.tt.imlib.network.SocketThread;
 import com.mogujie.tt.imlib.proto.ContactEntity;
@@ -102,6 +103,7 @@ public class IMGroupManager extends IMManager {
 		logger.d("group#fetchGroupList");
 
 		reqGetGroupList();
+		reqGetTempGroupList();
 		reqUnreadMsgGroupList();
 
 	}
@@ -116,6 +118,20 @@ public class IMGroupManager extends IMManager {
 		}
 
 		channel.sendPacket(new GroupPacket(IMSession.SESSION_GROUP));
+
+		logger.i("group#send packet to server");
+
+	}
+	
+	public void reqGetTempGroupList() {
+		logger.i("group#reqGetTempGroupList");
+
+		SocketThread channel = IMLoginManager.instance().getMsgServerChannel();
+		if (channel == null) {
+			logger.e("contact#channel is null");
+			return;
+		}
+
 		channel.sendPacket(new GroupPacket(IMSession.SESSION_TEMP_GROUP));
 
 		logger.i("group#send packet to server");
@@ -194,7 +210,7 @@ public class IMGroupManager extends IMManager {
 	}
 
 	public void reqCreateTempGroup(String tempGroupName, List<String> memberList) {
-		logger.i("tempgroup#reqCreateTempGroup, name:%s, member cnt:%d", tempGroupName, memberList.size());
+		logger.d("tempgroup#reqCreateTempGroup, name:%s, member cnt:%d", tempGroupName, memberList.size());
 
 		SocketThread channel = IMLoginManager.instance().getMsgServerChannel();
 		if (channel == null) {
@@ -210,28 +226,33 @@ public class IMGroupManager extends IMManager {
 	}
 
 	public void onRepCreateTempGroup(DataBuffer buffer) {
-		logger.i("tempgroup#onRepCreateTempGroup");
+		logger.d("tempgroup#onRepCreateTempGroup");
 
 		CreateTempGroupPacket packet = new CreateTempGroupPacket();
 		packet.decode(buffer);
 
 		CreateTempGroupPacket.PacketResponse resp = (CreateTempGroupPacket.PacketResponse) packet.getResponse();
 
+		Intent intent = new Intent(IMActions.ACTION_GROUP_CREATE_TEMP_GROUP_RESULT);
+		intent.putExtra(SysConstant.OPERATION_RESULT_KEY, resp.result);
 		if (resp.result != 0) {
 			logger.e("tempgroup#createTempGroup failed");
-			return;
+		} else {
+			GroupEntity group = resp.entity;
+//			group.pinyin = PinYin.getPinYin(group.name);
+
+			logger.i("tempgroup# -> new temp group:%s", group);
+
+			intent.putExtra(SysConstant.SESSION_ID_KEY, group.id);
+			
+			//todo eric, the return value has bug, updated time is not right, and the member cnt is also not right
+			reqGetTempGroupList();
 		}
 
-		GroupEntity group = resp.entity;
-		group.pinyin = PinYin.getPinYin(group.name);
+		ctx.sendBroadcast(intent);
 
-		logger.i("tempgroup# -> new temp group:%s", group);
-
-		groups.put(group.id, group);
-
-		// ctx.sendBroadcast(new Intent(IMActions.ACTION_GROUP_READY));
-		logger.d("tempgroup#broadcast group ready msg");
 	}
+
 
 	private void reqUnreadMsgGroupList() {
 		logger.i("unread#reqUnreadMsgGroupList");

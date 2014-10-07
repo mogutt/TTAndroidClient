@@ -7,7 +7,7 @@ import java.util.List;
 import com.mogujie.tt.entity.MessageInfo;
 import com.mogujie.tt.log.Logger;
 
-public class IMUnreadMsgManager  extends IMManager {
+public class IMUnreadMsgManager extends IMManager {
 	private static IMUnreadMsgManager inst;
 	public static IMUnreadMsgManager instance() {
 		synchronized (IMUnreadMsgManager.class) {
@@ -18,7 +18,7 @@ public class IMUnreadMsgManager  extends IMManager {
 			return inst;
 		}
 	}
-	
+
 	private Logger logger = Logger.getLogger(IMUnreadMsgManager.class);
 
 	// key = session_id
@@ -47,14 +47,33 @@ public class IMUnreadMsgManager  extends IMManager {
 
 		return msgList;
 	}
-	
+
 	public synchronized int getUnreadMsgListCnt(String sessionId) {
 		logger.d("unread#getUnreadMsgListCnt sessionId:%s", sessionId);
 		List<MessageInfo> msgList = unreadMsgs.get(sessionId);
 		if (msgList == null) {
 			return 0;
 		}
-		
+
 		return msgList.size();
+	}
+
+	public synchronized MessageInfo getUnreadMsg(String sessionId, String msgId) {
+		logger.d("unread#getUnreadMsg sessionId:%s, msgId:%s", sessionId, msgId);
+
+		List<MessageInfo> msgList = unreadMsgs.get(sessionId);
+		if (msgList == null) {
+			logger.w("unread# sessionId:%s has no unreadMsgs", sessionId);
+			return null;
+		}
+
+		for (MessageInfo msg : msgList) {
+			if (msg.msgId.equals(msgId)) {
+				return msg;
+			}
+		}
+		
+		logger.d("unread#no such unread msg");
+		return null;
 	}
 }

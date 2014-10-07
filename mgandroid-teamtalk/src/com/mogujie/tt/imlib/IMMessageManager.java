@@ -1,9 +1,12 @@
 package com.mogujie.tt.imlib;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 
+import android.content.BroadcastReceiver;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
@@ -23,8 +26,10 @@ import com.mogujie.tt.imlib.proto.UnreadMsgPacket.PacketResponse;
 import com.mogujie.tt.imlib.utils.IMContactHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
+import com.mogujie.tt.ui.utils.IMServiceHelper;
+import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 
-public class IMMessageManager extends IMManager {
+public class IMMessageManager extends IMManager implements OnIMServiceListner {
 	private static IMMessageManager inst;
 	private Logger logger = Logger.getLogger(IMMessageManager.class);
 
@@ -39,9 +44,20 @@ public class IMMessageManager extends IMManager {
 	}
 
 	private int seqNo = 1;
+	private List<MessageInfo> noSessionEntityMsgList = new ArrayList<MessageInfo>();
+	private IMServiceHelper imServiceHelper = new IMServiceHelper();
+
 
 	private IMMessageManager() {
 
+	}
+	
+	public void register() {
+		logger.d("chat#regisgter");
+
+		List<String> actions = new ArrayList<String>();
+		actions.add(IMActions.ACTION_GROUP_READY);
+		imServiceHelper.registerActions(ctx, actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
 	}
 
 	public void sendText(String peerId, String text, int sessionType,
@@ -125,10 +141,10 @@ public class IMMessageManager extends IMManager {
 		msgInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_LOADDING);
 
 		IMUnAckMsgManager.instance().add(msgInfo);
-		
+
 		IMRecentSessionManager.instance().update(msgInfo);
 		IMRecentSessionManager.instance().broadcast();
-		
+
 		channel.sendPacket(new MessagePacket(msgInfo));
 	}
 
@@ -192,6 +208,24 @@ public class IMMessageManager extends IMManager {
 
 	}
 
+	private Object findMsgSessionEntity(MessageInfo msg) {
+		logger.d("chat#findMsgSessionEntity msg:%s", msg);
+		ContactEntity contactEntity = IMContactManager.instance().findContact(msg.sessionId);
+		if (contactEntity != null) {
+			logger.d("chat#this is a contact msg");
+			return contactEntity;
+		}
+
+		GroupEntity groupEntity = IMGroupManager.instance().findGroup(msg.sessionId);
+		if (groupEntity != null) {
+			logger.d("chat#this is a group msg");
+			return groupEntity;
+		}
+
+		IMGroupManager.instance().reqGetTempGroupList();
+		return null;
+	}
+
 	public void onRecvMessage(DataBuffer buffer) {
 		logger.i("chat#onRecvMessage");
 
@@ -202,6 +236,21 @@ public class IMMessageManager extends IMManager {
 		}
 
 		ackMsg(msgInfo);
+
+		Object msgSessionEntity = findMsgSessionEntity(msgInfo);
+
+		if (msgSessionEntity != null) {
+			logger.d("chat#found msgSessionEntity");
+			handleRecvMsg(msgInfo);
+		} else {
+			logger.d("chat#msgSessionEntity not found for msg:%s", msgInfo);
+			noSessionEntityMsgList.add(msgInfo);
+		}
+	}
+	
+	private void handleRecvMsg(MessageInfo msgInfo) {
+		logger.d("chat#handleRecvMsg");
+		
 		handleUnreadMsg(msgInfo);
 		IMRecentSessionManager.instance().broadcast();
 	}
@@ -212,17 +261,17 @@ public class IMMessageManager extends IMManager {
 			msgInfo.sessionType = IMSession.SESSION_P2P;
 			return;
 		}
-		
+
 		GroupEntity group = IMGroupManager.instance().findGroup(msgInfo.sessionId);
 		if (group != null) {
 			msgInfo.sessionType = group.type;
 			return;
 		}
-		
+
 		logger.e("chat#unkown msg session type, could be temp group type");
 		msgInfo.sessionType = IMSession.SESSION_TEMP_GROUP;
 	}
-	
+
 	private void handleUnreadMsg(MessageInfo msgInfo) {
 		logger.d("chat#handleUnreadMsg");
 		List<MessageInfo> splitMessageList = IMContactHelper.splitMessage(msgInfo);
@@ -230,7 +279,7 @@ public class IMMessageManager extends IMManager {
 		for (MessageInfo msg : splitMessageList) {
 			setMsgSessionType(msg);
 			IMUnreadMsgManager.instance().add(msg);
-			
+
 			IMRecentSessionManager.instance().update(msg);
 
 			if (broadcastMessage(msg, IMActions.ACTION_MSG_RECV, true)) {
@@ -281,7 +330,7 @@ public class IMMessageManager extends IMManager {
 			MessageInfo msgInfo = new MessageInfo(msgEntity);
 			handleUnreadMsg(msgInfo);
 		}
-		
+
 		IMRecentSessionManager.instance().broadcast();
 	}
 
@@ -344,5 +393,24 @@ public class IMMessageManager extends IMManager {
 
 		logger.i("chat#send packet to server");
 
+	}
+
+	@Override
+	public void onAction(String action, Intent intent,
+			BroadcastReceiver broadcastReceiver) {
+		// TODO Auto-generated method stub
+		if (action.equals(IMActions.ACTION_GROUP_READY)) {
+			logger.d("chat#on action group ready");
+			
+			for (MessageInfo msg : noSessionEntityMsgList) {
+				handleRecvMsg(msg);
+			}
+		}
+	}
+
+	@Override
+	public void onIMServiceConnected() {
+		// TODO Auto-generated method stub
+		
 	}
 }

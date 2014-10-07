@@ -133,7 +133,7 @@ public class IMUIHelper {
 			logger.d("avatar#setWebImageViewAvatar avatarUrl:%s",
 					contact.avatarUrl);
 			setWebImageViewAvatar(webImageView, contact.avatarUrl,
-					session.getType());
+					IMSession.SESSION_P2P);
 
 			return true;
 		} else {

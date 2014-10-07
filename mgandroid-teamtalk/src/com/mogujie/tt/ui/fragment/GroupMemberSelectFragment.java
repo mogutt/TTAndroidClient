@@ -112,7 +112,7 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 					
 					String loginId = imService.getLoginManager().getLoginId();
 					logger.d("tempgroup#loginId:%s", loginId);
-					memberList.add(loginId);
+					memberList.add(0, loginId);
 					
 					logger.d("tempgroup#memberList size:%d", memberList.size());
 					for (String id : memberList) {

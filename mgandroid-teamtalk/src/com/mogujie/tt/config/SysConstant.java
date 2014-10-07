@@ -12,6 +12,7 @@ public interface SysConstant {
 	String MSG_ID_KEY = "msg_id";
 	String SESSION_TYPE_KEY = "session_type";
 	String SESSION_ID_KEY = "session_id";
+	String OPERATION_RESULT_KEY = "tt_opeartion_result";
 	
 	//todo eric
 	String AVATAR_URL_PREFIX = "http://122.225.68.125:8001/";
