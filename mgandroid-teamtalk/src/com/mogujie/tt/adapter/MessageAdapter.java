@@ -1161,7 +1161,7 @@ public class MessageAdapter extends BaseAdapter {
 			updateItemState(messageInfo.msgId, SysConstant.MESSAGE_STATE_LOADDING);
 
 			// todo eric
-			final String smallImageUrl = "http://122.225.68.125:8600/"
+			final String smallImageUrl = SysConstant.DOWNLOAD_IMAGE_URL_REPFIX
 					+ messageInfo.getUrl();// StringUtil.getSmallerImageLink(messageInfo.getUrl());
 			
 			logger.d("chat#pic#download image ulr:%s", smallImageUrl);

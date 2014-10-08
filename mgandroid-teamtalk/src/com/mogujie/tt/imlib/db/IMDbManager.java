@@ -234,6 +234,31 @@ public class IMDbManager extends SQLiteOpenHelper {
 		return null;
 	}
 
+	private int refreshMessageStatus(String msgId, int dbStatus) {
+		if (dbStatus != SysConstant.MESSAGE_STATE_FINISH_SUCCESSED) {
+			// if it's loading status, but not in unack list, make it failed
+			// status
+			// todo eric, picture loading status has 2 steps, handle the
+			// first step(uploading step)
+			// status = SysConstant.MESSAGE_STATE_FINISH_FAILED;
+			MessageInfo unackMsg = IMUnAckMsgManager.instance().get(msgId);
+			if (unackMsg != null) {
+				dbStatus = unackMsg.getMsgLoadState();
+			} else {
+				if (dbStatus == SysConstant.MESSAGE_STATE_LOADDING) {
+					// for image, the status is unload
+					// for unfinished audio or text messages, make the status
+					// failed
+					dbStatus = SysConstant.MESSAGE_STATE_FINISH_FAILED;
+				} else if (dbStatus == SysConstant.MESSAGE_STATE_UNLOAD) {
+					//do nothing, so image message can still be fetched from the network
+				}
+			}
+		}
+		
+		return dbStatus;
+	}
+
 	public synchronized List<MessageInfo> getHistoryMsg(String sessionId,
 			int sessionType, int offset, int count, int firstHistoryMsgTime) {
 		logger.d("db#getMsg sessionid:%s, sessionType:%d, offset:%d,  count:%d, firstHistoryMsgTime:%d", sessionId, sessionType, offset, count, firstHistoryMsgTime);
@@ -267,17 +292,7 @@ public class IMDbManager extends SQLiteOpenHelper {
 			int status = cursor.getInt(5);
 			String content = cursor.getString(6);
 			String msgId = cursor.getString(7);
-			if (status != SysConstant.MESSAGE_STATE_FINISH_SUCCESSED) {
-				// if it's loading status, but not in unack list, make it failed
-				// status
-				// todo eric, picture loading status has 2 steps, handle the
-				// first step(uploading step)
-				//status = SysConstant.MESSAGE_STATE_FINISH_FAILED;
-				MessageInfo unackMsg = IMUnAckMsgManager.instance().get(msgId);
-				if (unackMsg != null) {
-					status = unackMsg.getMsgLoadState();
-				}
-			}
+			status = refreshMessageStatus(msgId, status);
 
 			logger.d("db#fetch msg from db -> time:%d, fromId:%s, toId:%s, msgType:%d, renderType:%d, status:%d, content:%s, msgId:%s", time, fromId, toId, msgType, displayType, status, content, msgId);
 

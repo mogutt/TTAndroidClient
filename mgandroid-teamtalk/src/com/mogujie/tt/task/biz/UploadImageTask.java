@@ -69,7 +69,7 @@ public class UploadImageTask extends MAsyncTask {
 					// httpClient.uploadImage3("http://122.225.68.125:8001/upload/",
 					// messageInfo.getSavePath());
 
-					result = httpClient.uploadImage3("http://122.225.68.125:8600/upload/", messageInfo.getSavePath());
+					result = httpClient.uploadImage3(SysConstant.UPLOAD_IMAGE_URL_PREFIX + "upload/", messageInfo.getSavePath());
 
 					logger.d("pic#uploadImage ret url:%s", result);
 

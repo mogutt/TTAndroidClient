@@ -216,8 +216,8 @@ public class ProtocolConstant {
 	// LOGIN IP,PORT
 	public static final String LOGIN_IP1 = "122.225.68.125";
 	public static final String LOGIN_IP2 = "101.68.218.125";
-	//public static final int LOGIN_PORT = 9008;
-	public static final int LOGIN_PORT = 18008;
+	public static final int LOGIN_PORT = 9008;
+	//public static final int LOGIN_PORT = 18008;
 
 
 	// COMMAND_ID FOR LOGIN
