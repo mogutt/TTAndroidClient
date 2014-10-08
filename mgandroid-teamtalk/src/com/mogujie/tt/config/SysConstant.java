@@ -44,13 +44,8 @@ public interface SysConstant {
 
 	public static final String MESSAGE_ACTIVITY = "com.mogujie.tt.ui.activity.MessageActivity";
 
-	public static final String ORDER_URL = "http://www.mogujie.com/trade/order/detail4buyer";
-	public static final String ORDER_HOST = "www.mogujie.com/trade/order/detail4buyer";
 
-	public static final String DETAIL_URL = "http://shop.mogujie.com/detail/";
-	public static final String DETAIL_HOST = "shop.mogujie.com/detail";
 
-	public static final String TUANGOU_URL = "mogujie.com/tuan/detail/";
 
 	// 图片消息占位符
 	public static final String MESSAGE_IMAGE_LINK_START = "&$#@~^@[{:";
@@ -152,10 +147,6 @@ public interface SysConstant {
 	public static final int WEB_IMAGE_MIN_WIDTH = 100;
 	public static final int WEB_IMAGE_MIN_HEIGHT = 100;
 
-	public static final String UPLOAD_IMAGE_HOST = "http://www.mogujie.com/upload/addpic/";
-	public static final String AUTH_HOST = "http://www.mogujie.com/user/zlogin/";
-	public static final String CONVERT_TOKEN_HOST = "http://www.mogujie.com/mtalk/iauth";
-	public static final String DETAULT_PORTRAIT_URL = "http://s2.mogujie.cn/avatar/girl_avatar_default.jpg_64x64.jpg";
 
 	public static final String CHOOSE_CONTACT = "CHOOSE_CONTACT";
 	public static final String READCOUNT = "READ_COUNT";
@@ -217,7 +208,6 @@ public interface SysConstant {
 
 	public static final String APPLICATION_PACKAGE_NAME = "com.mogujie.tt";
 
-	public static final String INTERNAL_PAGE_URL = "http://www.mogujie.org";
 
 	public static final String USER_DETAIL_PARAM = "FROM_PAGE";
 

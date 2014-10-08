@@ -35,7 +35,7 @@ public class InternalFragment extends TTBaseFragment {
 
         WebView webView = (WebView) curView.findViewById(R.id.web_view);
         webView.getSettings().setJavaScriptEnabled(true);
-        webView.loadUrl(SysConstant.INTERNAL_PAGE_URL);
+//        webView.loadUrl(SysConstant.INTERNAL_PAGE_URL);
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);
         webView.setWebViewClient(new WebViewClient());

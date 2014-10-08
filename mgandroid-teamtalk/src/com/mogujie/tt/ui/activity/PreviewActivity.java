@@ -109,7 +109,7 @@ public class PreviewActivity extends Activity implements OnPageChangeListener, O
                     }
                     String Dao = "";//TokenManager.getInstance().getDao();
                     UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), sessionType,
-                            SysConstant.UPLOAD_IMAGE_HOST, Dao, messageList);
+                            SysConstant.UPLOAD_IMAGE_URL_PREFIX, Dao, messageList);
                     TaskManager.getInstance().trigger(upTask);
                     
                     Intent data = new Intent();

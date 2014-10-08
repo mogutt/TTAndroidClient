@@ -1018,7 +1018,7 @@ public class MessageActivity extends TTBaseActivity
 		List<MessageInfo> messageList = new ArrayList<MessageInfo>();
 		messageList.add(msg);
 		String Dao = "";// TokenManager.getInstance().getDao();
-		UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), session.getType(), SysConstant.UPLOAD_IMAGE_HOST, Dao, messageList);
+		UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), session.getType(), SysConstant.UPLOAD_IMAGE_URL_PREFIX, Dao, messageList);
 		TaskManager.getInstance().trigger(upTask);
 	}
 

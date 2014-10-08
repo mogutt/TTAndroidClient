@@ -177,17 +177,17 @@ public class CommonUtil {
      * @param content
      */
     public static void skipLink(Context cxt, String content) {
-        String detailUrl = "";
-        String orderUrl = "";
-        String httpUrl = "";
-        if (!TextUtils.isEmpty(detailUrl = getMatchUrl(content, SysConstant.DETAIL_HOST))) {
-            toDetailPage(cxt, getGoodsId(detailUrl));
-        } else if (!TextUtils.isEmpty(orderUrl = getMatchUrl(content, SysConstant.ORDER_HOST))) {
-            toOrderPage(cxt, getOrderId(orderUrl));
-            // toWebPage(cxt, orderUrl);
-        } else if (!TextUtils.isEmpty(httpUrl = matchUrl(content))) {
-            toWebPage(cxt, httpUrl);
-        }
+//        String detailUrl = "";
+//        String orderUrl = "";
+//        String httpUrl = "";
+//        if (!TextUtils.isEmpty(detailUrl = getMatchUrl(content, SysConstant.DETAIL_HOST))) {
+//            toDetailPage(cxt, getGoodsId(detailUrl));
+//        } else if (!TextUtils.isEmpty(orderUrl = getMatchUrl(content, SysConstant.ORDER_HOST))) {
+//            toOrderPage(cxt, getOrderId(orderUrl));
+//            // toWebPage(cxt, orderUrl);
+//        } else if (!TextUtils.isEmpty(httpUrl = matchUrl(content))) {
+//            toWebPage(cxt, httpUrl);
+//        }
     }
 
     /**
@@ -259,19 +259,20 @@ public class CommonUtil {
      * @return
      */
     private static String getGoodsId(String url) {
-        String[] strArray = url.split(SysConstant.DETAIL_URL);
-        String id = null;
-        if (strArray.length == 2) {
-            id = strArray[1];
-            int pSplit = id.indexOf("/");
-            int pParam = id.indexOf("?");
-            if (pSplit > 0) {
-                id = id.substring(0, pSplit);
-            } else if (pParam > 0) {
-                id = id.substring(0, pParam);
-            }
-        }
-        return id;
+//        String[] strArray = url.split(SysConstant.DETAIL_URL);
+//        String id = null;
+//        if (strArray.length == 2) {
+//            id = strArray[1];
+//            int pSplit = id.indexOf("/");
+//            int pParam = id.indexOf("?");
+//            if (pSplit > 0) {
+//                id = id.substring(0, pSplit);
+//            } else if (pParam > 0) {
+//                id = id.substring(0, pParam);
+//            }
+//        }
+//        return id;
+    	return null;
     }
 
     public static String getImageSavePath(String fileName) {

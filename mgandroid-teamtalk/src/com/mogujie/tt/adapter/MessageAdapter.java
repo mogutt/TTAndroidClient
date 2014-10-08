@@ -1120,7 +1120,7 @@ public class MessageAdapter extends BaseAdapter {
 					String Dao = "";// TokenManager.getInstance().getDao();
 					List<MessageInfo> messageList = new ArrayList<MessageInfo>();
 					messageList.add(mMsgInfo);
-					UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), session.getType(), SysConstant.UPLOAD_IMAGE_HOST, Dao, messageList);
+					UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), session.getType(), SysConstant.UPLOAD_IMAGE_URL_PREFIX, Dao, messageList);
 					TaskManager.getInstance().trigger(upTask);
 				}
 				mMsgInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_LOADDING);

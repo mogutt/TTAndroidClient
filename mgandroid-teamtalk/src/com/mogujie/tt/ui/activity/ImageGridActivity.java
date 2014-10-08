@@ -211,7 +211,7 @@ public class ImageGridActivity extends Activity implements OnTouchListener, OnIM
 					}
                     
                     UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), sessionType,
-                            SysConstant.UPLOAD_IMAGE_HOST, Dao, messageList);
+                            SysConstant.UPLOAD_IMAGE_URL_PREFIX, Dao, messageList);
                     TaskManager.getInstance().trigger(upTask);
                 } else {
                     PinkToast.makeText(ImageGridActivity.this,
