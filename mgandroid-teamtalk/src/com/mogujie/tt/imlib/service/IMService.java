@@ -251,7 +251,7 @@ public class IMService extends Service implements OnIMServiceListner {
 			return msg.getText();
 		} else if (msg.isAudioType()) {
 			return "[语音]";
-		} else if (msg.isAudioType()) {
+		} else if (msg.isPictureType()) {
 			return "[图片]";
 		} else {
 			return "错误消息图片";

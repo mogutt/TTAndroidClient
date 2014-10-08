@@ -747,6 +747,7 @@ public class MessageAdapter extends BaseAdapter {
 					break;
 
 				case SysConstant.MESSAGE_STATE_LOADDING : {
+					logger.d("chat#pic#MESSAGE_STATE_LOADDING");
 					if (null != bmp) {
 						holder.message_image.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 						holder.message_layout.setBackgroundResource(0);
@@ -761,6 +762,7 @@ public class MessageAdapter extends BaseAdapter {
 					break;
 
 				case SysConstant.MESSAGE_STATE_FINISH_SUCCESSED : {
+					logger.d("chat#pic#MESSAGE_STATE_FINISH_SUCCESSED");
 					if (null != bmp) {
 						holder.message_image.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 						holder.message_layout.setBackgroundResource(0);

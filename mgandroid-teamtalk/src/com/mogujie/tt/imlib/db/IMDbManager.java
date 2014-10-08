@@ -272,7 +272,7 @@ public class IMDbManager extends SQLiteOpenHelper {
 				// status
 				// todo eric, picture loading status has 2 steps, handle the
 				// first step(uploading step)
-				status = SysConstant.MESSAGE_STATE_FINISH_FAILED;
+				//status = SysConstant.MESSAGE_STATE_FINISH_FAILED;
 				MessageInfo unackMsg = IMUnAckMsgManager.instance().get(msgId);
 				if (unackMsg != null) {
 					status = unackMsg.getMsgLoadState();
@@ -323,6 +323,7 @@ public class IMDbManager extends SQLiteOpenHelper {
 
 			if (picInfo != null) {
 				msgInfo.setSavePath(picInfo.getPath());
+				msgInfo.setUrl(picInfo.getUrl());
 			}
 		}
 	}

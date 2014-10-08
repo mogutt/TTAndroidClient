@@ -91,6 +91,8 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 		msg.fromId = IMLoginManager.instance().getLoginId();
 		msg.toId = peerId;
 
+		msg.type = msgType;
+		
 		msg.generateMsgIdIfEmpty();
 		msg.generateSessionId(true);
 		msg.generateSessionType(sessionType);
@@ -99,8 +101,6 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 
 		// todo eric, use the server time
 		msg.createTime = (int) (System.currentTimeMillis() / 1000);
-
-		msg.type = msgType;
 
 		// it looks no one use attach param now
 		msg.attach = "";

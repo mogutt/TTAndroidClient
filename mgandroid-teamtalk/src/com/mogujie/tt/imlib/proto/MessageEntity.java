@@ -178,7 +178,22 @@ public class MessageEntity {
 		logger.d("pic#createPicInfo getSavePath:%s", msgInfo.getSavePath());
 		JSONObject jo = new JSONObject();
 		try {
-			jo.put("path", msgInfo.getSavePath());
+			String savePath = msgInfo.getSavePath();
+			if (savePath == null) {
+				savePath = "";
+			}
+
+			jo.put("path", savePath);
+
+			String url = msgInfo.getUrl();
+			if (url == null) {
+				url = "";
+			}
+			
+			logger.d("pic#save pic to db, path:%s, url:%s", savePath, url);
+
+			jo.put("url", url);
+
 			return jo.toString();
 		} catch (JSONException e) {
 
@@ -187,7 +202,6 @@ public class MessageEntity {
 
 		return "";
 	}
-
 	public static class AudioInfo {
 		public String getPath() {
 			return path;
@@ -241,27 +255,38 @@ public class MessageEntity {
 			this.path = path;
 		}
 
-		private String path;
+		private String path = "";
+		private String url = "";
 
-		public PicInfo(String path) {
+		public String getUrl() {
+			return url;
+		}
+
+		public void setUrl(String url) {
+			this.url = url;
+		}
+
+		public PicInfo(String path, String url) {
 			this.path = path;
+			this.url = url;
 
-			Logger.getLogger(MessageEntity.class).d("pic#set path:%s", path);
+			Logger.getLogger(PicInfo.class).d("pic#read picture content path:%s, url:%s", path, url);
 		}
 
 		public static PicInfo create(String info) {
-			JSONObject jo;
+			String path = "";
+			String url = "";
+
 			try {
-				jo = new JSONObject(info);
-				return new PicInfo((String) jo.get("path"));
+				JSONObject jo = new JSONObject(info);
+				
+				url = (String) jo.get("url");
+				path = (String) jo.get("path");
 			} catch (JSONException e1) {
-				Logger logger = Logger.getLogger(MessageEntity.class);
-				// TODO Auto-generated catch block
-				logger.d("pic#createPicInfo failed");
 			}
 
-			return null;
-
+			Logger.getLogger(PicInfo.class).d("pic#read pic info from db, url:%s, path:%s", url, path);
+			return new PicInfo(path, url);
 		}
 	}
 
