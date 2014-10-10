@@ -1,58 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/RelativeLayout1"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="0dp" >
 
+    <!-- todo eric specify the detail height is not a good option -->
+
     <LinearLayout
         android:id="@+id/layout_no_network"
         android:layout_width="fill_parent"
-        android:layout_height="49dp"
-        android:orientation="vertical"
-        android:visibility="gone" >
+        android:layout_height="47dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_gravity="center_vertical"
+        android:background="#ffeeee"
+        android:orientation="horizontal" >
 
-        <!-- todo eric specify the detail height is not a good option -->
-
-        <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="47dp"
+        <ImageView
+            android:id="@+id/imageView1"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:layout_gravity="center_vertical"
-            android:background="#ffeeee"
-            android:orientation="horizontal" >
-
-            <ImageView
-                android:id="@+id/imageView1"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_gravity="center_vertical"
-                android:layout_marginLeft="25dp"
-                android:src="@drawable/warning" />
-
-            <TextView
-                android:id="@+id/textView1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_marginLeft="23dp"
-                android:text="@string/no_network"
-                android:textColor="#ABABAB" />
-        </LinearLayout>
+            android:layout_marginLeft="25dp"
+            android:src="@drawable/warning" />
 
         <TextView
-            android:id="@+id/message_divider_footer"
-            android:layout_width="fill_parent"
-            android:layout_height="0.5dp"
-            android:background="@color/list_divider_color"
-            android:paddingTop="1dp"
-            android:textColor="@color/message_time_color"
-            android:textSize="13sp" />
+            android:id="@+id/textView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="23dp"
+            android:text="@string/no_network"
+            android:textColor="#ABABAB" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/message_divider_footer"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/LinearLayout1"
+        android:background="@color/list_divider_color"
+        android:paddingTop="1dp"
+        android:textColor="@color/message_time_color"
+        android:textSize="13sp" />
 
     <ListView
         android:id="@+id/ContactListView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
         android:layout_marginTop="0dp"
         android:background="@android:color/white"
         android:cacheColorHint="@android:color/transparent"
@@ -63,6 +63,8 @@
         android:id="@+id/search_transparent_view"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/ContactListView"
         android:background="@color/half_transparent_light"
         android:visibility="gone" />
 
@@ -70,6 +72,8 @@
         android:id="@+id/search_tip_txt"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/search_transparent_view"
         android:gravity="center"
         android:text="@string/chat_failed_search"
         android:visibility="gone" />
@@ -79,6 +83,8 @@
         android:id="@+id/SearchListView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/search_tip_txt"
         android:layout_marginTop="0dp"
         android:background="@android:color/white"
         android:cacheColorHint="@android:color/transparent"
@@ -122,9 +128,9 @@
         android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:layout_centerInParent="true"
         android:indeterminateDrawable="@drawable/tt_progressbar"
         android:indeterminateDuration="4000"
         android:visibility="gone" />
 
-</LinearLayout>
+</RelativeLayout>
