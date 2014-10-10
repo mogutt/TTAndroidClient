@@ -223,8 +223,8 @@ public class IMGroupManager extends IMManager {
 
 		logger.d("changeTempGroupMembers gropuId:%s", groupId);
 
-//		DumpUtils.dumpStringList(logger, "tempgroup#adding list", addingMemberList);
-//		DumpUtils.dumpStringList(logger, "tempgroup#removing list", removingMemberList);
+		DumpUtils.dumpStringList(logger, "tempgroup#adding list", addingMemberList);
+		DumpUtils.dumpStringList(logger, "tempgroup#removing list", removingMemberList);
 
 		changeTempGroupMembersImpl(groupId, ADD_CHANGE_MEMBER_TYPE, addingMemberList);
 		changeTempGroupMembersImpl(groupId, REMOVE_CHANGE_MEMBER_TYPE, removingMemberList);
@@ -264,15 +264,15 @@ public class IMGroupManager extends IMManager {
 		ChangeTempGroupMemberPacket.PacketResponse resp = (ChangeTempGroupMemberPacket.PacketResponse) packet.getResponse();
 
 		ChangeTempGroupMemberPacket.PacketResponse.Entity entity = resp.entity;
-		
+
 		logger.d("tempgroup#groupId:%s", entity.groupId);
 		boolean ok = handleChangeTempGroupMember(entity, entity.groupId);
 		logger.d("tempgroup#result ok:%s", ok);
-		
+
 		Intent intent = new Intent(IMActions.ACTION_GROUP_CHANGE_TEMP_GROUP_MEMBER_RESULT);
 		intent.putExtra(SysConstant.OPERATION_RESULT_KEY, ok);
 		intent.putExtra(SysConstant.SESSION_ID_KEY, entity.groupId);
-		
+
 		triggerAddRecentInfo();
 
 		ctx.sendBroadcast(intent);
@@ -280,13 +280,14 @@ public class IMGroupManager extends IMManager {
 	}
 
 	private boolean handleChangeTempGroupMember(
-			ChangeTempGroupMemberPacket.PacketResponse.Entity entity, String groupId) {
-		
+			ChangeTempGroupMemberPacket.PacketResponse.Entity entity,
+			String groupId) {
+
 		if (entity.result != 0) {
-			logger.e("tempgroup#onRepChangeTempGroupMembers failed");
+			logger.e("tempgroup#onRepChangeTempGroupMembers failed, result:%d", entity.result);
 			return false;
 		}
-		
+
 		GroupEntity group = findGroup(groupId);
 		if (group == null) {
 			logger.e("tempgroup#no such group:%s", groupId);
@@ -298,8 +299,13 @@ public class IMGroupManager extends IMManager {
 			return false;
 		}
 
-		//DumpUtils.dumpStringList(logger, getChangeMemberTypeString(entity.changeType), entity.memberList);
-		group.memberIdList = entity.memberList;
+		DumpUtils.dumpStringList(logger, getChangeMemberTypeString(entity.changeType), entity.memberList);
+
+		if (entity.changeType == ADD_CHANGE_MEMBER_TYPE) {
+			group.memberIdList.addAll(entity.memberList);
+		} else if (entity.changeType == REMOVE_CHANGE_MEMBER_TYPE) {
+			group.memberIdList.removeAll(entity.memberList);
+		}
 
 		return true;
 	}

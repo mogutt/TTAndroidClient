@@ -43,7 +43,7 @@ public class ChangeTempGroupMemberPacket extends Packet {
 		bodyBuffer.writeString(req.entity.groupId);
 		bodyBuffer.writeInt(req.entity.changeType);
 		writeStringList(req.entity.memberList, bodyBuffer);
-		
+
 		int headLength = headerBuffer.readableBytes();
 		int bodyLength = bodyBuffer.readableBytes();
 
@@ -73,11 +73,9 @@ public class ChangeTempGroupMemberPacket extends Packet {
 
 			// starts filling from here
 			res.entity.result = buffer.readInt();
-			if (res.entity.result == 0) {
-				res.entity.groupId = buffer.readString();
-				res.entity.changeType = buffer.readInt();
-				res.entity.memberList = readStringList(buffer);
-			}
+			res.entity.groupId = buffer.readString();
+			res.entity.changeType = buffer.readInt();
+			res.entity.memberList = readStringList(buffer);
 
 			mResponse = res;
 		} catch (Exception e) {
@@ -88,18 +86,17 @@ public class ChangeTempGroupMemberPacket extends Packet {
 	}
 
 	public static class PacketRequest extends Request {
-		public static class  Entity {
-		public String groupId;
-		public int changeType;
-		public List<String> memberList;
+		public static class Entity {
+			public String groupId;
+			public int changeType;
+			public List<String> memberList;
 		}
 
 		public Entity entity;
-		
+
 		public PacketRequest(Entity entity) {
 			this.entity = entity;
-			Header header = new DefaultHeader(ProtocolConstant.SID_GROUP,
-					ProtocolConstant.CID_GROUP_CHANGE_MEMBER_REQUEST);
+			Header header = new DefaultHeader(ProtocolConstant.SID_GROUP, ProtocolConstant.CID_GROUP_CHANGE_MEMBER_REQUEST);
 
 			int contentLength = getStringLen(entity.groupId)
 					+ getIntLen(entity.changeType)
@@ -117,7 +114,7 @@ public class ChangeTempGroupMemberPacket extends Packet {
 			public int changeType;
 			public List<String> memberList;
 		}
-		
+
 		public Entity entity = new Entity();
 	}
 }
