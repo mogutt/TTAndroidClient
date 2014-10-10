@@ -1,5 +1,10 @@
 package com.mogujie.tt.ui.fragment;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.security.auth.PrivateCredentialPermission;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
@@ -14,6 +19,7 @@ import com.mogujie.tt.R;
 import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.User;
+import com.mogujie.tt.imlib.IMActions;
 import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.DepartmentEntity;
@@ -33,11 +39,15 @@ public class UserInfoFragment extends TTBaseFragment
 	private View curView = null;
 	private User user = null;
 	private IMServiceHelper imServiceHelper = new IMServiceHelper();
+	SessionInfo sessionInfo;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		imServiceHelper.connect(getActivity(), null, IMServiceHelper.INTENT_NO_PRIORITY, this);
+		List<String> actions = new ArrayList<String>();
+		actions.add(IMActions.ACTION_CONTACT_READY);
+
+		imServiceHelper.connect(getActivity(), actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
 
 		if (null != curView) {
 			((ViewGroup) curView.getParent()).removeView(curView);
@@ -84,21 +94,42 @@ public class UserInfoFragment extends TTBaseFragment
 	@Override
 	public void onAction(String action, Intent intent,
 			BroadcastReceiver broadcastReceiver) {
-		// TODO Auto-generated method stub
+		logger.d("detail#onAction action:%s", action);
 
+		if (action.equals(IMActions.ACTION_CONTACT_READY)) {
+			init(imServiceHelper.getIMService(), sessionInfo);
+		}
 	}
 
 	@Override
 	public void onIMServiceConnected() {
-		// TODO Auto-generated method stub
+		logger.d("detail#onIMServiceConnected");
+
 		IMService imService = imServiceHelper.getIMService();
 		if (imService == null) {
+			logger.e("detail#imService is null");
 			return;
 		}
 
-		SessionInfo sessionInfo = IMUIHelper.getSessionInfoFromIntent(getActivity().getIntent());
+		sessionInfo = IMUIHelper.getSessionInfoFromIntent(getActivity().getIntent());
+		logger.d("detail#sessionInfo:%s", sessionInfo);
+
+		if (!imService.getContactManager().ContactsDataReady()) {
+			logger.i("detail#contact data are not ready");
+		} else {
+			init(imService, sessionInfo);
+		}
+	}
+
+	private void init(IMService imService, SessionInfo sessionInfo) {
+		if (imService == null) {
+			logger.e("detail#imService is null");
+			return;
+		}
+
 		final ContactEntity contact = imService.getContactManager().findContact(sessionInfo.getSessionId());
 		if (contact == null) {
+			logger.d("detail#no such contact id:%s", sessionInfo.getSessionId());
 			return;
 		}
 

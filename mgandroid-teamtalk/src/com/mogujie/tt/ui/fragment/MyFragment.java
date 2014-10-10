@@ -1,5 +1,8 @@
 package com.mogujie.tt.ui.fragment;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,6 +14,7 @@ import android.widget.TextView;
 
 import com.mogujie.tt.R;
 import com.mogujie.tt.config.SysConstant;
+import com.mogujie.tt.imlib.IMActions;
 import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.service.IMService;
@@ -28,7 +32,10 @@ public class MyFragment extends TTBaseFragment implements OnIMServiceListner {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		imServiceHelper.connect(getActivity(), null, IMServiceHelper.INTENT_NO_PRIORITY, this);
+
+		List<String> actions = new ArrayList<String>();
+		actions.add(IMActions.ACTION_CONTACT_READY);
+		imServiceHelper.connect(getActivity(), actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
 		if (null != curView) {
 			((ViewGroup) curView.getParent()).removeView(curView);
 			return curView;
@@ -47,7 +54,7 @@ public class MyFragment extends TTBaseFragment implements OnIMServiceListner {
 		// 设置顶部标题栏
 		setTopTitle(getActivity().getString(R.string.page_me));
 		// 设置页面其它控件
-		
+
 	}
 
 	@Override
@@ -73,8 +80,11 @@ public class MyFragment extends TTBaseFragment implements OnIMServiceListner {
 	@Override
 	public void onAction(String action, Intent intent,
 			BroadcastReceiver broadcastReceiver) {
-		// TODO Auto-generated method stub
+		logger.d("detail#onAction action:%s", action);
 
+		if (action.equals(IMActions.ACTION_CONTACT_READY)) {
+			init(imServiceHelper.getIMService());
+		}
 	}
 
 	@Override
@@ -85,6 +95,17 @@ public class MyFragment extends TTBaseFragment implements OnIMServiceListner {
 		}
 
 		IMService imService = imServiceHelper.getIMService();
+		if (imService == null) {
+			return;
+		}
+		if (!imService.getContactManager().ContactsDataReady()) {
+			logger.i("detail#contact data are not ready");
+		} else {
+			init(imService);
+		}
+	}
+
+	private void init(IMService imService) {
 		if (imService == null) {
 			return;
 		}
@@ -101,7 +122,7 @@ public class MyFragment extends TTBaseFragment implements OnIMServiceListner {
 		nickNameView.setText(loginContact.nickName);
 		userNameView.setText(loginContact.name);
 		IMUIHelper.setWebImageViewAvatar(portraitImageView, loginContact.avatarUrl, IMSession.SESSION_P2P);
-		
+
 		RelativeLayout userContainer = (RelativeLayout) curView.findViewById(R.id.user_container);
 		userContainer.setOnClickListener(new View.OnClickListener() {
 			@Override
