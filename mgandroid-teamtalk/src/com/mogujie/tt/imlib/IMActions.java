@@ -13,8 +13,8 @@ public interface IMActions {
 	
 	String ACTION_GROUP_CREATE_TEMP_GROUP_RESULT = "com.mogujie.tt.imlib.action.group.crate_temp_group_result";
 
-	
-	
+	String ACTION_GROUP_CHANGE_TEMP_GROUP_MEMBER_RESULT = "com.mogujie.tt.imlib.action.group.change_temp_group_member_result";
+
 	String ACTION_ADD_RECENT_CONTACT_OR_GROUP = "com.mogujie.tt.imlib.action.add_recent_contact_or_group";
 	
 	String ACTION_SERVER_DISCONNECTED = "com.mogujie.tt.imlib.action.server_disconnected";
@@ -22,6 +22,8 @@ public interface IMActions {
 	String ACTION_RECONNECT = "com.mogujie.tt.imlib.action.reconnect";
 	
 	String ACTION_SENDING_HEARTBEAT = "com.mogujie.tt.imlib.action.sending_heartbeat";
+	
+	String ACTION_NEW_MESSAGE_SESSION = "com.mogujie.tt.ui.action.new_message_session";
 
 
 

@@ -109,7 +109,7 @@ public abstract class Packet {
 
 		return 4 + getUtf8Bytes(content).length;
 	}
-	
+
 	public static int getIntLen(int a) {
 		return 4;
 	}
@@ -131,15 +131,15 @@ public abstract class Packet {
 			bodyBuffer.writeString(content);
 		}
 	}
-	
+
 	public static List<String> readStringList(DataBuffer buffer) {
 		List<String> stringList = new ArrayList<String>();
 		int cnt = buffer.readInt();
-		if (cnt > 0) {
+		for (int i = 0; i < cnt; ++i) {
 			String content = buffer.readString();
 			stringList.add(content);
 		}
-		
+
 		return stringList;
 	}
 

@@ -5,6 +5,7 @@ import java.util.List;
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.imlib.IMLoginManager;
+import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.packet.base.DefaultHeader;
@@ -83,11 +84,10 @@ public class CreateTempGroupPacket extends Packet {
 				res.entity.name = groupName;
 				res.entity.avatarUrl = "";
 				res.entity.creatorId = IMLoginManager.instance().getLoginId();
-				res.entity.type = 2;
-				//todo eric any chance microseconds?then it needs to be divided by 1000
-				res.entity.updated = (int) System.currentTimeMillis();
+				res.entity.type = IMSession.SESSION_TEMP_GROUP;
+				res.entity.updated = (int) (System.currentTimeMillis() / 1000L);
+				logger.d("updated#updated:%d", res.entity.updated);
 				res.entity.memberIdList = memberList;
-				
 				logger.d("tempgroup#group:%s", res.entity);
 			}
 

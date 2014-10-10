@@ -1,8 +1,10 @@
 package com.mogujie.tt.ui.fragment;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -16,19 +18,26 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.mogujie.tt.R;
 import com.mogujie.tt.adapter.EntityListViewAdapter;
 import com.mogujie.tt.adapter.EntityListViewAdapter.ViewHolder;
 import com.mogujie.tt.adapter.GroupManagerAdapter;
+import com.mogujie.tt.adapter.GroupManagerAdapter.OnDeleteItemListener;
+import com.mogujie.tt.config.SysConstant;
+import com.mogujie.tt.imlib.IMActions;
 import com.mogujie.tt.imlib.IMContactManager;
 import com.mogujie.tt.imlib.IMGroupManager;
 import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
+import com.mogujie.tt.imlib.utils.IMUIHelper.SessionInfo;
 import com.mogujie.tt.ui.base.TTBaseFragment;
 import com.mogujie.tt.ui.utils.EntityList;
 import com.mogujie.tt.ui.utils.IMGroupMemberGridViewHelper;
@@ -38,11 +47,12 @@ import com.mogujie.tt.utils.ContactUtils;
 import com.mogujie.tt.widget.SearchEditText;
 import com.mogujie.tt.widget.SortSideBar;
 import com.mogujie.tt.widget.SortSideBar.OnTouchingLetterChangedListener;
- 
 
-public class GroupMemberSelectFragment extends TTBaseFragment implements
-		OnIMServiceListner, OnTouchingLetterChangedListener,
-		OnItemClickListener {
+public class GroupMemberSelectFragment extends TTBaseFragment
+		implements
+			OnIMServiceListner,
+			OnTouchingLetterChangedListener,
+			OnItemClickListener {
 	@Override
 	public void onDestroyView() {
 		imServiceHelper.disconnect(getActivity());
@@ -59,7 +69,8 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 	private SortSideBar sortSideBar;
 	private TextView dialog;
 	private SearchEditText searchEditText;
-	private IMUIHelper.SessionInfo sessinInfo;
+	private IMUIHelper.SessionInfo sessionInfo;
+	private EntityList entityList;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -68,11 +79,13 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 			((ViewGroup) curView.getParent()).removeView(curView);
 			return curView;
 		}
-		curView = inflater.inflate(R.layout.tt_fragment_group_member_select,
-				topContentView);
+		curView = inflater.inflate(R.layout.tt_fragment_group_member_select, topContentView);
 
-		imServiceHelper.connect(getActivity(), null,
-				IMServiceHelper.INTENT_NO_PRIORITY, this);
+		List<String> actions = new ArrayList<String>();
+		actions.add(IMActions.ACTION_GROUP_CREATE_TEMP_GROUP_RESULT);
+		actions.add(IMActions.ACTION_GROUP_CHANGE_TEMP_GROUP_MEMBER_RESULT);
+
+		imServiceHelper.connect(getActivity(), actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
 
 		initRes();
 
@@ -102,71 +115,68 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 			@Override
 			public void onClick(View arg0) {
 				logger.d("tempgroup#on 'save' btn clicked");
-				
+
 				IMGroupManager groupMgr = imService.getGroupManager();
 				GroupManagerAdapter adapter = gridViewHelper.getAdapter();
-				
-				int sessionType = GroupMemberSelectFragment.this.sessinInfo.getSessionType();
+
+				int sessionType = GroupMemberSelectFragment.this.sessionInfo.getSessionType();
 				if (sessionType == IMSession.SESSION_P2P) {
 					List<String> memberList = adapter.getMemberList();
-					
+
 					String loginId = imService.getLoginManager().getLoginId();
 					logger.d("tempgroup#loginId:%s", loginId);
 					memberList.add(0, loginId);
-					
+
 					logger.d("tempgroup#memberList size:%d", memberList.size());
 					for (String id : memberList) {
 						logger.d("tempgroup#member:%s", id);
 					}
-					
+
 					String tempGroupName = generateTempGroupName(memberList);
 					logger.d("tempgroup#generateTempGroupName:%s", tempGroupName);
-					
+
 					groupMgr.reqCreateTempGroup(tempGroupName, memberList);
 
-				} else {
-					List<String> addingMemberList = gridViewHelper.getAdapter()
-							.getAddingMemberList();
-					List<String> removingMemberList = gridViewHelper
-							.getAdapter().getRemovingMemberList();
+				} else if (sessionType == IMSession.SESSION_TEMP_GROUP) {
+					List<String> addingMemberList = gridViewHelper.getAdapter().getAddingMemberList();
+					List<String> removingMemberList = gridViewHelper.getAdapter().getRemovingMemberList();
 
-					imService.getGroupManager().adjustDialogMembers(
-							addingMemberList, removingMemberList);
+					imService.getGroupManager().changeTempGroupMembers(sessionInfo.getSessionId(), addingMemberList, removingMemberList);
 				}
 
 			}
 
 			private String generateTempGroupName(List<String> memberList) {
 				int MAX_NAME_PREFIX_LEN = 15;
-				
+
 				String name = "";
 				IMContactManager contactMgr = imService.getContactManager();
-				
+
 				ContactEntity prevContact = null;
 				for (String id : memberList) {
 					ContactEntity contact = contactMgr.findContact(id);
 					if (contact == null) {
 						continue;
 					}
-					
+
 					logger.d("tempgroup#member contact:%s", contact);
-					
+
 					if (prevContact != null) {
 						name += "," + contact.name;
 					} else {
-						//first element
+						// first element
 						name += contact.name;
 					}
-					
+
 					if (name.length() >= MAX_NAME_PREFIX_LEN) {
 						name = name.substring(0, MAX_NAME_PREFIX_LEN);
 						name += "...";
 						break;
 					}
-					
+
 					prevContact = contact;
 				}
-				
+
 				return name;
 			}
 		});
@@ -177,16 +187,14 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 		dialog = (TextView) curView.findViewById(R.id.dialog);
 		sortSideBar.setTextView(dialog);
 
-		contactListView = (ListView) curView
-				.findViewById(R.id.all_contact_list);
+		contactListView = (ListView) curView.findViewById(R.id.all_contact_list);
 		contactListView.setOnItemClickListener(this);
 
 		contactAdapter = new EntityListViewAdapter(getActivity());
 		contactAdapter.showCheckbox();
 		contactListView.setAdapter(contactAdapter);
 
-		searchEditText = (SearchEditText) curView
-				.findViewById(R.id.filter_edit);
+		searchEditText = (SearchEditText) curView.findViewById(R.id.filter_edit);
 
 		searchEditText.addTextChangedListener(new TextWatcher() {
 
@@ -207,16 +215,44 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 			}
 		});
 
-		gridViewHelper.onInit(curView, R.id.group_manager_grid, getActivity(),
-				true, null);
+		gridViewHelper.onInit(curView, R.id.group_manager_grid, getActivity(), false, null, new OnItemLongClickListener() {
+
+			@Override
+			public boolean onItemLongClick(AdapterView<?> parent, View view,
+					int position, long id) {
+
+				gridViewHelper.getAdapter().setRemoveState(true);
+				gridViewHelper.getAdapter().notifyDataSetChanged();
+
+				return false;
+			}
+		}, new OnDeleteItemListener() {
+
+			@Override
+			public void onDeleteItem(String contactId) {
+				((BaseAdapter) contactListView.getAdapter()).notifyDataSetChanged();
+			}
+		});
 	}
 
-	private void initContactList() {
-		Map<String, ContactEntity> contacts = imService.getContactManager()
-				.getContacts();
+	private void initContactList(Set<String> removedIdSet) {
+		Map<String, ContactEntity> contacts = imService.getContactManager().getContacts();
 		List<Object> contactList = IMUIHelper.getContactSortedList(contacts);
+		List<Object> finalContactList = new ArrayList<Object>();
+		for (Object obj : contactList) {
+			ContactEntity contact = (ContactEntity) obj;
+			if (contact == null) {
+				continue;
+			}
 
-		EntityList entityList = new EntityList(contactList) {
+			if (removedIdSet.contains(contact.id)) {
+				continue;
+			}
+
+			finalContactList.add(obj);
+		}
+
+		entityList = new EntityList(finalContactList) {
 
 			@Override
 			public boolean shouldCheckBoxChecked(int position) {
@@ -231,14 +267,12 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 			@Override
 			public void onItemClick(View view, int position) {
 				// TODO Auto-generated method stub
-				handleContactItemClick(view,
-						GroupMemberSelectFragment.this.getActivity(), position);
+				handleContactItemClick(view, GroupMemberSelectFragment.this.getActivity(), position);
 			}
 
 			private void handleContactItemClick(View view, Context ctx,
 					int position) {
-				logger.d("contactUI#handleContactItemClick position:%d",
-						position);
+				logger.d("contactUI#handleContactItemClick position:%d", position);
 
 				ContactEntity contact = (ContactEntity) list.get(position);
 				logger.d("chat#clicked contact:%s", contact);
@@ -265,8 +299,7 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 				}
 
 				// TODO Auto-generated method stub
-				final ContactEntity contact = (ContactEntity) list
-						.get(position);
+				final ContactEntity contact = (ContactEntity) list.get(position);
 				if (contact == null) {
 					return "";
 				}
@@ -276,10 +309,8 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 					return sectionName;
 				}
 
-				ContactEntity upperContact = (ContactEntity) list
-						.get(position - 1);
-				if (sectionName.equals(ContactUtils
-						.getSectionName(upperContact))) {
+				ContactEntity upperContact = (ContactEntity) list.get(position - 1);
+				if (sectionName.equals(ContactUtils.getSectionName(upperContact))) {
 					return "";
 				} else {
 					return sectionName;
@@ -293,8 +324,7 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 
 			public int getPinYinFirstCharacter(int position) {
 				// TODO Auto-generated method stub
-				final ContactEntity contact = (ContactEntity) list
-						.get(position);
+				final ContactEntity contact = (ContactEntity) list.get(position);
 				if (contact == null) {
 					return 0;
 				}
@@ -325,6 +355,47 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 			BroadcastReceiver broadcastReceiver) {
 		// TODO Auto-generated method stub
 
+		if (action.equals(IMActions.ACTION_GROUP_CREATE_TEMP_GROUP_RESULT)) {
+			handleAddTempGroupResult(intent);
+		} else if (action.equals(IMActions.ACTION_GROUP_CHANGE_TEMP_GROUP_MEMBER_RESULT)) {
+			handleChangeTempGroupMemberResult(intent);
+		}
+	}
+
+	private void handleChangeTempGroupMemberResult(Intent intent) {
+		logger.d("tempgroup#handleChangeTempGroupMemberResult");
+		boolean ok = intent.getBooleanExtra(SysConstant.OPERATION_RESULT_KEY, false);
+		if (!ok) {
+			Toast.makeText(getActivity(), getString(R.string.change_temp_group_member_failed), Toast.LENGTH_SHORT).show();
+			return;
+		}
+
+		String sessionId = intent.getStringExtra(SysConstant.SESSION_ID_KEY);
+		logger.d("tempgroup#result ok, sessionId:%s", sessionId);
+
+		//todo eric adding an notification to the chat window, tell that "members are changed, right now, members are 'a', 'b', 'c' "
+		IMUIHelper.openSessionChatActivity(logger, getActivity(), sessionId, IMSession.SESSION_TEMP_GROUP, imService);
+
+		getActivity().finish();
+	}
+
+	private void handleAddTempGroupResult(Intent intent) {
+		logger.d("groupmgr#on ACTION_GROUP_CREATE_TEMP_GROUP_RESULT");
+		int result = intent.getIntExtra(SysConstant.OPERATION_RESULT_KEY, -1);
+		if (result != 0) {
+			logger.d("groupmgr#result failed");
+
+			Toast.makeText(getActivity(), getString(R.string.create_temp_group_failed), Toast.LENGTH_SHORT).show();
+			return;
+		}
+
+		String sessionId = intent.getStringExtra(SysConstant.SESSION_ID_KEY);
+
+		logger.d("groupmgr#result ok");
+
+		IMUIHelper.openSessionChatActivity(logger, getActivity(), sessionId, IMSession.SESSION_TEMP_GROUP, imService);
+
+		getActivity().finish();
 	}
 
 	@Override
@@ -335,10 +406,20 @@ public class GroupMemberSelectFragment extends TTBaseFragment implements
 		imService = imServiceHelper.getIMService();
 
 		Intent intent = getActivity().getIntent();
-		sessinInfo = IMUIHelper.getSessionInfoFromIntent(intent);
+		sessionInfo = IMUIHelper.getSessionInfoFromIntent(intent);
+
+		Set<String> removedIdSet = new HashSet<String>();
+		removedIdSet.add(imService.getLoginManager().getLoginId());
+
+		int sessionType = sessionInfo.getSessionType();
+		if (sessionType == IMSession.SESSION_P2P) {
+			removedIdSet.add(sessionInfo.getSessionId());
+		}
+
+		gridViewHelper.getAdapter().setFixIdSet(removedIdSet);
 		gridViewHelper.onSetGridData(imService, intent);
 
-		initContactList();
+		initContactList(removedIdSet);
 	}
 
 	@Override

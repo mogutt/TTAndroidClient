@@ -76,6 +76,8 @@ import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.service.IMService;
+import com.mogujie.tt.imlib.utils.IMUIHelper;
+import com.mogujie.tt.imlib.utils.IMUIHelper.SessionInfo;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.MessageDispatchCenter;
 import com.mogujie.tt.task.TaskCallback;
@@ -131,7 +133,7 @@ public class MessageActivity extends TTBaseActivity
 		setTitleByUser2(sessionId, sessionType);
 		handleOnResume();
 	}
-	
+
 	private void handleOnResume() {
 		int sessionType = session.getType();;
 		String sessionId = session.getSessionId();
@@ -225,7 +227,30 @@ public class MessageActivity extends TTBaseActivity
 			}
 
 			onMsgRecv(intent, broadcastReceiver);
+		} else if (action.equals(IMActions.ACTION_NEW_MESSAGE_SESSION)) {
+			onNewMessageSession();
 		}
+	}
+
+	private void onNewMessageSession() {
+		logger.d("chat#onNewMessageSession");
+
+		SessionInfo sessionInfo = CacheHub.getInstance().getSessionInfo();
+		if (sessionInfo == null) {
+			return;
+		}
+
+		logger.d("chat#sessionInfo:%s", sessionInfo);
+
+		// different session
+		if (!(sessionInfo.getSessionId().equals(session.getSessionId()) && sessionInfo.getSessionType() == session.getType())) {
+			logger.w("chat#got new different session msg, close the current chat window");
+			
+			
+			IMUIHelper.openSessionChatActivity(logger, this, sessionInfo.getSessionId(), sessionInfo.getSessionType(), imService);
+			this.finish();
+		}
+		
 	}
 
 	private void onMsgUnAckTimeout(Intent intent) {
@@ -292,6 +317,8 @@ public class MessageActivity extends TTBaseActivity
 		actions.add(IMActions.ACTION_MSG_ACK);
 		actions.add(IMActions.ACTION_MSG_RECV);
 		actions.add(IMActions.ACTION_MSG_UNACK_TIMEOUT);
+		actions.add(IMActions.ACTION_NEW_MESSAGE_SESSION);
+
 		imServiceHelper.connect(this, actions, IMServiceHelper.INTENT_MAX_PRIORITY, this);
 		logger.d("messageactivity#register im service");
 
@@ -316,9 +343,10 @@ public class MessageActivity extends TTBaseActivity
 			// notifyMgr.cancelAll();
 			notifyMgr.cancel(Integer.parseInt(session.getSessionId()));
 		}
-		
-		//not the first time
+
+		// not the first time
 		if (imServiceHelper.getIMService() != null) {
+			onNewMessageSession();
 			handleOnResume();
 		}
 
@@ -815,7 +843,7 @@ public class MessageActivity extends TTBaseActivity
 			}
 
 			setTitle(contact.nickName);
-		} else if (sessionType == IMSession.SESSION_GROUP) {
+		} else  {
 			setTitleByGroup(sessionId);
 		}
 	}

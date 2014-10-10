@@ -86,6 +86,9 @@ public class IMPacketDispatcher {
 			case ProtocolConstant.CID_GROUP_UNREAD_MSG_RESPONSE:
 				IMMessageManager.instance().onRepGroupUnreadMsg(buffer);
 				return;
+			case ProtocolConstant.CID_GROUP_CHANGE_MEMBER_RESPONSE:
+				IMGroupManager.instance().onRepChangeTempGroupMembers(buffer);
+				return;
 
 			}
 

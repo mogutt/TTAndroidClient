@@ -7,19 +7,25 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
 
 import com.mogujie.tt.R;
+import com.mogujie.tt.imlib.IMSession;
+import com.mogujie.tt.imlib.proto.ContactEntity;
+import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
+import com.mogujie.tt.imlib.utils.IMUIHelper.SessionInfo;
 import com.mogujie.tt.ui.activity.GroupMemberSelectActivity;
 import com.mogujie.tt.ui.base.TTBaseFragment;
 import com.mogujie.tt.ui.utils.IMGroupMemberGridViewHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 
-public class GroupManagerFragment extends TTBaseFragment implements
-		OnIMServiceListner {
+public class GroupManagerFragment extends TTBaseFragment
+		implements
+			OnIMServiceListner {
 	// OnTouchBlankPositionListener, {
 	@Override
 	public void onDestroyView() {
@@ -40,11 +46,9 @@ public class GroupManagerFragment extends TTBaseFragment implements
 			((ViewGroup) curView.getParent()).removeView(curView);
 			return curView;
 		}
-		curView = inflater.inflate(R.layout.tt_fragment_group_manage,
-				topContentView);
+		curView = inflater.inflate(R.layout.tt_fragment_group_manage, topContentView);
 
-		imServiceHelper.connect(getActivity(), null,
-				IMServiceHelper.INTENT_NO_PRIORITY, this);
+		imServiceHelper.connect(getActivity(), null, IMServiceHelper.INTENT_NO_PRIORITY, this);
 		initRes();
 
 		return curView;
@@ -55,7 +59,7 @@ public class GroupManagerFragment extends TTBaseFragment implements
 	 */
 	private void initRes() {
 		// 设置标题栏
-		setTopTitle("蘑菇街IM(108)");
+
 		setTopLeftButton(R.drawable.tt_top_back);
 		setTopLeftText(getActivity().getString(R.string.top_left_back));
 		topLeftBtn.setOnClickListener(new View.OnClickListener() {
@@ -68,22 +72,6 @@ public class GroupManagerFragment extends TTBaseFragment implements
 		// 设置其它页面信息
 		// gridView = (GroupManagerGridView) curView
 		// .findViewById(R.id.group_manager_grid);
-
-		gridViewHelper.onInit(curView, R.id.group_manager_grid, getActivity(),
-				true, new OnItemClickListener() {
-
-					@Override
-					public void onItemClick(AdapterView<?> arg0, View arg1,
-							int position, long arg3) {
-						// TODO Auto-generated method stub
-						boolean isAddMemberButton = gridViewHelper.getAdapter()
-								.isAddMemberButton(position);
-						if (isAddMemberButton) {
-							logger.d("groupmgr#click add MemberButton");
-							startGroupMemberSelectActivity();
-						}
-					}
-				});
 
 		// // 点击空白地方时处理
 		// ((GroupManagerGridView)
@@ -128,11 +116,9 @@ public class GroupManagerFragment extends TTBaseFragment implements
 	}
 
 	private void startGroupMemberSelectActivity() {
-		Intent intent = new Intent(getActivity(),
-				GroupMemberSelectActivity.class);
+		Intent intent = new Intent(getActivity(), GroupMemberSelectActivity.class);
 
-		IMUIHelper.setSessionInIntent(intent, gridViewHelper.getSessionId(),
-				gridViewHelper.getSessionType());
+		IMUIHelper.setSessionInIntent(intent, gridViewHelper.getSessionId(), gridViewHelper.getSessionType());
 
 		getActivity().startActivity(intent);
 	}
@@ -158,6 +144,73 @@ public class GroupManagerFragment extends TTBaseFragment implements
 	// return false;
 	// }
 
+	private void init() {
+		SessionInfo sesisonInfo = IMUIHelper.getSessionInfoFromIntent(getActivity().getIntent());
+		if (sesisonInfo == null) {
+			logger.e("groupmgr#getSessionInfoFromIntent failed");
+			return;
+		}
+		
+		int sessionType = sesisonInfo.getSessionType();
+		String sessionId = sesisonInfo.getSessionId();
+
+		
+		if (imService == null) {
+			return;
+		}
+
+		if (curView == null) {
+			return;
+		}
+		
+		String title = "聊天信息";
+		boolean hasAddBtn = true;
+		if (sessionType == IMSession.SESSION_P2P) {
+
+			View groupNameContainerView = curView.findViewById(R.id.group_manager_name);
+			if (groupNameContainerView == null) {
+				return;
+			}
+
+			groupNameContainerView.setVisibility(View.GONE);
+
+		} else {
+			if (sessionType == IMSession.SESSION_GROUP) {
+				hasAddBtn = false;
+			}
+			
+			GroupEntity group = imService.getGroupManager().findGroup(sessionId);
+			if (group == null) {
+				return;
+			}
+
+			// todo eric i18n
+			title += String.format("(%d)", group.memberIdList.size());
+
+			TextView groupNameView = (TextView) curView.findViewById(R.id.group_manager_title);
+			if (groupNameView == null) {
+				return;
+			}
+			groupNameView.setText(group.name);
+		}
+
+		gridViewHelper.onInit(curView, R.id.group_manager_grid, getActivity(), hasAddBtn, new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> arg0, View arg1,
+					int position, long arg3) {
+				// TODO Auto-generated method stub
+				boolean isAddMemberButton = gridViewHelper.getAdapter().isAddMemberButton(position);
+				if (isAddMemberButton) {
+					logger.d("groupmgr#click add MemberButton");
+					startGroupMemberSelectActivity();
+				}
+			}
+		}, null, null);
+
+		setTopTitle(title);
+	}
+
 	@Override
 	public void onAction(String action, Intent intent,
 			BroadcastReceiver broadcastReceiver) {
@@ -172,7 +225,8 @@ public class GroupManagerFragment extends TTBaseFragment implements
 
 		imService = imServiceHelper.getIMService();
 
-		gridViewHelper.onSetGridData(imService, getActivity().getIntent());
+		init();
 
+		gridViewHelper.onSetGridData(imService, getActivity().getIntent());
 	}
 }

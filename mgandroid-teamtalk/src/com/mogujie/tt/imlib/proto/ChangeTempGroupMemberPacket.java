@@ -112,10 +112,10 @@ public class ChangeTempGroupMemberPacket extends Packet {
 
 	public static class PacketResponse extends Response {
 		public static class Entity {
-			int result;
-			String groupId;
-			int changeType;
-			List<String> memberList;
+			public int result;
+			public String groupId;
+			public int changeType;
+			public List<String> memberList;
 		}
 		
 		public Entity entity = new Entity();

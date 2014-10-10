@@ -15,6 +15,7 @@ import com.mogujie.tt.adapter.GroupManagerAdapter;
 import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
+import com.mogujie.tt.imlib.IMActions;
 import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
@@ -61,7 +62,7 @@ public class IMUIHelper {
 			return;
 		}
 
-		openChatActivityImpl(ctx, IMSession.SESSION_P2P, contact.id);
+		openChatActivity(ctx, IMSession.SESSION_P2P, contact.id);
 
 	}
 
@@ -71,16 +72,19 @@ public class IMUIHelper {
 			return;
 		}
 
-		openChatActivityImpl(ctx, IMSession.SESSION_GROUP, group.id);
+		openChatActivity(ctx, group.type, group.id);
 	}
-
-	private static void openChatActivityImpl(Context ctx, int sessionType,
+	
+	public static void openChatActivity(Context ctx, int sessionType,
 			String sessionId) {
 		Intent i = new Intent(ctx, MessageActivity.class);
-		setSessionInIntent(i, sessionId, sessionType);
-		CacheHub.getInstance().setSessionInfo(new SessionInfo(sessionId, sessionType));
+		i.setAction(IMActions.ACTION_NEW_MESSAGE_SESSION);
 
+		setSessionInIntent(i, sessionId, sessionType);
+		
+		CacheHub.getInstance().setSessionInfo(new SessionInfo(sessionId, sessionType));
 		ctx.startActivity(i);
+		
 	}
 
 	public static boolean setMessageOwnerName(Logger logger, IMSession session,
@@ -233,6 +237,12 @@ public class IMUIHelper {
 	}
 
 	public static class SessionInfo {
+		@Override
+		public String toString() {
+			return "SessionInfo [sessionId=" + sessionId + ", sessionType="
+					+ sessionType + "]";
+		}
+
 		public String getSessionId() {
 			return sessionId;
 		}

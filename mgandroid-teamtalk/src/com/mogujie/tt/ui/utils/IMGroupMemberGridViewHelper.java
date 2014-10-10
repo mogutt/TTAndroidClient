@@ -2,13 +2,16 @@ package com.mogujie.tt.ui.utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.View;
+import android.view.View.OnLongClickListener;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.GridView;
 
 import com.mogujie.tt.adapter.GroupManagerAdapter;
@@ -38,7 +41,7 @@ public class IMGroupMemberGridViewHelper {
 	}
 
 	public void onInit(View parentView, int gridViewResId, Context ctx,
-			boolean hasAddButton, OnItemClickListener itemClickListener) {
+			boolean hasAddButton, OnItemClickListener itemClickListner, OnItemLongClickListener itemLongClickListener, GroupManagerAdapter.OnDeleteItemListener deleteImteListner) {
 		if (ctx == null) {
 			return;
 		}
@@ -48,11 +51,15 @@ public class IMGroupMemberGridViewHelper {
 		gridView = (GridView) parentView.findViewById(gridViewResId);
 		gridView.setSelector(new ColorDrawable(Color.TRANSPARENT));// 去掉点击时的黄色背影
 
-		if (itemClickListener != null) {
-			gridView.setOnItemClickListener(itemClickListener);
+		if (itemClickListner != null) {
+			gridView.setOnItemClickListener(itemClickListner);
 		}
 		
-		adapter = new GroupManagerAdapter(ctx, hasAddButton);
+		if (itemLongClickListener != null) {
+			gridView.setOnItemLongClickListener(itemLongClickListener);
+		}
+		
+		adapter = new GroupManagerAdapter(ctx, hasAddButton, deleteImteListner);
 		gridView.setAdapter(adapter);
 	}
 

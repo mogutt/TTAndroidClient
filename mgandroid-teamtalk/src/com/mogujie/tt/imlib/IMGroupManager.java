@@ -12,12 +12,14 @@ import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.RecentInfo;
 import com.mogujie.tt.imlib.network.SocketThread;
+import com.mogujie.tt.imlib.proto.ChangeTempGroupMemberPacket;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.CreateTempGroupPacket;
 import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.proto.GroupPacket;
 import com.mogujie.tt.imlib.proto.GroupUnreadMsgPacket;
 import com.mogujie.tt.imlib.proto.UnreadMsgGroupListPacket;
+import com.mogujie.tt.imlib.utils.DumpUtils;
 import com.mogujie.tt.imlib.utils.IMContactHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
@@ -25,6 +27,18 @@ import com.mogujie.tt.packet.base.Header;
 import com.mogujie.tt.utils.pinyin.PinYin;
 
 public class IMGroupManager extends IMManager {
+	public static final int ADD_CHANGE_MEMBER_TYPE = 0;
+	public static final int REMOVE_CHANGE_MEMBER_TYPE = 1;
+
+	public static String getChangeMemberTypeString(int changeType) {
+		if (changeType == ADD_CHANGE_MEMBER_TYPE) {
+			return "tempgroup#adding members";
+		} else if (changeType == REMOVE_CHANGE_MEMBER_TYPE) {
+			return "tempgroup#removing members";
+		} else {
+			return "tempgroup#no such type";
+		}
+	}
 	private static IMGroupManager inst;
 
 	public static IMGroupManager instance() {
@@ -122,7 +136,7 @@ public class IMGroupManager extends IMManager {
 		logger.i("group#send packet to server");
 
 	}
-	
+
 	public void reqGetTempGroupList() {
 		logger.i("group#reqGetTempGroupList");
 
@@ -146,6 +160,13 @@ public class IMGroupManager extends IMManager {
 		return groupReadyConditionOk() && unreadMsgGroupListReady;
 	}
 
+	private void addGroup(GroupEntity group) {
+		logger.i("group#addGroup -> entity:%s", group);
+
+		group.pinyin = PinYin.getPinYin(group.name);
+		groups.put(group.id, group);
+	}
+
 	public void onRepGroupList(DataBuffer buffer) {
 		logger.i("group#onRepGroupList");
 
@@ -156,10 +177,7 @@ public class IMGroupManager extends IMManager {
 		logger.i("group#group cnt:%d", resp.entityList.size());
 
 		for (GroupEntity group : resp.entityList) {
-			logger.i("group# -> entity:%s", group);
-
-			group.pinyin = PinYin.getPinYin(group.name);
-			groups.put(group.id, group);
+			addGroup(group);
 		}
 
 		Header header = packet.getResponse().getHeader();
@@ -190,6 +208,8 @@ public class IMGroupManager extends IMManager {
 					continue;
 				}
 
+				logger.d("group#recent#group:%s", group);
+
 				RecentInfo recentSession = IMContactHelper.convertGroupEntity2RecentInfo(group);
 				IMRecentSessionManager.instance().addRecentSession(recentSession);
 			}
@@ -198,15 +218,90 @@ public class IMGroupManager extends IMManager {
 		}
 	}
 
-	public void adjustDialogMembers(List<String> addingMemberList,
-			List<String> removingMemberList) {
-		logger.d("adjust#adjustDialogMembers, adding size:%d, removing size:%d", addingMemberList.size(), removingMemberList.size());
+	public void changeTempGroupMembers(String groupId,
+			List<String> addingMemberList, List<String> removingMemberList) {
 
-		if (addingMemberList.isEmpty() && removingMemberList.isEmpty()) {
-			logger.d("tempgroup#no need to adjust");
+		logger.d("changeTempGroupMembers gropuId:%s", groupId);
+
+//		DumpUtils.dumpStringList(logger, "tempgroup#adding list", addingMemberList);
+//		DumpUtils.dumpStringList(logger, "tempgroup#removing list", removingMemberList);
+
+		changeTempGroupMembersImpl(groupId, ADD_CHANGE_MEMBER_TYPE, addingMemberList);
+		changeTempGroupMembersImpl(groupId, REMOVE_CHANGE_MEMBER_TYPE, removingMemberList);
+	}
+
+	public void changeTempGroupMembersImpl(String groupId, int changeType,
+			List<String> memberList) {
+		logger.d("tempgroup#changeGroupMembers gropuId:%s, changeType:%d", groupId, changeType);
+
+		if (memberList.isEmpty()) {
+			logger.d("tempgroup#empty, no need to change");
 			return;
 		}
 
+		SocketThread channel = IMLoginManager.instance().getMsgServerChannel();
+		if (channel == null) {
+			logger.e("tempgroup#channel is null");
+			return;
+		}
+
+		ChangeTempGroupMemberPacket.PacketRequest.Entity param = new ChangeTempGroupMemberPacket.PacketRequest.Entity();
+
+		param.groupId = groupId;
+		param.changeType = changeType;
+		param.memberList = memberList;
+
+		channel.sendPacket(new ChangeTempGroupMemberPacket(param));
+
+	}
+
+	public void onRepChangeTempGroupMembers(DataBuffer buffer) {
+		logger.d("tempgroup#onRepchangeTempGroupMembers");
+
+		ChangeTempGroupMemberPacket packet = new ChangeTempGroupMemberPacket();
+		packet.decode(buffer);
+
+		ChangeTempGroupMemberPacket.PacketResponse resp = (ChangeTempGroupMemberPacket.PacketResponse) packet.getResponse();
+
+		ChangeTempGroupMemberPacket.PacketResponse.Entity entity = resp.entity;
+		
+		logger.d("tempgroup#groupId:%s", entity.groupId);
+		boolean ok = handleChangeTempGroupMember(entity, entity.groupId);
+		logger.d("tempgroup#result ok:%s", ok);
+		
+		Intent intent = new Intent(IMActions.ACTION_GROUP_CHANGE_TEMP_GROUP_MEMBER_RESULT);
+		intent.putExtra(SysConstant.OPERATION_RESULT_KEY, ok);
+		intent.putExtra(SysConstant.SESSION_ID_KEY, entity.groupId);
+		
+		triggerAddRecentInfo();
+
+		ctx.sendBroadcast(intent);
+
+	}
+
+	private boolean handleChangeTempGroupMember(
+			ChangeTempGroupMemberPacket.PacketResponse.Entity entity, String groupId) {
+		
+		if (entity.result != 0) {
+			logger.e("tempgroup#onRepChangeTempGroupMembers failed");
+			return false;
+		}
+		
+		GroupEntity group = findGroup(groupId);
+		if (group == null) {
+			logger.e("tempgroup#no such group:%s", groupId);
+			return false;
+		}
+
+		if (entity.memberList == null || entity.memberList.isEmpty()) {
+			logger.e("tempgroup#memberList are empty");
+			return false;
+		}
+
+		//DumpUtils.dumpStringList(logger, getChangeMemberTypeString(entity.changeType), entity.memberList);
+		group.memberIdList = entity.memberList;
+
+		return true;
 	}
 
 	public void reqCreateTempGroup(String tempGroupName, List<String> memberList) {
@@ -239,20 +334,20 @@ public class IMGroupManager extends IMManager {
 			logger.e("tempgroup#createTempGroup failed");
 		} else {
 			GroupEntity group = resp.entity;
-//			group.pinyin = PinYin.getPinYin(group.name);
-
-			logger.i("tempgroup# -> new temp group:%s", group);
+			addGroup(group);
 
 			intent.putExtra(SysConstant.SESSION_ID_KEY, group.id);
-			
-			//todo eric, the return value has bug, updated time is not right, and the member cnt is also not right
-			reqGetTempGroupList();
+
+			triggerAddRecentInfo();
+
+			// todo eric, the return value has bug, updated time is not right,
+			// and the member cnt is also not right
+			// reqGetTempGroupList();
 		}
 
 		ctx.sendBroadcast(intent);
 
 	}
-
 
 	private void reqUnreadMsgGroupList() {
 		logger.i("unread#reqUnreadMsgGroupList");

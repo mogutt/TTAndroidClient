@@ -108,7 +108,7 @@ public class IMRecentSessionManager extends IMManager {
 
 		RecentInfo recentInfo = recentSessionMap.get(sessionId);
 		if (recentInfo == null) {
-			logger.e("resetUnreadMsgCnt didn't find recentinfo by sessionId:%d", sessionId);
+			logger.e("resetUnreadMsgCnt didn't find recentinfo by sessionId:%s", sessionId);
 			return;
 		}
 

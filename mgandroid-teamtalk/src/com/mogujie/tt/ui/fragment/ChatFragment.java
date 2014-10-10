@@ -515,6 +515,8 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 			logger.e("recent#null recentInfo -> position:%d", position);
 			return;
 		}
+		
+		logger.d("xrecent#onItemClick recentInfo:%s", recentInfo);
 
 		// handleUnreadMsgs(recentInfo.getEntityId(),
 		// recentInfo.getSessionType());

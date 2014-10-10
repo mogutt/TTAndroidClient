@@ -16,13 +16,13 @@ public interface SysConstant {
 	// todo eric
 	// 122.225.68.125:8001
 
-//	String AVATAR_URL_PREFIX = "http://122.225.68.125:8600/";
-//	String DOWNLOAD_IMAGE_URL_REPFIX = "http://122.225.68.125:8600/";
-//	String UPLOAD_IMAGE_URL_PREFIX = "http://122.225.68.125:8600/";
+	String AVATAR_URL_PREFIX = "http://122.225.68.125:8600/";
+	String DOWNLOAD_IMAGE_URL_REPFIX = "http://122.225.68.125:8600/";
+	String UPLOAD_IMAGE_URL_PREFIX = "http://122.225.68.125:8600/";
 	
-	String AVATAR_URL_PREFIX = "http://122.225.68.125:8001/";
-	String DOWNLOAD_IMAGE_URL_REPFIX = "http://122.225.68.125:8001/";
-	String UPLOAD_IMAGE_URL_PREFIX = "http://122.225.68.125:8001/";
+//	String AVATAR_URL_PREFIX = "http://122.225.68.125:8001/";
+//	String DOWNLOAD_IMAGE_URL_REPFIX = "http://122.225.68.125:8001/";
+//	String UPLOAD_IMAGE_URL_PREFIX = "http://122.225.68.125:8001/";
 
 	public static final int PROTOCOL_HEADER_LENGTH = 12;// 默认消息头的长度
 	public static final int PROTOCOL_VERSION = 3;

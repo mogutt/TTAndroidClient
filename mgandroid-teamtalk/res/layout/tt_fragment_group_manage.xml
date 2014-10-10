@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/gridlayout"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:background="@color/default_fragment_bk_color"
-    android:orientation="vertical" >
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scrollView1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
 
-    <!-- <com.mogujie.tt.widget.GroupManagerGridView
+    <LinearLayout
+        
+        android:id="@+id/gridlayout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/default_fragment_bk_color"
+        android:orientation="vertical" >
+
+        <!--
+         <com.mogujie.tt.widget.GroupManagerGridView
         android:id="@+id/group_manager_grid"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -16,52 +24,54 @@
         android:horizontalSpacing="10dp"
         android:numColumns="auto_fit"
         android:padding="20dp"
-        android:stretchMode="columnWidth"
+        android:stretchMode="columnWidth"a
         android:verticalSpacing="10dp" />
- -->
- <GridView
-        android:id="@+id/group_manager_grid"
-        android:layout_width="fill_parent"
-        android:layout_height="300dp"
-        android:background="@android:color/white"
-        android:columnWidth="60dp"
-        android:gravity="center"
-        android:horizontalSpacing="10dp"
-        android:numColumns="auto_fit"
-        android:padding="20dp"
-        android:stretchMode="columnWidth"
-        android:verticalSpacing="10dp" />
- 
- 
-    <RelativeLayout
-        android:id="@+id/group_manager_name"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:background="@drawable/tt_page_item_bk"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingBottom="10dp"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
-        android:paddingTop="10dp" >
+        -->
 
-        <TextView
-            android:layout_width="wrap_content"
+        <com.mogujie.tt.widget.GroupManagerGridView
+            android:id="@+id/group_manager_grid"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:text="@string/group_name_tip"
-            android:textColor="@android:color/black"
-            android:textSize="17sp" />
+            android:background="@android:color/white"
+            android:columnWidth="60dp"
+            android:gravity="center"
+            android:horizontalSpacing="10dp"
+            android:numColumns="auto_fit"
+            android:padding="20dp"
+            android:stretchMode="columnWidth"
+            android:verticalSpacing="10dp" />
 
-        <TextView
-            android:id="@+id/group_manager_title"
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:id="@+id/group_manager_name"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:text="蘑菇街IM(108)"
-            android:textColor="@color/group_manager_group_title"
-            android:textSize="17sp" />
-    </RelativeLayout>
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/tt_page_item_bk"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingBottom="10dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="10dp" >
 
-</LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:text="@string/group_name_tip"
+                android:textColor="@android:color/black"
+                android:textSize="17sp" />
+
+            <TextView
+                android:id="@+id/group_manager_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:text="蘑菇街IM(108)"
+                android:textColor="@color/group_manager_group_title"
+                android:textSize="17sp" />
+        </RelativeLayout>
+    </LinearLayout>
+
+</ScrollView>
