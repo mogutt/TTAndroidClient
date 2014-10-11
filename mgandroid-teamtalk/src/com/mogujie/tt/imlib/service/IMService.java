@@ -342,14 +342,15 @@ public class IMService extends Service implements OnIMServiceListner {
 
 //		new Notification.Builder(getApplicationContext())
 //				.setContentTitle(getNotificationTitle(msg))
-//				.setContentText(getNotificationContentText(msg)).setSmallIcon(R.drawable.tt_default_user_portrait_corner) // todo eric use small icon
+//				.setContentText(getNotif icationContentText(msg)).setSmallIcon(R.drawable.tt_default_user_portrait_corner) // todo eric use small icon
 //				.setLargeIcon(getNotificationLargeIcon()
 //				.
 //				build();
 
 		notification.icon = IMUIHelper.getDefaultAvatarResId(msg.sessionType);
 
-		long[] vibrate = { 1000, 1000, 1000, 1000, 1000 };
+		//delay 0ms, vibrate 200ms, delay 250ms, vibrate 200ms 
+		long[] vibrate = { 0, 200, 250, 200};
 		notification.vibrate = vibrate;
 
 		notification.when = System.currentTimeMillis();
