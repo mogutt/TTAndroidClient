@@ -21,9 +21,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,7 +36,6 @@ import com.mogujie.tt.biz.SearchHelper;
 import com.mogujie.tt.config.HandlerConstant;
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
-import com.mogujie.tt.conn.NetStateDispach;
 import com.mogujie.tt.conn.NetStateManager;
 import com.mogujie.tt.entity.RecentInfo;
 import com.mogujie.tt.imlib.IMActions;
@@ -47,7 +44,6 @@ import com.mogujie.tt.imlib.common.ErrorCode;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.packet.MessageDispatchCenter;
 import com.mogujie.tt.ui.activity.MainActivity;
-import com.mogujie.tt.ui.base.TTBaseFragment;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 import com.mogujie.tt.utils.CommonUtil;
@@ -58,7 +54,7 @@ import com.mogujie.tt.utils.CommonUtil;
  * @date 2014-7-24
  */
 @SuppressLint("HandlerLeak")
-public class ChatFragment extends TTBaseFragment implements /*
+public class ChatFragment extends MainFragment implements /*
 															 * OnRefreshListener2<
 															 * ListView>,
 															 */
@@ -72,9 +68,8 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 	private TextView searchTipTextView;
 	private ListView contactListView;
 	private PullToRefreshListView searchListView;
-	private LinearLayout tipView;
-	private TextView tipTextView;
-	private ProgressBar progressbar;
+//	private LinearLayout tipView;
+//	private TextView tipTextView;
 	private View curView = null;
 	private IMServiceHelper imServiceHelper = new IMServiceHelper();
 	private View noNetworkView;
@@ -120,13 +115,13 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 		}
 		curView = inflater.inflate(R.layout.tt_fragment_chat, topContentView);
 
+		super.init(curView);
 		initTitleView();// 初始化顶部view
 		initSearchBar();// 初始化顶部搜索条
-		initTipView(); // 初始化提示视图
 		initContactListView(); // 初始化联系人列表视图
 		initSearchView(); // 初始化搜索结果列表视图
 		// updateAdapter(getActivity());// 加载数据
-		showProgress();// 创建时没有数据，显示加载动画
+		showProgressBar();// 创建时没有数据，显示加载动画
 		return curView;
 	}
 
@@ -173,20 +168,20 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 		super.onDestroy();
 	}
 
-	/**
-	 * @Description 注册事件
-	 */
-	private void registEvents() {
-		// 消息数据
-		int msgData = ProtocolConstant.SID_MSG * 1000
-				+ ProtocolConstant.CID_MSG_DATA;
-		MessageDispatchCenter.getInstance().register(msgHandler, msgData);
-		// 网络状态通知
-		NetStateDispach.getInstance().register(getActivity().getClass(), uiHandler);
-		// 未读消息通知
-		MessageNotifyCenter.getInstance().register(SysConstant.EVENT_UNREAD_MSG, uiHandler, HandlerConstant.HANDLER_CONTACTS_NEW_MESSAGE_COME);
-		MessageNotifyCenter.getInstance().register(SysConstant.EVENT_RECENT_INFO_CHANGED, uiHandler, HandlerConstant.HANDLER_CONTACTS_TO_REFRESH);
-	}
+//	/**
+//	 * @Description 注册事件
+//	 */
+//	private void registEvents() {
+//		// 消息数据
+//		int msgData = ProtocolConstant.SID_MSG * 1000
+//				+ ProtocolConstant.CID_MSG_DATA;
+//		MessageDispatchCenter.getInstance().register(msgHandler, msgData);
+//		// 网络状态通知
+//		NetStateDispach.getInstance().register(getActivity().getClass(), uiHandler);
+//		// 未读消息通知
+//		MessageNotifyCenter.getInstance().register(SysConstant.EVENT_UNREAD_MSG, uiHandler, HandlerConstant.HANDLER_CONTACTS_NEW_MESSAGE_COME);
+//		MessageNotifyCenter.getInstance().register(SysConstant.EVENT_RECENT_INFO_CHANGED, uiHandler, HandlerConstant.HANDLER_CONTACTS_TO_REFRESH);
+//	}
 
 	/**
 	 * @Description 取消事件注册
@@ -348,7 +343,7 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 						if (isAdded()) {
 							setTopTitle(getActivity().getString(R.string.network_was_disconnected));
 							// handleTips(getActivity().getString(R.string.network_was_disconnected));
-							hideProgress();
+							hideProgressBar();
 						}
 						break;
 					case HandlerConstant.HANDLER_NET_STATE_CONNECTED :
@@ -368,7 +363,7 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 						break;
 					case HandlerConstant.HANDLER_CONTACTS_REQUEST_TIMEOUT :
 						if (isAdded()) {
-							hideProgress();
+							hideProgressBar();
 							// handleTips(getActivity().getString(R.string.load_contacts_failed));
 						}
 						break;
@@ -379,17 +374,16 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 		};
 	}
 
-	/**
-	 * @Description 初始化提示视图
-	 */
-	private void initTipView() {
-		// tipView = (LinearLayout) curView.findViewById(R.id.ContactTipsView);
-		// tipView.setVisibility(View.INVISIBLE);
-		// tipTextView = (TextView)
-		// curView.findViewById(R.id.ContactTipsTextView);
-
-		progressbar = (ProgressBar) curView.findViewById(R.id.progress_bar);
-	}
+//	/**
+//	 * @Description 初始化提示视图
+//	 */
+//	private void initTipView() {
+//		// tipView = (LinearLayout) curView.findViewById(R.id.ContactTipsView);
+//		// tipView.setVisibility(View.INVISIBLE);
+//		// tipTextView = (TextView)
+//		// curView.findViewById(R.id.ContactTipsTextView);
+//
+//	}
 
 	/**
 	 * @Description 初始化列表视图
@@ -546,33 +540,25 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 		// }
 	}
 
-	/**
-	 * @Description 本地没有数据时进行请求
-	 * @param needRequest
-	 */
-	private void requestContacts(boolean needRequest) {
-		if (needRequest || contactAdapter.getCount() < 1) {
-			// ContactHelper.reqRecentContact(msgHandler, uiHandler);
-		}
-	}
-
-	public void showProgress() {
-		progressbar.setVisibility(View.VISIBLE);
-	}
-
-	public void hideProgress() {
-		progressbar.setVisibility(View.GONE);
-	}
+//	/**
+//	 * @Description 本地没有数据时进行请求
+//	 * @param needRequest
+//	 */
+//	private void requestContacts(boolean needRequest) {
+//		if (needRequest || contactAdapter.getCount() < 1) {
+//			// ContactHelper.reqRecentContact(msgHandler, uiHandler);
+//		}
+//	}
 
 	// private void hideTips() {
 	// tipTextView.setText("");
 	// tipView.setVisibility(View.INVISIBLE);
 	// }
 
-	private void showTips(String tips) {
-		tipTextView.setText(tips);
-		tipView.setVisibility(View.VISIBLE);
-	}
+//	private void showTips(String tips) {
+//		tipTextView.setText(tips);
+//		tipView.setVisibility(View.VISIBLE);
+//	}
 
 	// /**
 	// * @Description 显示提示信息 1.没有最近联系人使用：getString(R.string.no_recent_contact)
@@ -591,7 +577,7 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 	 * @param msg
 	 */
 	private void onRecieveRecentContactList(Object msg, Context context) {
-		hideProgress();
+		hideProgressBar();
 		// handleResponseData(msg, context);
 		updateAdapter(context);
 		if (isAdded() && null != msg) {
@@ -765,7 +751,7 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 		List<RecentInfo> recentSessionList = recentSessionManager.getRecentSessionList();
 		contactAdapter.setData(recentSessionList);
 
-		hideProgress();
+		hideProgressBar();
 	}
 
 	@Override

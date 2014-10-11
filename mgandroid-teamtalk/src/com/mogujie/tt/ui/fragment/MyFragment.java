@@ -13,21 +13,20 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.mogujie.tt.R;
-import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.imlib.IMActions;
 import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.ui.activity.UserInfoActivity;
-import com.mogujie.tt.ui.base.TTBaseFragment;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 import com.mogujie.widget.imageview.MGWebImageView;
 
-public class MyFragment extends TTBaseFragment implements OnIMServiceListner {
+public class MyFragment extends MainFragment implements OnIMServiceListner {
 	private View curView = null;
 	private IMServiceHelper imServiceHelper = new IMServiceHelper();
+	private View contentView;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -51,12 +50,28 @@ public class MyFragment extends TTBaseFragment implements OnIMServiceListner {
 	 * @Description 初始化资源
 	 */
 	private void initRes() {
+		super.init(curView);
+		
+		contentView = curView.findViewById(R.id.content);
+		hideContent();
+
 		// 设置顶部标题栏
 		setTopTitle(getActivity().getString(R.string.page_me));
 		// 设置页面其它控件
 
 	}
 
+	private void hideContent() {
+		if (contentView != null) {
+			contentView.setVisibility(View.GONE);
+		}
+	}
+
+	private void showContent() {
+		if (contentView != null) {
+			contentView.setVisibility(View.VISIBLE);
+		}
+	}
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
@@ -106,6 +121,9 @@ public class MyFragment extends TTBaseFragment implements OnIMServiceListner {
 	}
 
 	private void init(IMService imService) {
+		showContent();
+		hideProgressBar();
+		
 		if (imService == null) {
 			return;
 		}

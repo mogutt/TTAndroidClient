@@ -69,12 +69,13 @@
     </LinearLayout>
 
     <ProgressBar
-        android:id="@+id/contact_loading_progress_bar"
+        android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:indeterminateDrawable="@drawable/tt_progressbar"
         android:indeterminateDuration="4000"
-        android:visibility="gone" />
+        android:visibility="visible" />
+
 
 </RelativeLayout>

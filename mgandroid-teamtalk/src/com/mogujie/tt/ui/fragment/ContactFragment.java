@@ -20,7 +20,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.mogujie.tt.R;
@@ -35,7 +34,6 @@ import com.mogujie.tt.imlib.proto.DepartmentEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
-import com.mogujie.tt.ui.base.TTBaseFragment;
 import com.mogujie.tt.ui.utils.EntityList;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
@@ -46,7 +44,7 @@ import com.mogujie.tt.widget.SearchEditText;
 import com.mogujie.tt.widget.SortSideBar;
 import com.mogujie.tt.widget.SortSideBar.OnTouchingLetterChangedListener;
 
-public class ContactFragment extends TTBaseFragment implements
+public class ContactFragment extends MainFragment implements
 		OnTouchingLetterChangedListener, OnItemClickListener,
 		OnIMServiceListner {
 	private View curView = null;
@@ -54,7 +52,6 @@ public class ContactFragment extends TTBaseFragment implements
 	private ListView allContactListView;
 	private ListView departmentContactListView;
 	private SortSideBar sortSideBar;
-	private ProgressBar loadingProgressBar;
 	private TextView dialog;
 	private EntityListViewAdapter contactAdapter;
 	private EntityListViewAdapter departmentAdapter;
@@ -102,13 +99,7 @@ public class ContactFragment extends TTBaseFragment implements
 		return curView;
 	}
 
-	private void showLoadingProgressBar(boolean show) {
-		if (loadingProgressBar != null) {
-			int visibility = show ? View.VISIBLE : View.GONE;
-			loadingProgressBar.setVisibility(visibility);
-		}
-	}
-
+	
 	private List<Object> getDepartmentTabSortedList(
 			Map<String, ContactEntity> contacts) {
 		// todo eric efficiency
@@ -139,6 +130,8 @@ public class ContactFragment extends TTBaseFragment implements
 	}
 
 	private void onContactsReady() {
+		hideProgressBar();
+		
 		contactTabOnContactsReady();
 		departmentTabOnContactsReady();
 	}
@@ -332,6 +325,8 @@ public class ContactFragment extends TTBaseFragment implements
 	private void onGroupReady() {
 		logger.d("group#onGroupReady");
 
+		hideProgressBar();
+		
 		// todo efficiency
 		List<Object> groupList = new ArrayList<Object>(imService
 				.getGroupManager().getNormalGroupList());
@@ -429,8 +424,10 @@ public class ContactFragment extends TTBaseFragment implements
 		// });
 		// }
 		//
-		loadingProgressBar = (ProgressBar) curView
-				.findViewById(R.id.contact_loading_progress_bar);
+		
+		super.init(curView);
+		showProgressBar();
+		
 		sortSideBar = (SortSideBar) curView.findViewById(R.id.sidrbar);
 		dialog = (TextView) curView.findViewById(R.id.dialog);
 		sortSideBar.setTextView(dialog);
