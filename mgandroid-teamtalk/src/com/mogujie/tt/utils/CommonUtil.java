@@ -24,7 +24,6 @@ import com.mogujie.tt.R;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.tools.PhotoHandler;
-import com.mogujie.tt.widget.PinkToast;
 
 public class CommonUtil {
     /**
@@ -197,7 +196,7 @@ public class CommonUtil {
      */
     public static void toDetailPage(Context context, String iid) {
         if (TextUtils.isEmpty(iid)) {
-            PinkToast.makeText(context,
+            Toast.makeText(context,
                     context.getResources().getString(R.string.invalid_detail_url),
                     Toast.LENGTH_SHORT).show();
             return;
@@ -215,7 +214,7 @@ public class CommonUtil {
      */
     private static void toOrderPage(Context context, String orderId) {
         if (TextUtils.isEmpty(orderId)) {
-            PinkToast.makeText(context,
+            Toast.makeText(context,
                     context.getResources().getString(R.string.invalid_order_url),
                     Toast.LENGTH_SHORT).show();
             return;

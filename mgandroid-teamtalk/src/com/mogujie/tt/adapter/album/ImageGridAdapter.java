@@ -14,13 +14,13 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.mogujie.tt.R;
 import com.mogujie.tt.adapter.album.BitmapCache.ImageCallback;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.activity.PickPhotoActivity;
-import com.mogujie.tt.widget.PinkToast;
 
 /**
  * @Description 图片列表适配器
@@ -174,11 +174,11 @@ public class ImageGridAdapter extends BaseAdapter {
                     String path = dataList.get(position).getImagePath();
                     Bitmap bmp = cache.getCacheBitmap(path, path);
                     if (null != bmp && bmp == PickPhotoActivity.bimap) {
-                        PinkToast.makeText(
+                        Toast.makeText(
                                 activity,
                                 activity.getResources().getString(
                                         R.string.unavailable_image_file),
-                                PinkToast.LENGTH_LONG).show();
+                                Toast.LENGTH_LONG).show();
                         return;
                     }
                     if (selectTotal < SysConstant.MAX_SELECT_IMAGE_COUNT) {

@@ -42,7 +42,6 @@ import com.mogujie.tt.task.TaskManager;
 import com.mogujie.tt.task.biz.UploadImageTask;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
-import com.mogujie.tt.widget.PinkToast;
 
 /**
  * @Description 相册图片列表
@@ -71,7 +70,7 @@ public class ImageGridActivity extends Activity implements OnTouchListener, OnIM
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case 0:
-                    PinkToast.makeText(ImageGridActivity.this,
+                    Toast.makeText(ImageGridActivity.this,
                             "最多选择" + SysConstant.MAX_SELECT_IMAGE_COUNT + "张图片",
                             400).show();
                     break;
@@ -175,16 +174,7 @@ public class ImageGridActivity extends Activity implements OnTouchListener, OnIM
             public void onClick(View v) {
             	logger.d("pic#click send image btn");
                 if (adapter.getSelectMap().size() > 0) {
-
-//                    if (!StateManager.getInstance().isOnline()) {
-//                        PinkToast.makeText(
-//                                ImageGridActivity.this,
-//                                getString(R.string.disconnected),
-//                                Toast.LENGTH_LONG
-//                        ).show();
-//
-//                        return;
-//                    }
+                	
                     List<MessageInfo> messageList = new ArrayList<MessageInfo>();
                     Iterator<Integer> iter = adapter.getSelectMap().keySet()
                             .iterator();
@@ -214,7 +204,7 @@ public class ImageGridActivity extends Activity implements OnTouchListener, OnIM
                             SysConstant.UPLOAD_IMAGE_URL_PREFIX, Dao, messageList);
                     TaskManager.getInstance().trigger(upTask);
                 } else {
-                    PinkToast.makeText(ImageGridActivity.this,
+                    Toast.makeText(ImageGridActivity.this,
                             R.string.need_choose_images, Toast.LENGTH_SHORT)
                             .show();
                 }
@@ -232,7 +222,7 @@ public class ImageGridActivity extends Activity implements OnTouchListener, OnIM
                     startActivityForResult(intent,
                             SysConstant.ALBUM_PREVIEW_BACK);
                 } else {
-                    PinkToast.makeText(ImageGridActivity.this,
+                    Toast.makeText(ImageGridActivity.this,
                             R.string.need_choose_images, Toast.LENGTH_SHORT)
                             .show();
                 }

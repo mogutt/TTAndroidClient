@@ -63,7 +63,6 @@ import com.mogujie.tt.utils.DateUtil;
 import com.mogujie.tt.utils.FileUtil;
 import com.mogujie.tt.widget.MGProgressbar;
 import com.mogujie.tt.widget.MessageOperatePopup;
-import com.mogujie.tt.widget.PinkToast;
 import com.mogujie.tt.widget.SpeekerToast;
 import com.mogujie.widget.imageview.MGWebImageView;
 import com.squareup.picasso.Picasso.LoadedFrom;
@@ -149,8 +148,9 @@ public class MessageAdapter extends BaseAdapter {
 
 	@Override
 	public void notifyDataSetChanged() {
-		DumpUtils.dumpStacktrace(logger, "debug#notifyDataSetChanged", false);
-		logger.i("debug#notifyDataSetChanged");
+		// DumpUtils.dumpStacktrace(logger, "debug#notifyDataSetChanged",
+		// false);
+		// logger.i("debug#notifyDataSetChanged");
 		super.notifyDataSetChanged();
 	}
 
@@ -191,10 +191,10 @@ public class MessageAdapter extends BaseAdapter {
 	 * @param list
 	 */
 	public void addItem(boolean fromStart, List<MessageInfo> list) {
-		logger.d("debug#dump addItem fromStart msgList");
+		// logger.d("debug#dump addItem fromStart msgList");
 		int index = 0;
 		for (MessageInfo msgInfo : list) {
-			logger.d("debug#index:%d, msg:%s", index, msgInfo);
+			// logger.d("debug#index:%d, msg:%s", index, msgInfo);
 			++index;
 		}
 
@@ -207,7 +207,7 @@ public class MessageAdapter extends BaseAdapter {
 
 			// 先取出需要加进去的数据数量
 			final int count = list.size();
-			logger.d("debug#list size:%d", count);
+			// logger.d("debug#list size:%d", count);
 
 			if (fromStart) {
 				// 因为第一次插入历史数据的时候，需要插入一条divider数据，所以后移的偏移量是count + 1
@@ -332,7 +332,7 @@ public class MessageAdapter extends BaseAdapter {
 	 * @param state
 	 */
 	public void updateMessageState(MessageInfo messageInfo, int state) {
-		logger.d("debug#updateMessageState");
+		// logger.d("debug#updateMessageState");
 		if (null == messageInfo)
 			return;
 		try {
@@ -352,12 +352,12 @@ public class MessageAdapter extends BaseAdapter {
 			// CacheHub.getInstance().updateMsgStatus(msgId, state);
 
 			if (messageInfo.getDisplayType() == SysConstant.DISPLAY_TYPE_IMAGE) {
-				logger.d("debug#this is image");
+				logger.d("pic#this is image");
 				String savePath = "";
 				if (null != messageInfo.getSavePath()) {
 					savePath = messageInfo.getSavePath();
 				}
-				logger.d("debug#setsavepath:%s", savePath);
+				logger.d("pic#setsavepath:%s", savePath);
 				msgInfo.setSavePath(savePath);
 				msgInfo.setMsgReadStatus(SysConstant.MESSAGE_ALREADY_READ);
 				// CacheHub.getInstance().updateMsgImageSavePath(messageInfo.msgId,
@@ -387,7 +387,7 @@ public class MessageAdapter extends BaseAdapter {
 
 			String stackTraceString = Log.getStackTraceString(new Throwable());
 			stackTraceString.replaceAll("\n", "###");
-			logger.d("debug#updateItemState stack:%s", stackTraceString);
+			// logger.d("debug#updateItemState stack:%s", stackTraceString);
 			MessageInfo msgInfo = getMsgInfo(msgId);
 			if (msgInfo == null) {
 				logger.e("chat#error can't find msgInfo:%s", msgId);
@@ -399,7 +399,7 @@ public class MessageAdapter extends BaseAdapter {
 			}
 
 			msgInfo.setMsgLoadState(state);
-			logger.d("debug#updateItemState,  msg:%s", msgInfo);
+			// logger.d("debug#updateItemState,  msg:%s", msgInfo);
 			notifyDataSetChanged();
 		} catch (Exception e) {
 			logger.e(e.getMessage());
@@ -492,7 +492,8 @@ public class MessageAdapter extends BaseAdapter {
 			}
 
 			final MessageInfo info = (MessageInfo) messageList.get(position);
-			logger.d("debug#getview MessageInfo position:%d, info:%s", position, info);
+			// logger.d("debug#getview MessageInfo position:%d, info:%s",
+			// position, info);
 			// DumpUtils.dumpStacktrace(logger, "debug#getview", false);
 
 			IMUIHelper.setMessageOwnerAvatar(logger, session, info, holder.portrait);
@@ -509,7 +510,7 @@ public class MessageAdapter extends BaseAdapter {
 					public void onClick(View arg0) {
 						int menuType = getMenuType(info);
 						if (menuType > 0) {
-							logger.d("debug#showMenu  MessageInfo:%s", info);
+							// logger.d("debug#showMenu  MessageInfo:%s", info);
 							showMenu(context, menuType, parent, info, baseView);
 						}
 					}
@@ -908,7 +909,7 @@ public class MessageAdapter extends BaseAdapter {
 			try {
 				if (msgInfo.getDisplayType() == SysConstant.DISPLAY_TYPE_AUDIO) {
 					if (!new File(msgInfo.getSavePath()).exists()) {
-						PinkToast.makeText(context, context.getResources().getString(R.string.notfound_audio_file), Toast.LENGTH_LONG).show();
+						Toast.makeText(context, context.getResources().getString(R.string.notfound_audio_file), Toast.LENGTH_LONG).show();
 						return;
 					}
 					if (msgInfo.getMsgReadStatus() < SysConstant.MESSAGE_DISPLAYED) {
@@ -950,7 +951,7 @@ public class MessageAdapter extends BaseAdapter {
 						if (FileUtil.isSdCardAvailuable()) {
 							updateItemState(msgInfo.msgId, SysConstant.MESSAGE_STATE_UNLOAD);
 						} else {
-							PinkToast.makeText(context, context.getString(R.string.sdcard_unavaluable), Toast.LENGTH_LONG).show();
+							Toast.makeText(context, context.getString(R.string.sdcard_unavaluable), Toast.LENGTH_LONG).show();
 						}
 
 					} else {
@@ -1048,11 +1049,11 @@ public class MessageAdapter extends BaseAdapter {
 		boolean bIsSelf = msg.getMsgFromUserId().equals(CacheHub.getInstance().getLoginUserId());
 		OperateItemClickListener listener = new OperateItemClickListener(menuType);
 		listener.setMessageInfo(msg);
-		
+
 		MessageOperatePopup popupView = new MessageOperatePopup(context, parent);
 		popupView.setOnItemClickListener(listener);
-		currentPopupView  = popupView;
-		
+		currentPopupView = popupView;
+
 		boolean bResend = msg.getMsgLoadState() == SysConstant.MESSAGE_STATE_FINISH_FAILED;
 		popupView.show(layout, menuType, bResend, bIsSelf);
 
@@ -1073,7 +1074,8 @@ public class MessageAdapter extends BaseAdapter {
 		}
 
 		public void setMessageInfo(MessageInfo msgInfo) {
-			logger.d("debug#setMessageInfo msgInfo:%s, this:%s", msgInfo, this);
+			// logger.d("debug#setMessageInfo msgInfo:%s, this:%s", msgInfo,
+			// this);
 
 			mMsgInfo = msgInfo;
 		}
@@ -1108,22 +1110,18 @@ public class MessageAdapter extends BaseAdapter {
 							MessageHelper.setMsgAudioContent(mMsgInfo);
 						}
 					}
-
-					// MessageHelper.doSendTask(mMsgInfo,
-					// MessageActivity.getUiHandler(),
-					// MessageActivity.getMsgHandler());
 				} else if (mType == SysConstant.POPUP_MENU_TYPE_IMAGE) {
+					logger.d("pic#resend");
 					String Dao = "";// TokenManager.getInstance().getDao();
 					List<MessageInfo> messageList = new ArrayList<MessageInfo>();
 					messageList.add(mMsgInfo);
+
+					mMsgInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_LOADDING);
+					updateItemState(mMsgInfo.msgId, SysConstant.MESSAGE_STATE_LOADDING);
+
 					UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), session.getType(), SysConstant.UPLOAD_IMAGE_URL_PREFIX, Dao, messageList);
 					TaskManager.getInstance().trigger(upTask);
 				}
-
-				logger.d("debug#before resending, msgInfo:%s, this:%s", mMsgInfo, this);
-				mMsgInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_LOADDING);
-				updateItemState(mMsgInfo.msgId, SysConstant.MESSAGE_STATE_LOADDING);
-				logger.d("debug#after updateItemState, msgInfo:%s", mMsgInfo);
 
 				resendMsg(mMsgInfo.msgId);
 

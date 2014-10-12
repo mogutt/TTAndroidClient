@@ -92,7 +92,6 @@ import com.mogujie.tt.utils.CommonUtil;
 import com.mogujie.tt.widget.EmoGridView;
 import com.mogujie.tt.widget.EmoGridView.OnEmoGridViewItemClick;
 import com.mogujie.tt.widget.MGProgressbar;
-import com.mogujie.tt.widget.PinkToast;
 
 //import com.mogujie.tt.conn.ReconnectManager;
 
@@ -228,7 +227,7 @@ public class MessageActivity extends TTBaseActivity
 
 			onMsgRecv(intent, broadcastReceiver);
 		} else if (action.equals(IMActions.ACTION_NEW_MESSAGE_SESSION)) {
-			onNewMessageSession();
+			onResumeAgain();
 		} else if (action.equals(IMActions.ACTION_MSG_RESENT)) {
 			onMessageResent(intent);
 		}
@@ -251,7 +250,8 @@ public class MessageActivity extends TTBaseActivity
 		}
 	}
 
-	private void onNewMessageSession() {
+	//the second and later time resume 
+	private void onResumeAgain() {
 		logger.d("chat#onNewMessageSession");
 
 		SessionInfo sessionInfo = CacheHub.getInstance().getSessionInfo();
@@ -317,7 +317,8 @@ public class MessageActivity extends TTBaseActivity
 	private IMServiceHelper imServiceHelper = new IMServiceHelper();
 	private IMService imService;
 	private IMSession session = new IMSession(imServiceHelper);
-	private int MSG_CNT_PER_PAGE = 15;
+//	private int MSG_CNT_PER_PAGE = 15;
+	private int MSG_CNT_PER_PAGE = 2;
 	private int firstHistoryMsgTime = -1;
 	private boolean imServiceConnectionEnabled = false;
 
@@ -365,7 +366,7 @@ public class MessageActivity extends TTBaseActivity
 
 		// not the first time
 		if (imServiceHelper.getIMService() != null) {
-			onNewMessageSession();
+			onResumeAgain();
 			handleOnResume(false);
 		}
 
@@ -392,7 +393,7 @@ public class MessageActivity extends TTBaseActivity
 
 		// // 拍照时如果断网直接提示，不进行图片消息的展示
 		// if (!StateManager.getInstance().isOnline()) {
-		// PinkToast.makeText(MessageActivity.this,
+		// Toast.makeText(MessageActivity.this,
 		// getResources().getString(R.string.disconnected_by_server),
 		// Toast.LENGTH_LONG).show();
 		//
@@ -917,7 +918,7 @@ public class MessageActivity extends TTBaseActivity
 	private void blockUser(boolean block) {
 		hideProgress();
 		if (block) {
-			PinkToast.makeText(MessageActivity.this, getString(R.string.block_chat), Toast.LENGTH_LONG).show();
+			Toast.makeText(MessageActivity.this, getString(R.string.block_chat), Toast.LENGTH_LONG).show();
 			Timer timer = new Timer();
 			timer.schedule(new TimerTask() {
 				public void run() {
@@ -1088,7 +1089,7 @@ public class MessageActivity extends TTBaseActivity
 
 		// User chatUser = CacheHub.getInstance().getChatUser();
 		// if (chatUser == null) {
-		// PinkToast.makeText(MessageActivity.this,
+		// Toast.makeText(MessageActivity.this,
 		// getResources().getString(R.string.link_is_connecting),
 		// Toast.LENGTH_LONG).show();
 		//
@@ -1136,7 +1137,7 @@ public class MessageActivity extends TTBaseActivity
 		// @Override
 		// public void callback(Object result) {
 		// if (result == null) {
-		// PinkToast.makeText(
+		// Toast.makeText(
 		// MessageActivity.this,
 		// getResources().getString(
 		// R.string.write_audio_file_failed),
@@ -1146,7 +1147,7 @@ public class MessageActivity extends TTBaseActivity
 		// });
 		// TaskManager.getInstance().trigger(sendTask);
 		// } else {
-		// PinkToast.makeText(MessageActivity.this,
+		// Toast.makeText(MessageActivity.this,
 		// getResources().getString(R.string.disconnected_by_server),
 		// Toast.LENGTH_LONG).show();
 		// }
@@ -1226,7 +1227,7 @@ public class MessageActivity extends TTBaseActivity
 
 		} else if (id == R.id.take_photo_btn) {
 			if (albumList.size() < 1) {
-				PinkToast.makeText(MessageActivity.this, getResources().getString(R.string.not_found_album), Toast.LENGTH_LONG).show();
+				Toast.makeText(MessageActivity.this, getResources().getString(R.string.not_found_album), Toast.LENGTH_LONG).show();
 				return;
 			}
 			Intent intent = new Intent(MessageActivity.this, PickPhotoActivity.class);
@@ -1265,7 +1266,7 @@ public class MessageActivity extends TTBaseActivity
 		} else if (id == R.id.send_message_btn) {
 			// todo eric
 			// if (!StateManager.getInstance().isOnline()) {
-			// PinkToast.makeText(
+			// Toast.makeText(
 			// MessageActivity.this,
 			// getResources().getString(
 			// R.string.disconnected_by_server),
@@ -1279,7 +1280,7 @@ public class MessageActivity extends TTBaseActivity
 			String content = messageEdt.getText().toString();
 			logger.e("messageactivity#chat content:%s", content);
 			if (content.trim().equals("")) {
-				PinkToast.makeText(MessageActivity.this, getResources().getString(R.string.message_null), Toast.LENGTH_LONG).show();
+				Toast.makeText(MessageActivity.this, getResources().getString(R.string.message_null), Toast.LENGTH_LONG).show();
 				return;
 			}
 			MessageInfo msg = MessageHelper.obtainTextMessage(session.getSessionId(), content);
@@ -1372,7 +1373,7 @@ public class MessageActivity extends TTBaseActivity
 			} else if (event.getAction() == MotionEvent.ACTION_UP) {
 
 				// if (!StateManager.getInstance().isOnline()) {
-				// PinkToast.makeText(
+				// Toast.makeText(
 				// MessageActivity.this,
 				// getResources().getString(
 				// R.string.disconnected_by_server),

@@ -36,7 +36,6 @@ import com.mogujie.tt.ui.tools.DisplayBitmapCache;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 import com.mogujie.tt.widget.CustomViewPager;
-import com.mogujie.tt.widget.PinkToast;
 
 /**
  * @Description 图片预览
@@ -117,7 +116,7 @@ public class PreviewActivity extends Activity implements OnPageChangeListener, O
                     setResult(RESULT_OK, data); 
                     PreviewActivity.this.finish();
                 } else {
-                    PinkToast.makeText(PreviewActivity.this,
+                    Toast.makeText(PreviewActivity.this,
                             R.string.need_choose_images, Toast.LENGTH_SHORT)
                             .show();
                 }

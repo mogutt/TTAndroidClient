@@ -145,13 +145,14 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 			logger.d("chat#resend#this is an audio type message");
 			sendVoice(msgInfo.toId, msgInfo.getAudioContent(), msgInfo.sessionType, msgInfo);
 		} else if (msgInfo.isPictureType()) {
-			logger.d("chat#resend#this is a picture type message");
-			
-			List<MessageInfo> msgList = new ArrayList<MessageInfo>();
-			msgList.add(msgInfo);
-			UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), msgInfo.sessionType,
-			                                             SysConstant.UPLOAD_IMAGE_URL_PREFIX, "", msgList);
-			TaskManager.getInstance().trigger(upTask);
+			//todo eric upper logics handled the resend issue
+//			logger.d("chat#resend#this is a picture type message");
+//			
+//			List<MessageInfo> msgList = new ArrayList<MessageInfo>();
+//			msgList.add(msgInfo);
+//			UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), msgInfo.sessionType,
+//			                                             SysConstant.UPLOAD_IMAGE_URL_PREFIX, "", msgList);
+//			TaskManager.getInstance().trigger(upTask);
 
 		}
 		

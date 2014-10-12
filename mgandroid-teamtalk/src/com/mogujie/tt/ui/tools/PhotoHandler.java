@@ -23,7 +23,6 @@ import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.activity.MessageActivity;
 import com.mogujie.tt.utils.CommonUtil;
-import com.mogujie.tt.widget.PinkToast;
 
 public class PhotoHandler {
     private Context context;
@@ -60,7 +59,7 @@ public class PhotoHandler {
         if (CommonUtil.checkSDCard()) {
             doTakePhoto(context);
         } else {
-            PinkToast.makeText(context,
+            Toast.makeText(context,
                     context.getResources().getString(R.string.no_sdcard),
                     Toast.LENGTH_LONG).show();
         }

@@ -27,7 +27,6 @@ import com.mogujie.tt.ui.base.TTBaseActivity;
 import com.mogujie.tt.ui.tools.DisplayBitmapCache;
 import com.mogujie.tt.utils.CommonUtil;
 import com.mogujie.tt.widget.MGProgressbar;
-import com.mogujie.tt.widget.PinkToast;
 import com.mogujie.widget.imageview.MGWebImageView;
 import com.polites.android.GestureImageView;
 import com.squareup.picasso.Picasso.LoadedFrom;
@@ -215,7 +214,7 @@ public class DisplayImageActivity extends TTBaseActivity {
                         .d("bitmap == null");
             }
 
-            PinkToast.makeText(
+            Toast.makeText(
                     this,
                     this.getResources().getString(
                             R.string.image_download_failed), Toast.LENGTH_LONG)
