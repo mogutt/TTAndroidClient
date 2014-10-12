@@ -20,6 +20,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -42,8 +43,10 @@ import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
 import com.mogujie.tt.entity.TimeTileMessage;
+import com.mogujie.tt.imlib.IMMessageManager;
 import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.service.IMService;
+import com.mogujie.tt.imlib.utils.DumpUtils;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.task.TaskManager;
@@ -91,16 +94,18 @@ public class MessageAdapter extends BaseAdapter {
 	private static int selectedPosition = -1;
 
 	// key = msgid, value = the position in messageList
-//	private MsgIdToPositionMap msgIndexMap = new MsgIdToPositionMap();
+	// private MsgIdToPositionMap msgIndexMap = new MsgIdToPositionMap();
 
 	private volatile static HashMap<String, AnimationDrawable> audioPathAnimMap = new HashMap<String, AnimationDrawable>();
 	private static String playingPath = null;
+	MessageOperatePopup currentPopupView;
 
-	private MessageOperatePopup mOperatePopup = null;
 	private boolean mHistoryFirstAdd = true;;
 	private Logger logger = Logger.getLogger(MessageAdapter.class);
 	private IMSession session;
 	private IMServiceHelper imServiceHelper;
+	private IMService imService;
+	private IMMessageManager msgMgr;
 
 	public void setIMServiceHelper(IMServiceHelper imServiceHelper) {
 		this.imServiceHelper = imServiceHelper;
@@ -117,9 +122,9 @@ public class MessageAdapter extends BaseAdapter {
 	}
 
 	public void clearMsgIndexMap() {
-//		if (null != msgIndexMap) {
-//			msgIndexMap.clear();
-//		}
+		// if (null != msgIndexMap) {
+		// msgIndexMap.clear();
+		// }
 		mHistoryFirstAdd = true;
 	}
 
@@ -144,6 +149,8 @@ public class MessageAdapter extends BaseAdapter {
 
 	@Override
 	public void notifyDataSetChanged() {
+		DumpUtils.dumpStacktrace(logger, "debug#notifyDataSetChanged", false);
+		logger.i("debug#notifyDataSetChanged");
 		super.notifyDataSetChanged();
 	}
 
@@ -190,7 +197,7 @@ public class MessageAdapter extends BaseAdapter {
 			logger.d("debug#index:%d, msg:%s", index, msgInfo);
 			++index;
 		}
-		
+
 		try {
 			if (null == list || list.size() == 0) {
 				return;
@@ -201,11 +208,11 @@ public class MessageAdapter extends BaseAdapter {
 			// 先取出需要加进去的数据数量
 			final int count = list.size();
 			logger.d("debug#list size:%d", count);
-			
+
 			if (fromStart) {
 				// 因为第一次插入历史数据的时候，需要插入一条divider数据，所以后移的偏移量是count + 1
 				// updatePositonSeqMap(0, mHistoryFirstAdd ? count + 1 : count);
-//				msgIndexMap.fix(0, count);
+				// msgIndexMap.fix(0, count);
 			}
 			// 从加进去的那个info开始，赋值各条消息的状态
 			for (int i = 0; i < count; i++) {
@@ -213,7 +220,7 @@ public class MessageAdapter extends BaseAdapter {
 				if (null == info) {
 					continue;
 				}
-//				msgIndexMap.put(info.msgId, fromStart ? i : count + i);
+				// msgIndexMap.put(info.msgId, fromStart ? i : count + i);
 			}
 
 			int position = count - 1;
@@ -243,7 +250,7 @@ public class MessageAdapter extends BaseAdapter {
 						timeTile.setTime(info.getMsgCreateTime());
 
 						// 更新一下状态位置映射
-//						msgIndexMap.fix(position, 1);
+						// msgIndexMap.fix(position, 1);
 						messageList.add(position, timeTile);
 					}
 				}
@@ -278,7 +285,7 @@ public class MessageAdapter extends BaseAdapter {
 				return;
 			}
 			messageList.add(info);
-//			msgIndexMap.put(info.msgId, messageList.size() - 1);
+			// msgIndexMap.put(info.msgId, messageList.size() - 1);
 
 			final int count = messageList.size();
 			MessageInfo preInfo = null;
@@ -294,7 +301,7 @@ public class MessageAdapter extends BaseAdapter {
 					: preInfo.getMsgCreateTime(), info.getMsgCreateTime())) {
 				TimeTileMessage timeTitle = new TimeTileMessage();
 				timeTitle.setTime(info.getMsgCreateTime());
-//				msgIndexMap.fix(count - 1, 1);
+				// msgIndexMap.fix(count - 1, 1);
 				messageList.add(count - 1, timeTitle);
 			}
 
@@ -310,13 +317,13 @@ public class MessageAdapter extends BaseAdapter {
 			if (!(obj instanceof MessageInfo)) {
 				continue;
 			}
-			MessageInfo msgInfo = (MessageInfo)obj;
-			
+			MessageInfo msgInfo = (MessageInfo) obj;
+
 			if (msgInfo.msgId.equals(msgId)) {
 				return msgInfo;
 			}
 		}
-		
+
 		return null;
 	}
 	/**
@@ -334,7 +341,6 @@ public class MessageAdapter extends BaseAdapter {
 					|| null == context)
 				return;
 
-
 			String msgId = messageInfo.msgId;
 			MessageInfo msgInfo = getMsgInfo(msgId);
 			if (msgInfo == null) {
@@ -343,7 +349,7 @@ public class MessageAdapter extends BaseAdapter {
 			}
 
 			msgInfo.setMsgLoadState(state);
-//			CacheHub.getInstance().updateMsgStatus(msgId, state);
+			// CacheHub.getInstance().updateMsgStatus(msgId, state);
 
 			if (messageInfo.getDisplayType() == SysConstant.DISPLAY_TYPE_IMAGE) {
 				logger.d("debug#this is image");
@@ -354,7 +360,8 @@ public class MessageAdapter extends BaseAdapter {
 				logger.d("debug#setsavepath:%s", savePath);
 				msgInfo.setSavePath(savePath);
 				msgInfo.setMsgReadStatus(SysConstant.MESSAGE_ALREADY_READ);
-				//CacheHub.getInstance().updateMsgImageSavePath(messageInfo.msgId, savePath);
+				// CacheHub.getInstance().updateMsgImageSavePath(messageInfo.msgId,
+				// savePath);
 
 				if (imServiceHelper != null) {
 					IMService imService = imServiceHelper.getIMService();
@@ -377,8 +384,10 @@ public class MessageAdapter extends BaseAdapter {
 	 */
 	public void updateItemState(String msgId, int state) {
 		try {
-			
 
+			String stackTraceString = Log.getStackTraceString(new Throwable());
+			stackTraceString.replaceAll("\n", "###");
+			logger.d("debug#updateItemState stack:%s", stackTraceString);
 			MessageInfo msgInfo = getMsgInfo(msgId);
 			if (msgInfo == null) {
 				logger.e("chat#error can't find msgInfo:%s", msgId);
@@ -386,7 +395,7 @@ public class MessageAdapter extends BaseAdapter {
 			}
 
 			if (null != CacheHub.getInstance()) {
-//				CacheHub.getInstance().updateMsgStatus(msgId, state);
+				// CacheHub.getInstance().updateMsgStatus(msgId, state);
 			}
 
 			msgInfo.setMsgLoadState(state);
@@ -404,7 +413,7 @@ public class MessageAdapter extends BaseAdapter {
 				logger.e("chat#error can't find msgInfo:%s", msgId);
 				return;
 			}
-			
+
 			msgInfo.setSavePath(path);
 			notifyDataSetChanged();
 		} catch (Exception e) {
@@ -483,50 +492,39 @@ public class MessageAdapter extends BaseAdapter {
 			}
 
 			final MessageInfo info = (MessageInfo) messageList.get(position);
-			holder.msgInfo = info;
-			
+			logger.d("debug#getview MessageInfo position:%d, info:%s", position, info);
+			// DumpUtils.dumpStacktrace(logger, "debug#getview", false);
+
 			IMUIHelper.setMessageOwnerAvatar(logger, session, info, holder.portrait);
-			logger.d("1");
 			IMUIHelper.setMessageOwnerName(logger, session, info, holder.name);
-			logger.d("2");
 
 			final View baseView = getBaseViewForMenu(holder, info);
-			logger.d("3");
 
 			if (info.getMsgLoadState() == SysConstant.MESSAGE_STATE_FINISH_FAILED) {
-				logger.d("4");
 
 				holder.messageFailed.setVisibility(View.VISIBLE);
-				logger.d("5");
 
 				holder.messageFailed.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View arg0) {
 						int menuType = getMenuType(info);
 						if (menuType > 0) {
+							logger.d("debug#showMenu  MessageInfo:%s", info);
 							showMenu(context, menuType, parent, info, baseView);
 						}
 					}
 				});
 			} else {
-				logger.d("6");
-
 				holder.messageFailed.setVisibility(View.GONE);
 			}
-			
-			logger.d("7");
 
-			if (info.getMsgLoadState() == SysConstant.MESSAGE_STATE_LOADDING && !info.isPictureType()) {
-				logger.d("8");
-
+			if (info.getMsgLoadState() == SysConstant.MESSAGE_STATE_LOADDING
+					&& !info.isPictureType()) {
 				holder.loadingProgressBar.setVisibility(View.VISIBLE);
 			} else {
-				logger.d("9");
 				holder.loadingProgressBar.setVisibility(View.GONE);
 			}
-			
-			logger.d("10");
- 
+
 			if (type == MESSAGE_TYPE_MINE_TETX
 					|| type == MESSAGE_TYPE_OTHER_TEXT) {
 				handleTextMessage((TextMessageHolder) holder, info, parent);
@@ -542,7 +540,7 @@ public class MessageAdapter extends BaseAdapter {
 			return convertView;
 		} catch (Exception e) {
 			if (null != e && null != logger) {
-				logger.e("exception:%s", e.getMessage());
+				logger.e("chat#%s", e);
 			}
 			return null;
 		}
@@ -618,8 +616,8 @@ public class MessageAdapter extends BaseAdapter {
 	}
 
 	public void hidePopup() {
-		if (null != mOperatePopup) {
-			mOperatePopup.dismiss();
+		if (currentPopupView != null) {
+			currentPopupView.dismiss();
 		}
 	}
 
@@ -627,7 +625,7 @@ public class MessageAdapter extends BaseAdapter {
 			View convertView) {
 		holder.portrait = (MGWebImageView) convertView.findViewById(R.id.user_portrait);
 		holder.messageFailed = (ImageView) convertView.findViewById(R.id.message_state_failed);
-		holder.loadingProgressBar = (ProgressBar)convertView.findViewById(R.id.progressBar1);
+		holder.loadingProgressBar = (ProgressBar) convertView.findViewById(R.id.progressBar1);
 
 		holder.name = (TextView) convertView.findViewById(R.id.name);
 		logger.d("name#holder.name:%s", holder.name);
@@ -956,7 +954,7 @@ public class MessageAdapter extends BaseAdapter {
 						}
 
 					} else {
-//						msgIndexMap.put(msgInfo.msgId, position);
+						// msgIndexMap.put(msgInfo.msgId, position);
 						Intent i = new Intent(context, DisplayImageActivity.class);
 						Bundle bundle = new Bundle();
 						bundle.putSerializable(SysConstant.CUR_MESSAGE, msgInfo);
@@ -982,12 +980,10 @@ public class MessageAdapter extends BaseAdapter {
 		 * 消息状态
 		 */
 		ImageView messageFailed;
-		
+
 		ProgressBar loadingProgressBar;
 
 		TextView name;
-		
-		MessageInfo msgInfo;
 	}
 
 	private static class TextMessageHolder extends MessageHolderBase {
@@ -1051,16 +1047,14 @@ public class MessageAdapter extends BaseAdapter {
 			MessageInfo msg, View layout) {
 		boolean bIsSelf = msg.getMsgFromUserId().equals(CacheHub.getInstance().getLoginUserId());
 		OperateItemClickListener listener = new OperateItemClickListener(menuType);
-		if (null == mOperatePopup) {
-			if (null != parent) {
-				mOperatePopup = new MessageOperatePopup(context, parent);
-				mOperatePopup.setOnItemClickListener(listener);
-			}
-		}
 		listener.setMessageInfo(msg);
-
+		
+		MessageOperatePopup popupView = new MessageOperatePopup(context, parent);
+		popupView.setOnItemClickListener(listener);
+		currentPopupView  = popupView;
+		
 		boolean bResend = msg.getMsgLoadState() == SysConstant.MESSAGE_STATE_FINISH_FAILED;
-		mOperatePopup.show(layout, menuType, bResend, bIsSelf);
+		popupView.show(layout, menuType, bResend, bIsSelf);
 
 	}
 
@@ -1079,6 +1073,8 @@ public class MessageAdapter extends BaseAdapter {
 		}
 
 		public void setMessageInfo(MessageInfo msgInfo) {
+			logger.d("debug#setMessageInfo msgInfo:%s, this:%s", msgInfo, this);
+
 			mMsgInfo = msgInfo;
 		}
 
@@ -1123,12 +1119,31 @@ public class MessageAdapter extends BaseAdapter {
 					UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), session.getType(), SysConstant.UPLOAD_IMAGE_URL_PREFIX, Dao, messageList);
 					TaskManager.getInstance().trigger(upTask);
 				}
+
+				logger.d("debug#before resending, msgInfo:%s, this:%s", mMsgInfo, this);
 				mMsgInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_LOADDING);
 				updateItemState(mMsgInfo.msgId, SysConstant.MESSAGE_STATE_LOADDING);
+				logger.d("debug#after updateItemState, msgInfo:%s", mMsgInfo);
+
+				resendMsg(mMsgInfo.msgId);
+
 			} catch (Exception e) {
-				logger.e(e.getMessage());
+				logger.e("chat#exception:" + e.toString());
 			}
 
+		}
+
+		private void resendMsg(String msgId) {
+			MessageInfo msgInfo = getMsgInfo(msgId);
+			if (msgInfo == null) {
+				logger.d("chat#resend#getMsgInfo failed.id:%s", msgId);
+				return;
+			}
+
+			imService = imServiceHelper.getIMService();
+			if (imService != null) {
+				imService.getMessageManager().resendMessage(msgInfo);
+			}
 		}
 
 		@Override
@@ -1163,11 +1178,11 @@ public class MessageAdapter extends BaseAdapter {
 			// todo eric
 			final String smallImageUrl = SysConstant.DOWNLOAD_IMAGE_URL_REPFIX
 					+ messageInfo.getUrl();// StringUtil.getSmallerImageLink(messageInfo.getUrl());
-			
+
 			logger.d("chat#pic#download image ulr:%s", smallImageUrl);
 
 			String smallImagePath = CommonUtil.getMd5Path(smallImageUrl, SysConstant.FILE_SAVE_TYPE_IMAGE);
-			
+
 			logger.d("chat#pic#image save path:%s", smallImagePath);
 
 			messageInfo.setSavePath(smallImagePath);
@@ -1242,7 +1257,7 @@ public class MessageAdapter extends BaseAdapter {
 	 */
 	private void updateItemReadState(String msgId, int readStatus) {
 		try {
-			
+
 			MessageInfo msgInfo = getMsgInfo(msgId);
 			if (msgInfo == null) {
 				logger.e("chat#error can't find msgInfo:%s", msgId);
@@ -1251,7 +1266,7 @@ public class MessageAdapter extends BaseAdapter {
 
 			msgInfo.setMsgReadStatus(readStatus);
 
-//			CacheHub.getInstance().updateMsgReadStatus(msgId, readStatus);
+			// CacheHub.getInstance().updateMsgReadStatus(msgId, readStatus);
 
 			notifyDataSetChanged();
 		} catch (Exception e) {
@@ -1270,7 +1285,7 @@ public class MessageAdapter extends BaseAdapter {
 
 			mHistoryFirstAdd = false;
 
-//			msgIndexMap.fix(0, 1);
+			// msgIndexMap.fix(0, 1);
 
 			messageList.add(0, HISTORY_DIVIDER_TAG);
 		} catch (Exception e) {

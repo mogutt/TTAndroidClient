@@ -33,8 +33,7 @@ public class IMUIHelper {
 		}
 
 		if (sessionType == IMSession.SESSION_P2P) {
-			ContactEntity contact = imService.getContactManager().findContact(
-					sessionId);
+			ContactEntity contact = imService.getContactManager().findContact(sessionId);
 			if (contact == null) {
 				logger.e("chat#no such contact -> id:%s", sessionId);
 				return false;
@@ -43,8 +42,7 @@ public class IMUIHelper {
 			openContactChatActivity(ctx, contact);
 			return true;
 		} else {
-			GroupEntity group = imService.getGroupManager()
-					.findGroup(sessionId);
+			GroupEntity group = imService.getGroupManager().findGroup(sessionId);
 			if (group == null) {
 				logger.e("chat#no such group -> id:%s", sessionId);
 				return false;
@@ -74,17 +72,17 @@ public class IMUIHelper {
 
 		openChatActivity(ctx, group.type, group.id);
 	}
-	
+
 	public static void openChatActivity(Context ctx, int sessionType,
 			String sessionId) {
 		Intent i = new Intent(ctx, MessageActivity.class);
 		i.setAction(IMActions.ACTION_NEW_MESSAGE_SESSION);
 
 		setSessionInIntent(i, sessionId, sessionType);
-		
+
 		CacheHub.getInstance().setSessionInfo(new SessionInfo(sessionId, sessionType));
 		ctx.startActivity(i);
-		
+
 	}
 
 	public static boolean setMessageOwnerName(Logger logger, IMSession session,
@@ -94,12 +92,10 @@ public class IMUIHelper {
 			return false;
 		}
 
-		logger.d("name#setMessageOwnerName, fromid:%s, from usrname:%s",
-				msgInfo.getMsgFromUserId(), msgInfo.getMsgFromName());
+		logger.d("name#setMessageOwnerName, fromid:%s, from usrname:%s", msgInfo.getMsgFromUserId(), msgInfo.getMsgFromName());
 		if (!msgInfo.isMyMsg()) {
 			logger.d("name#not my msg");
-			ContactEntity contact = session.getSessionContact(msgInfo
-					.getMsgFromUserId());
+			ContactEntity contact = session.getSessionContact(msgInfo.getMsgFromUserId());
 			if (contact != null) {
 				nameTextView.setText(contact.name);
 
@@ -119,8 +115,7 @@ public class IMUIHelper {
 			return false;
 		}
 
-		logger.d("avatar#setMessageOwnerAvatar, fromid:%s, from usrname:%s",
-				msgInfo.getMsgFromUserId(), msgInfo.getMsgFromName());
+		logger.d("avatar#setMessageOwnerAvatar, fromid:%s, from usrname:%s", msgInfo.getMsgFromUserId(), msgInfo.getMsgFromName());
 
 		ContactEntity contact;
 		if (msgInfo.isMyMsg()) {
@@ -134,10 +129,8 @@ public class IMUIHelper {
 		}
 
 		if (contact != null) {
-			logger.d("avatar#setWebImageViewAvatar avatarUrl:%s",
-					contact.avatarUrl);
-			setWebImageViewAvatar(webImageView, contact.avatarUrl,
-					IMSession.SESSION_P2P);
+			logger.d("avatar#setWebImageViewAvatar avatarUrl:%s", contact.avatarUrl);
+			setWebImageViewAvatar(webImageView, contact.avatarUrl, IMSession.SESSION_P2P);
 
 			return true;
 		} else {
@@ -176,8 +169,7 @@ public class IMUIHelper {
 			webImageView.setImageResource(getDefaultAvatarResId(sessionType));
 
 		} else {
-			webImageView
-					.setDefaultImageResId(getDefaultAvatarResId(sessionType));
+			webImageView.setDefaultImageResId(getDefaultAvatarResId(sessionType));
 			webImageView.setImageUrlNeedFit(realAvatarUrl);
 		}
 
@@ -199,13 +191,11 @@ public class IMUIHelper {
 
 		String sessionId = intent.getStringExtra(SysConstant.SESSION_ID_KEY);
 		int sessiondType = intent.getIntExtra(SysConstant.SESSION_TYPE_KEY, 0);
-		logger.d("groupmgr#sessionType:%d, sessionId:%s", sessiondType,
-				sessionId);
+		logger.d("groupmgr#sessionType:%d, sessionId:%s", sessiondType, sessionId);
 
 		List<ContactEntity> contactList = new ArrayList<ContactEntity>();
 		if (sessiondType == IMSession.SESSION_P2P) {
-			ContactEntity contact = imService.getContactManager().findContact(
-					sessionId);
+			ContactEntity contact = imService.getContactManager().findContact(sessionId);
 			if (contact == null) {
 				logger.e("groupmgr#no such contact by id:%s", sessionId);
 				return;
@@ -213,11 +203,9 @@ public class IMUIHelper {
 
 			contactList.add(contact);
 		} else {
-			contactList = imService.getGroupManager()
-					.getGroupMembers(sessionId);
+			contactList = imService.getGroupManager().getGroupMembers(sessionId);
 			if (contactList == null) {
-				logger.e("groupmgr#get members from group id:%s failed",
-						sessionId);
+				logger.e("groupmgr#get members from group id:%s failed", sessionId);
 				return;
 			}
 		}
@@ -275,9 +263,7 @@ public class IMUIHelper {
 			return null;
 		}
 
-		return new SessionInfo(
-				intent.getStringExtra(SysConstant.SESSION_ID_KEY),
-				intent.getIntExtra(SysConstant.SESSION_TYPE_KEY, 0));
+		return new SessionInfo(intent.getStringExtra(SysConstant.SESSION_ID_KEY), intent.getIntExtra(SysConstant.SESSION_TYPE_KEY, 0));
 
 	}
 
@@ -308,5 +294,14 @@ public class IMUIHelper {
 
 		return contactList;
 
+	}
+
+	public static boolean isSameSession(SessionInfo sessionInfo,
+			IMSession session) {
+		if (sessionInfo == null || session == null) {
+			return false;
+		}
+
+		return (sessionInfo.getSessionId().equals(session.getSessionId()) && sessionInfo.getSessionType() == session.getType());
 	}
 }

@@ -106,7 +106,7 @@ public class Logger {
     public void i(String format, Object... args) {
         if (displayFlag && logLevel <= Log.INFO) {
             lock.lock();
-            String message = createMessage(String.format(format, args));
+            String message = createMessage(getInputString(format, args));
             Log.i(tagName, message);
             lock.unlock();
         }
@@ -118,7 +118,7 @@ public class Logger {
     public void v(String format, Object... args) {
         if (displayFlag && logLevel <= Log.VERBOSE) {
             lock.lock();
-            String message = createMessage(String.format(format, args));
+            String message = createMessage(getInputString(format, args));
             Log.v(tagName, message);
             lock.unlock();
         }
@@ -130,7 +130,7 @@ public class Logger {
     public void d(String format, Object... args) {
         if (displayFlag && logLevel <= Log.DEBUG) {
             lock.lock();
-            String message = createMessage(String.format(format, args));
+            String message = createMessage(getInputString(format, args));
             Log.d(tagName, message);
             lock.unlock();
         }
@@ -142,10 +142,18 @@ public class Logger {
     public void e(String format, Object... args) {
         if (displayFlag && logLevel <= Log.ERROR) {
             lock.lock();
-            String message = createMessage(String.format(format, args));
+            String message = createMessage(getInputString(format, args));
             Log.e(tagName, message);
             lock.unlock();
         }
+    }
+    
+    private String getInputString(String format, Object... args) {
+    	if (format == null) {
+    		return "null log format";
+    	}
+    	
+    	return String.format(format, args);
     }
 
     /**
@@ -181,7 +189,7 @@ public class Logger {
     public void w(String format, Object... args) {
         if (displayFlag && logLevel <= Log.WARN) {
             lock.lock();
-            String message = createMessage(String.format(format, args));
+            String message = createMessage(getInputString(format, args));
             Log.w(tagName, message);
             lock.unlock();
         }

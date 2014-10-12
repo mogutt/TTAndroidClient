@@ -96,7 +96,7 @@ public class NaviTabButton extends FrameLayout {
     }
 
     public void setUnreadNotify(int unreadNum) {
-    	logger.d("unread#setUreadNotify -> unreadNum:%d, stack:%s", unreadNum, Log.getStackTraceString(new Throwable()));
+    	logger.d("unread#setUreadNotify -> unreadNum:%d", unreadNum);
         if (0 == unreadNum) {
             mNotify.setVisibility(View.INVISIBLE);
             return;

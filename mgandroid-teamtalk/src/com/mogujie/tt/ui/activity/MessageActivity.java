@@ -131,14 +131,14 @@ public class MessageActivity extends TTBaseActivity
 		// }
 
 		setTitleByUser2(sessionId, sessionType);
-		handleOnResume();
+		handleOnResume(true);
 	}
 
-	private void handleOnResume() {
+	private void handleOnResume(boolean firstStart) {
 		int sessionType = session.getType();;
 		String sessionId = session.getSessionId();
 		handleUnreadMsgs(sessionId, sessionType);
-		loadHistoryMessage(sessionId);
+		loadHistoryMessage(sessionId, false, firstStart);
 	}
 
 	private void handleUnreadMsgs(String sessionId, int sessionType) {
@@ -229,6 +229,25 @@ public class MessageActivity extends TTBaseActivity
 			onMsgRecv(intent, broadcastReceiver);
 		} else if (action.equals(IMActions.ACTION_NEW_MESSAGE_SESSION)) {
 			onNewMessageSession();
+		} else if (action.equals(IMActions.ACTION_MSG_RESENT)) {
+			onMessageResent(intent);
+		}
+	}
+
+	private void onMessageResent(Intent intent) {
+		logger.d("chat#resend#onMessageResent");
+		if (intent == null) {
+			return;
+		}
+
+		SessionInfo sessionInfoFromIntent = IMUIHelper.getSessionInfoFromIntent(intent);
+		if (sessionInfoFromIntent == null) {
+			return;
+		}
+
+		if (IMUIHelper.isSameSession(sessionInfoFromIntent, session)) {
+			logger.d("chat#resend#same session, reloading messages");
+			loadHistoryMessage(session.getSessionId(), true, false);
 		}
 	}
 
@@ -245,12 +264,11 @@ public class MessageActivity extends TTBaseActivity
 		// different session
 		if (!(sessionInfo.getSessionId().equals(session.getSessionId()) && sessionInfo.getSessionType() == session.getType())) {
 			logger.w("chat#got new different session msg, close the current chat window");
-			
-			
+
 			IMUIHelper.openSessionChatActivity(logger, this, sessionInfo.getSessionId(), sessionInfo.getSessionType(), imService);
 			this.finish();
 		}
-		
+
 	}
 
 	private void onMsgUnAckTimeout(Intent intent) {
@@ -318,6 +336,7 @@ public class MessageActivity extends TTBaseActivity
 		actions.add(IMActions.ACTION_MSG_RECV);
 		actions.add(IMActions.ACTION_MSG_UNACK_TIMEOUT);
 		actions.add(IMActions.ACTION_NEW_MESSAGE_SESSION);
+		actions.add(IMActions.ACTION_MSG_RESENT);
 
 		imServiceHelper.connect(this, actions, IMServiceHelper.INTENT_MAX_PRIORITY, this);
 		logger.d("messageactivity#register im service");
@@ -347,7 +366,7 @@ public class MessageActivity extends TTBaseActivity
 		// not the first time
 		if (imServiceHelper.getIMService() != null) {
 			onNewMessageSession();
-			handleOnResume();
+			handleOnResume(false);
 		}
 
 		// 从联系人切换到消息界面时设置聊天界面信息
@@ -751,7 +770,10 @@ public class MessageActivity extends TTBaseActivity
 
 	}
 
-	private void loadHistoryMessage(String sessionId) {
+	private void loadHistoryMessage(String sessionId, boolean reset,
+			boolean firstStart) {
+		logger.d("chat#messageactivity#loadHistoryMessage sessionId:%s, reset:%s, showHistoryDivider:%s", sessionId, reset, firstStart);
+
 		if (imServiceHelper.getIMService() == null) {
 			logger.d("messageactivity#still not connected im");
 			return;
@@ -760,11 +782,18 @@ public class MessageActivity extends TTBaseActivity
 		adapter.clearItem();
 		adapter.clearMsgIndexMap();
 
+		if (reset) {
+			firstHistoryMsgTime = 0;
+		}
+
 		List<MessageInfo> historyMsgInfo = loadHistory();
 
 		if (!historyMsgInfo.isEmpty()) {
 			logger.d("messageactivity#got historyMessage");
-			adapter.addHistoryDivideTag();
+
+			if (firstStart) {
+				adapter.addHistoryDivideTag();
+			}
 
 			// // 处理一些特殊情况SDCARD不可用
 			// if (!FileUtil.isSdCardAvailuable()) {
@@ -843,7 +872,7 @@ public class MessageActivity extends TTBaseActivity
 			}
 
 			setTitle(contact.nickName);
-		} else  {
+		} else {
 			setTitleByGroup(sessionId);
 		}
 	}

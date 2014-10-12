@@ -50,7 +50,7 @@ public class IMUnAckMsgManager extends IMManager {
 			return TIMEOUT_MILLISECONDS;
 		}
 	}
-	public void handleTimeoutUnAckMsg(MessageInfo msg) {
+	public synchronized void handleTimeoutUnAckMsg(MessageInfo msg) {
 		logger.d("unack#handleTimeoutUnAckMsg");
 		handleTimeoutUnAckMsgImpl(msg);
 
@@ -75,7 +75,8 @@ public class IMUnAckMsgManager extends IMManager {
 		logger.d("unack#broadcast is ok");
 	}
 
-	private void timerImpl() {
+	//todo eric make locker more smaller
+	private synchronized void timerImpl() {
 		logger.d("unack#UnAckMsgTimeoutTimer run");
 
 		long currentElapsedRealtime = SystemClock.elapsedRealtime();
@@ -87,7 +88,7 @@ public class IMUnAckMsgManager extends IMManager {
 			// todo eric optimization
 			if (currentElapsedRealtime >= unAckMsg.timeoutElapsedRealtime) {
 				logger.d("unack#find timeout msg");
-				handleTimeoutUnAckMsg(unAckMsg.msg);
+				handleTimeoutUnAckMsgImpl(unAckMsg.msg);
 				toRemovedMsgList.add(unAckMsg.msg);
 			}
 		}
@@ -116,7 +117,7 @@ public class IMUnAckMsgManager extends IMManager {
 
 		String msgId = msgInfo.msgId;
 		// todo eric efficiency
-		if (unackMsgList.containsKey(msgId)) {
+		if (unackMsgList.containsKey(msgId) || msgInfo.isResend()) {
 			// for uploading image msg, it has already been added to the list
 			// when
 			// uploading the image, and at the time of sending the msg to the
@@ -125,7 +126,7 @@ public class IMUnAckMsgManager extends IMManager {
 			IMDbManager.instance(ctx).deleteMsg(msgId);
 			removeUnackMsg(msgId);
 		}
-
+		
 		IMDbManager.instance(ctx).saveMsg(msgInfo, true);
 
 		unackMsgList.put(msgInfo.msgId, new UnAckMsg(msgInfo, SystemClock.elapsedRealtime()

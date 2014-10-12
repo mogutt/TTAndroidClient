@@ -24,8 +24,11 @@ import com.mogujie.tt.imlib.proto.MessagePacket;
 import com.mogujie.tt.imlib.proto.UnreadMsgPacket;
 import com.mogujie.tt.imlib.proto.UnreadMsgPacket.PacketResponse;
 import com.mogujie.tt.imlib.utils.IMContactHelper;
+import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
+import com.mogujie.tt.task.TaskManager;
+import com.mogujie.tt.task.biz.UploadImageTask;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 
@@ -47,11 +50,10 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 	private List<MessageInfo> noSessionEntityMsgList = new ArrayList<MessageInfo>();
 	private IMServiceHelper imServiceHelper = new IMServiceHelper();
 
-
 	private IMMessageManager() {
 
 	}
-	
+
 	public void register() {
 		logger.d("chat#regisgter");
 
@@ -92,7 +94,7 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 		msg.toId = peerId;
 
 		msg.type = msgType;
-		
+
 		msg.generateMsgIdIfEmpty();
 		msg.generateSessionId(true);
 		msg.generateSessionType(sessionType);
@@ -128,6 +130,38 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 		return msgType;
 	}
 
+	public  void resendMessage(MessageInfo msgInfo) {
+		logger.d("chat#resend#resendMessage msgInfo:%s", msgInfo);
+		if (msgInfo == null) {
+			return;
+		}
+		
+		msgInfo.setResend(true);
+		
+		if (msgInfo.isTextType()) {
+			logger.d("chat#resend#this is a text type message");
+			sendText(msgInfo.toId, msgInfo.getMsgContent(), msgInfo.sessionType, msgInfo);
+		} else if (msgInfo.isAudioType()) {
+			logger.d("chat#resend#this is an audio type message");
+			sendVoice(msgInfo.toId, msgInfo.getAudioContent(), msgInfo.sessionType, msgInfo);
+		} else if (msgInfo.isPictureType()) {
+			logger.d("chat#resend#this is a picture type message");
+			
+			List<MessageInfo> msgList = new ArrayList<MessageInfo>();
+			msgList.add(msgInfo);
+			UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), msgInfo.sessionType,
+			                                             SysConstant.UPLOAD_IMAGE_URL_PREFIX, "", msgList);
+			TaskManager.getInstance().trigger(upTask);
+
+		}
+		
+		if (ctx != null) {
+			Intent intent = new Intent(IMActions.ACTION_MSG_RESENT);
+			IMUIHelper.setSessionInIntent(intent, msgInfo.sessionId, msgInfo.sessionType);
+			ctx.sendBroadcast(intent);
+		}
+	}
+	
 	private void sendMessage(MessageInfo msgInfo) {
 		logger.i("chat#sendMessage, msg:%s", msgInfo);
 
@@ -247,10 +281,10 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 			noSessionEntityMsgList.add(msgInfo);
 		}
 	}
-	
+
 	private void handleRecvMsg(MessageInfo msgInfo) {
 		logger.d("chat#handleRecvMsg");
-		
+
 		handleUnreadMsg(msgInfo);
 		IMRecentSessionManager.instance().broadcast();
 	}
@@ -401,7 +435,7 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 		// TODO Auto-generated method stub
 		if (action.equals(IMActions.ACTION_GROUP_READY)) {
 			logger.d("chat#on action group ready");
-			
+
 			for (MessageInfo msg : noSessionEntityMsgList) {
 				handleRecvMsg(msg);
 			}
@@ -411,6 +445,6 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 	@Override
 	public void onIMServiceConnected() {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

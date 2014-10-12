@@ -305,6 +305,8 @@ public class IMDbManager extends SQLiteOpenHelper {
 			msgInfo.setDisplayType((byte) displayType);
 			msgInfo.setMsgLoadState(status);
 			msgInfo.setMsgContent(content);
+			msgInfo.sessionId = sessionId;
+			msgInfo.sessionType = sessionType;
 
 			tryRecoverAudioMsg(msgInfo, content);
 			tryRecoverPicMsg(msgInfo, content, displayType);

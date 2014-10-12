@@ -33,7 +33,7 @@ public class MessageInfo extends MessageEntity implements Serializable {
 				+ ", createTime=" + createTime + ", type=" + type + ", msgLen="
 				+ msgLen + ", attach=" + attach + ", msgId=" + msgId
 				+ ", sessionId=" + sessionId + ", sessionType=" + sessionType
-				+ "]";
+				+ ", resend=" + resend + "]";
 	}
 
 	protected String ownerId = CacheHub.getInstance().getLoginUserId(); // 用户id
@@ -61,6 +61,15 @@ public class MessageInfo extends MessageEntity implements Serializable {
 
 	private int created = 0; // 创建时间
 	private int updated = 0; // 更新时间
+	private boolean resend = false;
+
+	public boolean isResend() {
+		return resend;
+	}
+
+	public void setResend(boolean resend) {
+		this.resend = resend;
+	}
 
 	private int readStatus = SysConstant.MESSAGE_UNREAD;
 
