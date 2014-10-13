@@ -4,7 +4,7 @@
 
 we've released Win/Mac/Android/iOS  client repositories in github as well as IM server repository.
 
-see all projects in our [mogutt](https://github.com/mogutt) github account page or visit our (oficial website)[http://tt.mogu.io/](Chinease) for more information
+see all projects in our [mogutt](https://github.com/mogutt) github account page or visit our [oficial website](http://tt.mogu.io/)(Chinease) for more information
 
 ## Android Client Features
 * list all colleagues in your company as well as detail profiles like (email addr, title, phone No. etc.)
