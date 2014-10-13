@@ -36,10 +36,9 @@ import com.mogujie.tt.adapter.album.ImageItem;
 import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
+import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
-import com.mogujie.tt.task.TaskManager;
-import com.mogujie.tt.task.biz.UploadImageTask;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 
@@ -194,15 +193,16 @@ public class ImageGridActivity extends Activity implements OnTouchListener, OnIM
                     ImageGridActivity.this.finish();
                     
                     String Dao = "";//TokenManager.getInstance().getDao();
-					int sessionType = -1;
 					IMUIHelper.SessionInfo sessionInfo = CacheHub.getInstance().getSessionInfo();
-					if (sessionInfo != null) {
-						sessionType = sessionInfo.getSessionType();
+					if (sessionInfo == null) {
+						logger.e("pic#sessionInfo is null");
+						return;
 					}
-                    
-                    UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), sessionType,
-                            SysConstant.UPLOAD_IMAGE_URL_PREFIX, Dao, messageList);
-                    TaskManager.getInstance().trigger(upTask);
+
+					IMService imService = imServiceHelper.getIMService();
+					if (imService != null) {
+						imService.getMessageManager().sendImages(sessionInfo.getSessionId(), sessionInfo.getSessionType(), messageList);
+					}
                 } else {
                     Toast.makeText(ImageGridActivity.this,
                             R.string.need_choose_images, Toast.LENGTH_SHORT)

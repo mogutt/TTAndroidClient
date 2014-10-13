@@ -8,6 +8,8 @@ public interface IMActions {
 	String ACTION_MSG_RECV = "com.mogujie.tt.imlib.action.msg.recv";
 	String ACTION_MSG_UNACK_TIMEOUT = "com.mogujie.tt.imlib.action.msg.unack_timeout";
 	String ACTION_MSG_RESENT = "com.mogujie.tt.imlib.action.msg.resent";
+	String ACTION_MSG_STATUS = "com.mogujie.tt.imlib.action.msg.status";
+
 
 
 	

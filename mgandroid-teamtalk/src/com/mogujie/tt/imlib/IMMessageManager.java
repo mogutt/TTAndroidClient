@@ -1,13 +1,17 @@
 package com.mogujie.tt.imlib;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
 import android.content.BroadcastReceiver;
 import android.content.Intent;
-import android.net.ConnectivityManager;
+import android.os.Handler;
+import android.os.Message;
 
+import com.mogujie.tt.config.HandlerConstant;
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
@@ -49,6 +53,91 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 	private int seqNo = 1;
 	private List<MessageInfo> noSessionEntityMsgList = new ArrayList<MessageInfo>();
 	private IMServiceHelper imServiceHelper = new IMServiceHelper();
+	private static Handler mainHandler = new Handler() {
+
+		@Override
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+				case HandlerConstant.HANDLER_IMAGE_UPLOAD_FAILD :
+					IMMessageManager.instance().onUploadImageFaild(msg.obj);
+					break;
+
+				case HandlerConstant.HANDLER_IMAGE_UPLOAD_SUCESS :
+					IMMessageManager.instance().onImageUploadFinish(msg.obj);
+					break;
+
+				default :
+					break;
+			}
+
+			super.handleMessage(msg);
+		}
+
+	};
+
+	public void onUploadImageFaild(Object obj) {
+		logger.d("pic#onUploadImageFaild");
+		if (obj == null)
+			return;
+
+		MessageInfo messageInfo = (MessageInfo) obj;
+
+		logger.d("pic#msg:%s", messageInfo);
+		IMUnAckMsgManager.instance().handleTimeoutUnAckMsg(messageInfo.msgId);
+
+		broadcastMsgStatus(messageInfo, SysConstant.MESSAGE_STATE_FINISH_FAILED);
+
+	}
+
+	public void onImageUploadFinish(Object obj) {
+		logger.d("pic#onImageUploadFinish");
+
+		if (obj == null)
+			return;
+
+		MessageInfo messageInfo = (MessageInfo) obj;
+		logger.d("pic#msg:%s", messageInfo);
+
+		String imageUrl = messageInfo.getUrl();
+		logger.d("pic#imageUrl:%s", imageUrl);
+		String realImageURL = "";
+		try {
+			realImageURL = URLDecoder.decode(imageUrl, "utf-8");
+			logger.d("pic#realImageUrl:%s", realImageURL);
+		} catch (UnsupportedEncodingException e) {
+			logger.e(e.toString());
+		}
+
+		MessageInfo msgInfo = IMUnAckMsgManager.instance().get(messageInfo.msgId);
+		if (msgInfo == null) {
+			logger.e("pic#no such msgInfo");
+		}
+
+		msgInfo.setUrl(realImageURL);
+
+		msgInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_LOADDING);
+
+		msgInfo.setMsgContent(SysConstant.MESSAGE_IMAGE_LINK_START
+				+ realImageURL + SysConstant.MESSAGE_IMAGE_LINK_END);
+
+		broadcastMsgStatus(msgInfo, SysConstant.MESSAGE_STATE_LOADDING);
+
+		logger.d("pic#send pic message, msg:%s", msgInfo);
+		sendText(msgInfo.getTargetId(), msgInfo.getMsgContent(), msgInfo.sessionType, msgInfo);
+	}
+
+	private void broadcastMsgStatus(MessageInfo msg, int status) {
+		logger.d("chat#pic#broadcastMsgStatus msg:%s, status:%d", msg, status);
+
+		Intent intent = new Intent(IMActions.ACTION_MSG_STATUS);
+		IMUIHelper.setSessionInIntent(intent, msg.sessionId, msg.sessionType);
+		intent.putExtra(SysConstant.STATUS_KEY, status);
+
+		if (ctx != null) {
+			ctx.sendBroadcast(intent);
+			logger.d("chat#pic#broadcast ok");
+		}
+	}
 
 	private IMMessageManager() {
 
@@ -62,11 +151,11 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 		imServiceHelper.registerActions(ctx, actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
 	}
 
-	public void sendText(String peerId, String text, int sessionType,
+	public void sendText(String sessionId, String text, int sessionType,
 			MessageInfo msgInfo) {
-		logger.i("chat#text#sendText -> peerId:%s, text:%s", peerId, text);
+		logger.i("chat#text#sendText -> peerId:%s, text:%s", sessionId, text);
 
-		fillMessageCommonInfo(msgInfo, peerId, getTextMsgType(sessionType), sessionType);
+		fillMessageCommonInfo(msgInfo, sessionId, getTextMsgType(sessionType), sessionType);
 
 		msgInfo.msgData = text.getBytes(Charset.forName("utf8"));
 		msgInfo.msgLen = msgInfo.msgData.length;
@@ -74,11 +163,11 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 		sendMessage(msgInfo);
 	}
 
-	public void sendVoice(String peerId, byte[] voiceData, int sessionType,
+	public void sendVoice(String sessionId, byte[] voiceData, int sessionType,
 			MessageInfo msgInfo) {
-		logger.i("chat#audio#sendVoice -> peerId:%s, voidDataLen:%d", peerId, voiceData.length);
+		logger.i("chat#audio#sendVoice -> sessionId:%s, voidDataLen:%d", sessionId, voiceData.length);
 
-		fillMessageCommonInfo(msgInfo, peerId, getAudioMsgType(sessionType), sessionType);
+		fillMessageCommonInfo(msgInfo, sessionId, getAudioMsgType(sessionType), sessionType);
 
 		// todo eric utf8?
 		msgInfo.msgData = voiceData;
@@ -87,11 +176,26 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 		sendMessage(msgInfo);
 	}
 
-	private void fillMessageCommonInfo(MessageInfo msg, String peerId,
+	public void sendImages(String sessionId, int sessionType,
+			List<MessageInfo> msgList) {
+
+		for (MessageInfo msg : msgList) {
+			logger.d("chat#pic#sendImage sessionId:%s, msg:%s", sessionId, msg);
+
+			//image message would wrapped as a text message after uploading image to server ok
+			fillMessageCommonInfo(msg, sessionId, getTextMsgType(sessionType), sessionType);
+		}
+
+		//todo eric get rid of TaskManager 
+		UploadImageTask upTask = new UploadImageTask(mainHandler, sessionType, SysConstant.UPLOAD_IMAGE_URL_PREFIX, "", msgList);
+		TaskManager.getInstance().trigger(upTask);
+	}
+
+	private void fillMessageCommonInfo(MessageInfo msg, String sessionId,
 			byte msgType, int sessionType) {
 		msg.seqNo = seqNo++;
 		msg.fromId = IMLoginManager.instance().getLoginId();
-		msg.toId = peerId;
+		msg.toId = sessionId;
 
 		msg.type = msgType;
 
@@ -130,14 +234,14 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 		return msgType;
 	}
 
-	public  void resendMessage(MessageInfo msgInfo) {
+	public void resendMessage(MessageInfo msgInfo) {
 		logger.d("chat#resend#resendMessage msgInfo:%s", msgInfo);
 		if (msgInfo == null) {
 			return;
 		}
-		
+
 		msgInfo.setResend(true);
-		
+
 		if (msgInfo.isTextType()) {
 			logger.d("chat#resend#this is a text type message");
 			sendText(msgInfo.toId, msgInfo.getMsgContent(), msgInfo.sessionType, msgInfo);
@@ -145,24 +249,20 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 			logger.d("chat#resend#this is an audio type message");
 			sendVoice(msgInfo.toId, msgInfo.getAudioContent(), msgInfo.sessionType, msgInfo);
 		} else if (msgInfo.isPictureType()) {
-			//todo eric upper logics handled the resend issue
-//			logger.d("chat#resend#this is a picture type message");
-//			
-//			List<MessageInfo> msgList = new ArrayList<MessageInfo>();
-//			msgList.add(msgInfo);
-//			UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), msgInfo.sessionType,
-//			                                             SysConstant.UPLOAD_IMAGE_URL_PREFIX, "", msgList);
-//			TaskManager.getInstance().trigger(upTask);
+			logger.d("chat#pic#resend#this is a picture type message");
+			List<MessageInfo> msgList = new ArrayList<MessageInfo>();
+			msgList.add(msgInfo);
 
+			sendImages(msgInfo.sessionId, msgInfo.sessionType, msgList);
 		}
-		
+
 		if (ctx != null) {
 			Intent intent = new Intent(IMActions.ACTION_MSG_RESENT);
 			IMUIHelper.setSessionInIntent(intent, msgInfo.sessionId, msgInfo.sessionType);
 			ctx.sendBroadcast(intent);
 		}
 	}
-	
+
 	private void sendMessage(MessageInfo msgInfo) {
 		logger.i("chat#sendMessage, msg:%s", msgInfo);
 

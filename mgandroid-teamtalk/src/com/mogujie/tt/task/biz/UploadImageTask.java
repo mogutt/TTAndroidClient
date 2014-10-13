@@ -14,33 +14,25 @@ import com.mogujie.tt.config.TaskConstant;
 import com.mogujie.tt.entity.MessageInfo;
 import com.mogujie.tt.https.MoGuHttpClient;
 import com.mogujie.tt.imlib.IMUnAckMsgManager;
-import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.task.MAsyncTask;
-import com.mogujie.tt.ui.activity.MessageActivity;
 import com.mogujie.tt.ui.tools.PhotoHandler;
 
 public class UploadImageTask extends MAsyncTask {
-	private String strUrl;
-	private String strDao;
-	List<MessageInfo> list;
+	//	private String strUrl;
+	//	private String strDao;
 	private Logger logger = Logger.getLogger(UploadImageTask.class);
-	private IMService imService;
+	private List<MessageInfo> list;
+	private Handler handler;
 
-	public UploadImageTask(IMService imService, int sessionType, String url, String Dao, List<MessageInfo> msgInfoList) {
-		this.imService = imService;
-		
-		strUrl = url;
-		strDao = Dao;
+	public UploadImageTask(Handler handler, int sessionType, String url,
+			String Dao, List<MessageInfo> msgInfoList) {
+		this.handler = handler;
 		list = msgInfoList;
-		// setCallBack(this);
-		
+
 		logger.d("chat#pic#put uploading images msg list into unack manager");
-		
+
 		for (MessageInfo msgInfo : msgInfoList) {
-			msgInfo.generateMsgId();
-			msgInfo.generateSessionId(true);
-			msgInfo.generateSessionType(sessionType);
 			IMUnAckMsgManager.instance().add(msgInfo);
 		}
 	}
@@ -59,7 +51,7 @@ public class UploadImageTask extends MAsyncTask {
 			try {
 				bitmap = PhotoHandler.revitionImage(messageInfo.getSavePath());
 				if (null != bitmap) {
-					byte[] bytes = PhotoHandler.getBytes(bitmap);
+					//					byte[] bytes = PhotoHandler.getBytes(bitmap);
 					MoGuHttpClient httpClient = new MoGuHttpClient();
 					// result = httpClient.uploadImage(strUrl, bytes,
 					// messageInfo.getSavePath(), strDao);
@@ -69,36 +61,39 @@ public class UploadImageTask extends MAsyncTask {
 					// httpClient.uploadImage3("http://122.225.68.125:8001/upload/",
 					// messageInfo.getSavePath());
 
-					result = httpClient.uploadImage3(SysConstant.UPLOAD_IMAGE_URL_PREFIX + "upload/", messageInfo.getSavePath());
+					result = httpClient.uploadImage3(SysConstant.UPLOAD_IMAGE_URL_PREFIX
+							+ "upload/", messageInfo.getSavePath());
 
 					logger.d("pic#uploadImage ret url:%s", result);
 
 				}
 
-				Handler handler = MessageActivity.getUiHandler();
+				if (handler == null) {
+					logger.e("pic#handler is null");
+					return null;
+				}
+
 				Message message = handler.obtainMessage();
 
 				if (TextUtils.isEmpty(result)) {
+					logger.e("pic#upload failed");
+
 					message.what = HandlerConstant.HANDLER_IMAGE_UPLOAD_FAILD;
 					message.obj = messageInfo;
 					messageInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_FINISH_FAILED);
-					if (imService != null) {
-						imService.getUnAckMsgManager().handleTimeoutUnAckMsg(messageInfo);
-					}
 
-					logger.e("pic#send HANDLER_IMAGE_UPLOAD_FAILD to messageactivity");
-					handler.sendMessage(message);
 				} else {
 					String imageUrl = (String) result;
+					logger.e("pic#upload ok, url:%s", imageUrl);
+
 					Logger.getLogger(UploadImageTask.class).d(imageUrl);
 					messageInfo.setUrl(imageUrl);
 					message.what = HandlerConstant.HANDLER_IMAGE_UPLOAD_SUCESS;
 					message.obj = messageInfo;
-
-					logger.d("pic#send HANDLER_IMAGE_UPLOAD_SUCESS to messageactivity");
-
-					handler.sendMessage(message);
 				}
+				
+				handler.sendMessage(message);
+
 			} catch (IOException e) {
 				logger.e(e.getMessage());
 			}

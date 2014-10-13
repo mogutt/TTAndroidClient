@@ -46,11 +46,8 @@ import com.mogujie.tt.entity.TimeTileMessage;
 import com.mogujie.tt.imlib.IMMessageManager;
 import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.service.IMService;
-import com.mogujie.tt.imlib.utils.DumpUtils;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
-import com.mogujie.tt.task.TaskManager;
-import com.mogujie.tt.task.biz.UploadImageTask;
 import com.mogujie.tt.ui.activity.DisplayImageActivity;
 import com.mogujie.tt.ui.activity.MessageActivity;
 import com.mogujie.tt.ui.activity.PreviewTextActivity;
@@ -1112,15 +1109,9 @@ public class MessageAdapter extends BaseAdapter {
 					}
 				} else if (mType == SysConstant.POPUP_MENU_TYPE_IMAGE) {
 					logger.d("pic#resend");
-					String Dao = "";// TokenManager.getInstance().getDao();
-					List<MessageInfo> messageList = new ArrayList<MessageInfo>();
-					messageList.add(mMsgInfo);
 
 					mMsgInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_LOADDING);
 					updateItemState(mMsgInfo.msgId, SysConstant.MESSAGE_STATE_LOADDING);
-
-					UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), session.getType(), SysConstant.UPLOAD_IMAGE_URL_PREFIX, Dao, messageList);
-					TaskManager.getInstance().trigger(upTask);
 				}
 
 				resendMsg(mMsgInfo.msgId);

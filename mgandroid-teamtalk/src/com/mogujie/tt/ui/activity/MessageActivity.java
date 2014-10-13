@@ -230,9 +230,21 @@ public class MessageActivity extends TTBaseActivity
 			onResumeAgain();
 		} else if (action.equals(IMActions.ACTION_MSG_RESENT)) {
 			onMessageResent(intent);
+		} else if (action.equals(IMActions.ACTION_MSG_STATUS)) {
+			onMessageNewStatus(intent);
 		}
 	}
 
+	private void onMessageNewStatus(Intent intent) {
+		logger.d("chat#onMessageNewStatus");
+		if (intent == null) {
+			return;
+		}
+		
+//		int newStatus  = intent.getIntExtra(SysConstant.STATUS_KEY, SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
+		adapter.notifyDataSetChanged();
+	}
+	
 	private void onMessageResent(Intent intent) {
 		logger.d("chat#resend#onMessageResent");
 		if (intent == null) {
@@ -338,6 +350,7 @@ public class MessageActivity extends TTBaseActivity
 		actions.add(IMActions.ACTION_MSG_UNACK_TIMEOUT);
 		actions.add(IMActions.ACTION_NEW_MESSAGE_SESSION);
 		actions.add(IMActions.ACTION_MSG_RESENT);
+		actions.add(IMActions.ACTION_MSG_STATUS);
 
 		imServiceHelper.connect(this, actions, IMServiceHelper.INTENT_MAX_PRIORITY, this);
 		logger.d("messageactivity#register im service");
@@ -1075,9 +1088,10 @@ public class MessageActivity extends TTBaseActivity
 
 		List<MessageInfo> messageList = new ArrayList<MessageInfo>();
 		messageList.add(msg);
-		String Dao = "";// TokenManager.getInstance().getDao();
-		UploadImageTask upTask = new UploadImageTask(imServiceHelper.getIMService(), session.getType(), SysConstant.UPLOAD_IMAGE_URL_PREFIX, Dao, messageList);
-		TaskManager.getInstance().trigger(upTask);
+		
+		if (imService != null) {
+			imService.getMessageManager().sendImages(session.getSessionId(), session.getType(), messageList);
+		}
 	}
 
 	/**

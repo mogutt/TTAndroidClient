@@ -15,6 +15,7 @@ import com.mogujie.tt.log.Logger;
 
 public class IMUnAckMsgManager extends IMManager {
 	private static IMUnAckMsgManager inst;
+
 	public static IMUnAckMsgManager instance() {
 		synchronized (IMUnAckMsgManager.class) {
 			if (inst == null) {
@@ -30,6 +31,7 @@ public class IMUnAckMsgManager extends IMManager {
 			this.msg = msg;
 			this.timeoutElapsedRealtime = timeoutElapsedRealtime;
 		}
+
 		public MessageInfo msg;
 		public long timeoutElapsedRealtime;
 	}
@@ -50,8 +52,21 @@ public class IMUnAckMsgManager extends IMManager {
 			return TIMEOUT_MILLISECONDS;
 		}
 	}
-	public synchronized void handleTimeoutUnAckMsg(MessageInfo msg) {
-		logger.d("unack#handleTimeoutUnAckMsg");
+
+	public synchronized void handleTimeoutUnAckMsg(String msgId) {
+		if (msgId == null) {
+			return;
+		}
+		
+		logger.d("unack#handleTimeoutUnAckMsg ,msgId:%s", msgId);
+		
+		UnAckMsg unAckMsg = unackMsgList.get(msgId);
+		if (unAckMsg == null) {
+			logger.e("unack#so such message -> msgId:%s", msgId);
+			return;
+		}
+		
+		MessageInfo msg = unAckMsg.msg;
 		handleTimeoutUnAckMsgImpl(msg);
 
 		removeUnackMsg(msg.msgId);
@@ -75,7 +90,7 @@ public class IMUnAckMsgManager extends IMManager {
 		logger.d("unack#broadcast is ok");
 	}
 
-	//todo eric make locker more smaller
+	// todo eric make locker more smaller
 	private synchronized void timerImpl() {
 		logger.d("unack#UnAckMsgTimeoutTimer run");
 
@@ -107,6 +122,7 @@ public class IMUnAckMsgManager extends IMManager {
 			}
 		}, 10 * 1000);
 	}
+
 	public synchronized void startUnAckTimeoutTimer() {
 		logger.d("unack#startUnAckMsgTimeoutTimer");
 		startTimer();
@@ -118,15 +134,13 @@ public class IMUnAckMsgManager extends IMManager {
 		String msgId = msgInfo.msgId;
 		// todo eric efficiency
 		if (unackMsgList.containsKey(msgId) || msgInfo.isResend()) {
-			// for uploading image msg, it has already been added to the list
-			// when
+			// for uploading image msg, it has already been added to the list when
 			// uploading the image, and at the time of sending the msg to the
-			// peer,
-			// reset the timer
+			// peer, reset the timer
 			IMDbManager.instance(ctx).deleteMsg(msgId);
 			removeUnackMsg(msgId);
 		}
-		
+
 		IMDbManager.instance(ctx).saveMsg(msgInfo, true);
 
 		unackMsgList.put(msgInfo.msgId, new UnAckMsg(msgInfo, SystemClock.elapsedRealtime()

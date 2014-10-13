@@ -12,6 +12,7 @@ public interface SysConstant {
 	String SESSION_TYPE_KEY = "session_type";
 	String SESSION_ID_KEY = "session_id";
 	String OPERATION_RESULT_KEY = "tt_opeartion_result";
+	String STATUS_KEY = "status";
 
 	// todo eric
 	// 122.225.68.125:8001
