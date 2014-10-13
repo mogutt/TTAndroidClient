@@ -36,8 +36,11 @@ use below identity to login:
 * **id:** eric
 * **password:** 12345
 
-![login_page](http://s14.sinaimg.cn/mw690/003j8GoBgy6MMku49yJcd&690 =200*300)
-![contact_page](http://s9.sinaimg.cn/mw690/003j8GoBgy6MMku1bqEf8&690 =200*300)
+
+<img src="http://s14.sinaimg.cn/mw690/003j8GoBgy6MMku49yJcd&690" alt="login page" style="width:200px;height:300px">
+<img src="http://s9.sinaimg.cn/mw690/003j8GoBgy6MMku1bqEf8&690" alt="contact page" style="width:200px;height:300px">
+
+
 
 ## Acknowledgements
 
