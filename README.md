@@ -32,8 +32,11 @@ Build steps:
 
 
 ## Manual
-use below identity to login:
+use below identities to login:
 * **id:** eric
+* **password:** 12345
+
+* **id:** tom
 * **password:** 12345
 
 
