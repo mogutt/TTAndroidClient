@@ -30,6 +30,15 @@ Build steps:
 * if there're still a lot of errors about mgimlibs project, close the eclipse, and restart it should solve the issues
 * any building issues found, please file an issue ticket in [issue page](https://github.com/mogutt/TTAndroidClient/issues)
 
+
+## Manual
+use below identity to login:
+**id:** eric
+**password:** 12345
+
+![login_page](http://s14.sinaimg.cn/mw690/003j8GoBgy6MMku49yJcd&690)
+![contact_page](http://s9.sinaimg.cn/mw690/003j8GoBgy6MMku1bqEf8&690)
+
 ## Acknowledgements
 
 This project uses some open sources libraries such as:
