@@ -1,6 +1,6 @@
 # mogujie Open Source IM Android App  ![Logo](https://avatars2.githubusercontent.com/u/8542441?v=2&s=200)
 
-[mogujie](http://www.mogujie.com) Open Source IM is aiming to provide another choice as an IM solution in your company for colleagues to communicate with each other. 
+[mogujie](http://www.mogujie.com) Open Source IM is aiming to provide an another IM solution in your company for colleagues to communicate with each other. 
 
 we've released Win/Mac/Android/iOS  client repositories in github as well as IM server repository.
 
