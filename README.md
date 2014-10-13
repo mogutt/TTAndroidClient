@@ -37,8 +37,10 @@ use below identity to login:
 * **password:** 12345
 
 
-<img src="http://s14.sinaimg.cn/mw690/003j8GoBgy6MMku49yJcd&690" alt="login page" style="width:200px;height:300px">
-<img src="http://s9.sinaimg.cn/mw690/003j8GoBgy6MMku1bqEf8&690" alt="contact page" style="width:200px;height:300px">
+![loginpage] (http://s5.sinaimg.cn/mw690/003j8GoBgy6MMocfPvea4&690)
+
+--------------------------------------------------------------------------------------
+![contactpage](http://s10.sinaimg.cn/mw690/003j8GoBgy6MMoakN2V79&690)
 
 
 
