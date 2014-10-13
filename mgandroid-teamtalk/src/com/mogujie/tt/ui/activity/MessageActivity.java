@@ -329,8 +329,7 @@ public class MessageActivity extends TTBaseActivity
 	private IMServiceHelper imServiceHelper = new IMServiceHelper();
 	private IMService imService;
 	private IMSession session = new IMSession(imServiceHelper);
-//	private int MSG_CNT_PER_PAGE = 15;
-	private int MSG_CNT_PER_PAGE = 2;
+	private int MSG_CNT_PER_PAGE = 15;
 	private int firstHistoryMsgTime = -1;
 	private boolean imServiceConnectionEnabled = false;
 
