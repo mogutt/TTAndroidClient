@@ -68,3 +68,6 @@ Please fork this repository and contribute back using
 
 Any contributions, large or small, major features, bug fixes, additional
 language translations, unit/integration tests are **welcomed** and **appreciated**!
+
+
+***Happy Hacking and Have Fun!***
