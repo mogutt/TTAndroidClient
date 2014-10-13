@@ -505,6 +505,12 @@ public class MessageAdapter extends BaseAdapter {
 				holder.messageFailed.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View arg0) {
+						logger.d("debug#onClick, msg:%s", info);
+						if (!info.isMy() && info.isImage()) {
+							logger.d("debug#pic#found failed receiving image message");
+							updateItemState(info.msgId, SysConstant.MESSAGE_STATE_UNLOAD);
+						}
+						
 						int menuType = getMenuType(info);
 						if (menuType > 0) {
 							// logger.d("debug#showMenu  MessageInfo:%s", info);
@@ -517,7 +523,7 @@ public class MessageAdapter extends BaseAdapter {
 			}
 
 			if (info.getMsgLoadState() == SysConstant.MESSAGE_STATE_LOADDING
-					&& !info.isPictureType()) {
+					&& !info.isImage()) {
 				holder.loadingProgressBar.setVisibility(View.VISIBLE);
 			} else {
 				holder.loadingProgressBar.setVisibility(View.GONE);

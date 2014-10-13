@@ -65,7 +65,7 @@ public class MessageEntity {
 		return msgInfo.getDisplayType() == SysConstant.DISPLAY_TYPE_AUDIO;
 	}
 
-	public boolean isPictureType() {
+	public boolean isImage() {
 		// if (isTextType()) {
 		// String msgContent = new String(msgData);
 		// if (msgContent != null &&
@@ -295,7 +295,7 @@ public class MessageEntity {
 			return new String(msgData);
 		} else if (isAudioType()) {
 			return createAudioInfo(msgInfo);
-		} else if (isPictureType()) {
+		} else if (isImage()) {
 			return createPicInfo(msgInfo);
 		}
 

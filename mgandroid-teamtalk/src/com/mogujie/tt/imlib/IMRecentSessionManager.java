@@ -78,7 +78,7 @@ public class IMRecentSessionManager extends IMManager {
 		} else if (msg.isAudioType()) {
 			// todo eric i18n
 			return "[语音]";
-		} else if (msg.isPictureType()) {
+		} else if (msg.isImage()) {
 			return "[图片]";
 		}
 

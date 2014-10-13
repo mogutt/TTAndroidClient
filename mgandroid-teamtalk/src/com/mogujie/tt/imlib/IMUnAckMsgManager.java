@@ -46,7 +46,7 @@ public class IMUnAckMsgManager extends IMManager {
 	private Handler timerHandler = new Handler();
 
 	private long getTimeoutTolerance(MessageInfo msgInfo) {
-		if (msgInfo.isPictureType()) {
+		if (msgInfo.isImage()) {
 			return IMAGE_TIMEOUT_MILLISECONDS;
 		} else {
 			return TIMEOUT_MILLISECONDS;

@@ -64,10 +64,10 @@
 
             <ImageView
                 android:id="@+id/message_state_failed"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="6dp"
+                android:layout_marginLeft="3dp"
                 android:layout_toRightOf="@id/message_layout"
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/message_image_desc"

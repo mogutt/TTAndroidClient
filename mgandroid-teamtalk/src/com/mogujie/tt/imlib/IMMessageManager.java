@@ -248,7 +248,7 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 		} else if (msgInfo.isAudioType()) {
 			logger.d("chat#resend#this is an audio type message");
 			sendVoice(msgInfo.toId, msgInfo.getAudioContent(), msgInfo.sessionType, msgInfo);
-		} else if (msgInfo.isPictureType()) {
+		} else if (msgInfo.isImage()) {
 			logger.d("chat#pic#resend#this is a picture type message");
 			List<MessageInfo> msgList = new ArrayList<MessageInfo>();
 			msgList.add(msgInfo);

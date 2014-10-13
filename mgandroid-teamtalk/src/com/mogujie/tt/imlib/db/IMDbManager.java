@@ -150,7 +150,7 @@ public class IMDbManager extends SQLiteOpenHelper {
 	}
 
 	public synchronized void updatePictureMessagePath(MessageInfo msg) {
-		if (!msg.isPictureType()) {
+		if (!msg.isImage()) {
 			logger.e("db#msg is not picture");
 			return;
 		}
