@@ -39,8 +39,9 @@ use below identity to login:
 
 ![loginpage] (http://s6.sinaimg.cn/mw690/003j8GoBgy6MMp9gLNra5&690)
 
-![contactpage](http://s6.sinaimg.cn/mw690/003j8GoBgy6MMp9gLNra5&690)
+![contactpage](http://s9.sinaimg.cn/mw690/003j8GoBgy6MMp9dHmM38&690)
 
+or you can go to our oficial [website](http://tt.mogu.io/home/sign)(Chinease) to register an account
 
 
 ## Acknowledgements
