@@ -1,0 +1,292 @@
+package com.mogujie.tt.imlib;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.mogujie.tt.R;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationCompat.Builder;
+import android.view.View;
+
+import com.mogujie.tt.config.SysConstant;
+import com.mogujie.tt.imlib.proto.ContactEntity;
+import com.mogujie.tt.imlib.proto.GroupEntity;
+import com.mogujie.tt.imlib.proto.MessageEntity;
+import com.mogujie.tt.imlib.utils.IMContactHelper;
+import com.mogujie.tt.imlib.utils.IMUIHelper;
+import com.mogujie.tt.log.Logger;
+import com.mogujie.tt.ui.activity.MessageActivity;
+import com.mogujie.tt.ui.utils.IMServiceHelper;
+import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.assist.ImageSize;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
+
+public class IMNotificationManager extends IMManager
+		implements
+			OnIMServiceListner {
+
+	private static IMNotificationManager inst;
+	private Logger logger = Logger.getLogger(IMNotificationManager.class);
+	private IMServiceHelper imServiceHelper = new IMServiceHelper();
+
+	public static IMNotificationManager instance() {
+		synchronized (IMNotificationManager.class) {
+			if (inst == null) {
+				inst = new IMNotificationManager();
+			}
+
+			return inst;
+		}
+	}
+
+	private IMNotificationManager() {
+
+	}
+
+	public void register() {
+		logger.d("notification#regisgter");
+
+		List<String> actions = new ArrayList<String>();
+		actions.add(IMActions.ACTION_MSG_RECV);
+
+		imServiceHelper.registerActions(ctx, actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
+	}
+
+	@Override
+	public void onAction(String action, Intent intent,
+			BroadcastReceiver broadcastReceiver) {
+		logger.d("notification#onAction action:%s", action);
+
+		if (action.equals(IMActions.ACTION_MSG_RECV)) {
+			handleMsgRecv(intent);
+
+		}
+	}
+
+	public String getSessionAvatarUrl(int sessionType, String sessionId) {
+		String url = "";
+		if (sessionType == IMSession.SESSION_P2P) {
+			ContactEntity contact = IMContactManager.instance().findContact(sessionId);
+			if (contact == null) {
+				logger.d("notification#no such contact by id:%s", sessionId);
+				return "";
+			}
+
+			url = contact.avatarUrl;
+
+		} else {
+			GroupEntity group = IMGroupManager.instance().findGroup(sessionId);
+			if (group == null) {
+				logger.d("notification#no such group by id:%s", sessionId);
+				return "";
+			}
+
+			url = group.avatarUrl;
+		}
+
+		return IMContactHelper.getRealAvatarUrl(url);
+	}
+
+	private void handleMsgRecv(Intent intent) {
+		logger.d("notification#recv unhandled message");
+
+		final String sessionId = intent.getStringExtra(SysConstant.SESSION_ID_KEY);
+		String msgId = intent.getStringExtra(SysConstant.MSG_ID_KEY);
+		logger.d("notification#msg no one handled, sessionId:%s, msgId:%s", sessionId, msgId);
+
+		final MessageEntity msg = IMUnreadMsgManager.instance().getUnreadMsg(sessionId, msgId);
+		if (msg == null) {
+			logger.e("notification#can't get unread msg");
+			return;
+		}
+
+		showNotification(msg, sessionId);
+	}
+
+	private void showNotification(final MessageEntity msg,
+			final String sessionId) {
+		//todo eric need to set the exact size of the big icon
+		ImageSize targetSize = new ImageSize(128, 128);
+		String avatarUrl = getSessionAvatarUrl(msg.sessionType, sessionId);
+		logger.d("notification#notification avatarUrl:%s", avatarUrl);
+
+		ImageLoader.getInstance().loadImage(avatarUrl, targetSize, null, new SimpleImageLoadingListener() {
+
+			@Override
+			public void onLoadingComplete(String imageUri, View view,
+					Bitmap loadedImage) {
+				logger.d("notification#icon onLoadingComplete");
+				//holder.image.setImageBitmap(loadedImage);
+
+				showInNotificationBar(msg, sessionId, msg.sessionType, loadedImage);
+			}
+
+			@Override
+			public void onLoadingFailed(String imageUri, View view,
+					FailReason failReason) {
+				logger.d("notification#icon onLoadingFailed");
+
+				showInNotificationBar(msg, sessionId, msg.sessionType, null);
+			}
+
+		});
+	}
+
+	private void showInNotificationBar(MessageEntity msg, String sessionId,
+			int sessionType, Bitmap iconBitmap) {
+		logger.d("notification#showInNotificationBar msg:%s, sessionId:%s, sessionType:%d", msg, sessionId, sessionType);
+
+		NotificationManager notifyMgr = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+		if (notifyMgr == null) {
+			return;
+		}
+
+		Builder builder = new NotificationCompat.Builder(ctx);
+		builder.setContentTitle(getNotificationTitle(msg));
+		builder.setContentText(getNotificationContentText(msg));
+		builder.setSmallIcon(R.drawable.tt_logo);
+		builder.setTicker(getRollingText(msg, false));
+		builder.setWhen(System.currentTimeMillis());
+		builder.setAutoCancel(true);
+
+		//this is the content near the right bottom side
+		//builder.setContentInfo("content info");
+
+		//delay 0ms, vibrate 200ms, delay 250ms, vibrate 200ms 
+		long[] vibrate = {0, 200, 250, 200};
+		builder.setVibrate(vibrate);
+
+		//sound
+		builder.setDefaults(Notification.DEFAULT_SOUND);
+
+		if (iconBitmap != null) {
+			logger.d("notification#fetch icon from network ok");
+			builder.setLargeIcon(iconBitmap);
+		} else {
+			//todo eric default avatar is too small, need big size(128 * 128)
+			Bitmap defaultBitmap = BitmapFactory.decodeResource(ctx.getResources(), IMUIHelper.getDefaultAvatarResId(msg.sessionType));
+			if (defaultBitmap != null) {
+				builder.setLargeIcon(defaultBitmap);
+			}
+		}
+
+		Intent intent = new Intent(ctx, MessageActivity.class);
+		IMUIHelper.setSessionInIntent(intent, sessionId, sessionType);
+
+		PendingIntent pendingIntent = PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		builder.setContentIntent(pendingIntent);
+		Notification notification = builder.build();
+
+		notifyMgr.notify(Integer.parseInt(sessionId), notification);
+	}
+
+	private String getNotificationContent(MessageEntity msg) {
+		// todo eric i18n
+		if (msg.isTextType()) {
+			return msg.getText();
+		} else if (msg.isAudioType()) {
+			return "[语音]";
+		} else if (msg.isImage()) {
+			return "[图片]";
+		} else {
+			return "错误消息图片";
+		}
+	}
+
+	private String getRollingText(MessageEntity msg, boolean noName) {
+		String msgContent = getNotificationContent(msg);
+		String contactName = msg.fromId;
+		ContactEntity contact = IMContactManager.instance().findContact(msg.fromId);
+		if (contact == null) {
+			logger.e("notification#no contact id:%s", msg.fromId);
+		} else {
+			contactName = contact.name;
+		}
+
+		if (noName) {
+			return msgContent;
+		} else {
+			return String.format("%s: %s", contactName, msgContent);
+		}
+	}
+
+	private String getNotificationTitle(MessageEntity msg) {
+		if (msg.isGroupMsg()) {
+			GroupEntity group = IMGroupManager.instance().findGroup(msg.toId);
+			if (group == null) {
+				logger.e("notification#no such group id:%s", msg.toId);
+				return "no such group:" + msg.toId;
+			}
+
+			return group.name;
+		} else if (msg.isP2PMsg()) {
+			ContactEntity contact = IMContactManager.instance().findContact(msg.fromId);
+			if (contact == null) {
+				logger.e("notification#no such contact id:%s", msg.fromId);
+				return "no such contact:" + msg.fromId;
+			}
+
+			return contact.name;
+		}
+
+		return "wrong message type:" + msg.fromId + " " + msg.toId;
+	}
+
+	private String getNotificationContentText(MessageEntity msg) {
+		if (msg.isGroupMsg()) {
+
+			return getRollingText(msg, false);
+		} else {
+			return getRollingText(msg, true);
+		}
+	}
+
+	@Override
+	public void onIMServiceConnected() {
+
+	}
+
+	//	private void oldNotification() {
+	//		Notification notification = new Notification();
+	//
+	//		//notification.icon = IMUIHelper.getDefaultAvatarResId(msg.sessionType);
+	//		if (icon == null) {
+	//			logger.e("notification#icon is null");
+	//			notification.icon = IMUIHelper.getDefaultAvatarResId(msg.sessionType);
+	//		} else {
+	//			notification.largeIcon = icon;
+	//		}
+	//		
+	//		//notification.icon = IMUIHelper.getDefaultAvatarResId(msg.sessionType);
+	//
+	//		//delay 0ms, vibrate 200ms, delay 250ms, vibrate 200ms 
+	//		long[] vibrate = {0, 200, 250, 200};
+	//		notification.vibrate = vibrate;
+	//
+	//		notification.when = System.currentTimeMillis();
+	//
+	//		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+	//
+	//		// rolling text
+	//		notification.tickerText = getRollingText(msg, false);
+	//		notification.defaults = Notification.DEFAULT_SOUND;
+	//
+	//		Intent intent = new Intent(ctx, MessageActivity.class);
+	//		IMUIHelper.setSessionInIntent(intent, sessionId, sessionType);
+	//
+	//		PendingIntent pendingIntent = PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+	//		notification.setLatestEventInfo(ctx, getNotificationTitle(msg), getNotificationContentText(msg), pendingIntent);
+	//		notifyMgr.notify(Integer.parseInt(sessionId), notification);
+	//	}
+
+}
