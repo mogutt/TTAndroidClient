@@ -242,9 +242,9 @@ public class IMContactManager extends IMManager {
 				.getResponse();
 		logger.i("contact#user cnt:%d", resp.entityList.size());
 
-		for (RecentContactsPacket.UserEntity entity : resp.entityList) {
-			//logger.i("user -> entity:%s", entity);
-		}
+//		for (RecentContactsPacket.UserEntity entity : resp.entityList) {
+//			//logger.i("user -> entity:%s", entity);
+//		}
 
 		recentContactList = resp.entityList;
 

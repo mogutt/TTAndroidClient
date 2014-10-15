@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
@@ -36,6 +37,7 @@ public class EntityListViewAdapter extends BaseAdapter implements
 	private List<EntityList> entityListMgr = new ArrayList<EntityList>();
 
 	private boolean showCheckBox = false;
+	
 
 	public EntityListViewAdapter(Context context) {
 		this.context = context;
@@ -81,7 +83,7 @@ public class EntityListViewAdapter extends BaseAdapter implements
 					.findViewById(R.id.contact_item_title);
 			viewHolder.sectionView = (TextView) view
 					.findViewById(R.id.contact_category_title);
-			viewHolder.avatar = (MGWebImageView) view
+			viewHolder.avatar = (ImageView) view
 					.findViewById(R.id.contact_portrait);
 			viewHolder.checkBox = (CheckBox) view.findViewById(R.id.checkBox);
 			if (showCheckBox) {
@@ -106,7 +108,7 @@ public class EntityListViewAdapter extends BaseAdapter implements
 
 		viewHolder.nameView.setText(name);
 
-		IMUIHelper.setWebImageViewAvatar(viewHolder.avatar, avatarUrl, sessionType);
+		IMUIHelper.setEntityImageViewAvatar(viewHolder.avatar, avatarUrl, sessionType);
 
 		return view;
 
@@ -231,7 +233,7 @@ public class EntityListViewAdapter extends BaseAdapter implements
 	public final static class ViewHolder {
 		TextView sectionView;
 		TextView nameView;
-		MGWebImageView avatar;
+		ImageView avatar;
 		public CheckBox checkBox;
 		int viewType;
 

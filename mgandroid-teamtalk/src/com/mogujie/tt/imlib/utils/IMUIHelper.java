@@ -8,6 +8,7 @@ import java.util.Map;
 
 import android.content.Context;
 import android.content.Intent;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.mogujie.tt.R;
@@ -23,6 +24,9 @@ import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.activity.MessageActivity;
 import com.mogujie.widget.imageview.MGWebImageView;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 
 public class IMUIHelper {
 	public static boolean openSessionChatActivity(Logger logger, Context ctx,
@@ -173,6 +177,39 @@ public class IMUIHelper {
 			webImageView.setImageUrlNeedFit(realAvatarUrl);
 		}
 
+	}
+
+	public static void setEntityImageViewAvatar(ImageView imageView,
+			String avatarUrl, int sessionType) {
+		
+		Logger logger = Logger.getLogger(IMUIHelper.class);
+		
+		logger.d("debug#setEntityImageViewAvatar imageView:%s, avatarUrl:%s", imageView, avatarUrl);
+		
+		if (avatarUrl == null) {
+			return;
+		}
+
+		int defaultResId = getDefaultAvatarResId(sessionType);
+		
+		//todo eric created too many options, but I can't find a way to change showImageOnLoading resource id
+		// dynamically based on sessionType
+		DisplayImageOptions options = new DisplayImageOptions.Builder()
+									.showImageOnLoading(defaultResId)
+									.showImageForEmptyUri(defaultResId)
+									.showImageOnFail(defaultResId)
+									.cacheInMemory(true)
+									.cacheOnDisk(true)
+									.considerExifParams(true)
+									.displayer(new RoundedBitmapDisplayer(5))
+									.build();
+		
+
+		String realAvatarUrl = IMContactHelper.getRealAvatarUrl(avatarUrl);
+
+		logger.d("contactUI#realAvatarUrl:%s", realAvatarUrl);
+
+		ImageLoader.getInstance().displayImage(realAvatarUrl, imageView, options, null);
 	}
 
 	public static void setGroupMemberGridViewData(Logger logger, Intent intent,

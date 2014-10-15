@@ -37,7 +37,8 @@
             android:text=""
             android:visibility="gone" />
 
-        <com.mogujie.widget.imageview.MGWebImageView
+        <!--
+             <com.mogujie.widget.imageview.MGWebImageView
             xmlns:app="http://schemas.android.com/apk/res-auto"
             android:id="@+id/contact_portrait"
             android:layout_width="42dp"
@@ -50,6 +51,18 @@
             android:src="@drawable/tt_default_user_portrait_corner"
             app:cornerSize="2dp"
             app:shape="round_corner" />
+        -->
+
+        <ImageView
+            android:id="@+id/contact_portrait"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_centerVertical="true"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_toRightOf="@id/checkBox"
+            android:scaleType="centerCrop"
+            android:src="@drawable/tt_default_user_portrait_corner" />
 
         <TextView
             android:id="@+id/contact_item_title"

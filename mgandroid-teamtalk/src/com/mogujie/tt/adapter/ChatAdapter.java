@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.mogujie.tt.R;
@@ -62,7 +63,7 @@ public class ChatAdapter extends BaseAdapter {
 	}
 
 	public final class ContactViewHolder {
-		public MGWebImageView avatar;
+		public ImageView avatar;
 		public TextView uname;
 		public TextView lastContent;
 		public TextView lastTime;
@@ -71,7 +72,7 @@ public class ChatAdapter extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-//		logger.d("recent#getview position:%d", position);
+		//		logger.d("recent#getview position:%d", position);
 
 		try {
 			// 设置holder信息
@@ -80,16 +81,11 @@ public class ChatAdapter extends BaseAdapter {
 				convertView = mInflater.inflate(R.layout.tt_item_chat, null);
 				if (null != convertView) {
 					holder = new ContactViewHolder();
-					holder.avatar = (MGWebImageView) convertView
-							.findViewById(R.id.contact_portrait);
-					holder.uname = (TextView) convertView
-							.findViewById(R.id.shop_name);
-					holder.lastContent = (TextView) convertView
-							.findViewById(R.id.message_body);
-					holder.lastTime = (TextView) convertView
-							.findViewById(R.id.message_time);
-					holder.msgCount = (TextView) convertView
-							.findViewById(R.id.message_count_notify);
+					holder.avatar = (ImageView) convertView.findViewById(R.id.contact_portrait);
+					holder.uname = (TextView) convertView.findViewById(R.id.shop_name);
+					holder.lastContent = (TextView) convertView.findViewById(R.id.message_body);
+					holder.lastTime = (TextView) convertView.findViewById(R.id.message_time);
+					holder.msgCount = (TextView) convertView.findViewById(R.id.message_count_notify);
 					convertView.setTag(holder);
 				}
 
@@ -108,7 +104,7 @@ public class ChatAdapter extends BaseAdapter {
 			int backgroundResource = 0;
 			int unReadCount = 0;
 			int sessionType = IMSession.SESSION_P2P;
-			
+
 			if (null != recentSessionList
 					&& position < recentSessionList.size()) {
 				userName = recentSessionList.get(position).getUserName();
@@ -123,7 +119,7 @@ public class ChatAdapter extends BaseAdapter {
 				logger.d("recent#userName:%s,  unReadCount:%d", userName, unReadCount);
 				avatarUrl = recentSessionList.get(position).getUserAvatar();
 				sessionType = recentSessionList.get(position).getSessionType();
-				
+
 			}
 
 			// 设置未读消息计数
@@ -135,9 +131,12 @@ public class ChatAdapter extends BaseAdapter {
 				holder.msgCount.setVisibility(View.GONE);
 			}
 
-			if (avatarUrl != null) {
-				IMUIHelper.setWebImageViewAvatar(holder.avatar, avatarUrl, sessionType);
+			if (avatarUrl == null) {
+				avatarUrl = "";
 			}
+			
+			
+			IMUIHelper.setEntityImageViewAvatar(holder.avatar, avatarUrl, sessionType);
 
 			// 设置其它信息
 			holder.uname.setText(userName);
