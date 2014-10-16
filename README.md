@@ -28,6 +28,7 @@ Build steps:
 * import the project -  open eclipse, and select menu `File->New->Project`, then search and select  `Android Project From Existing Project`, select the source code root directory
 * 2 projects(MGTTInitAct, mgimlibs) should be imported to eclipse successfully so far
 * clean the 2 projects and rebuild 
+* if error is "Unable to resolve target 'android-16'", open project.properties file of the 2 projects, and edit it to your android SDK version on your machine
 * if there're still a lot of errors about mgimlibs project, close the eclipse, and restart it should solve the issues
 * any building issues found, please file an issue ticket in [issue page](https://github.com/mogutt/TTAndroidClient/issues)
 
