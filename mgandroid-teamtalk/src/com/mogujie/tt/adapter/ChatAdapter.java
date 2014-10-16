@@ -18,8 +18,6 @@ import com.mogujie.tt.entity.RecentInfo;
 import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
-import com.mogujie.tt.ui.utils.IMServiceHelper;
-import com.mogujie.widget.imageview.MGWebImageView;
 
 /**
  * 
@@ -28,7 +26,6 @@ import com.mogujie.widget.imageview.MGWebImageView;
 @SuppressLint("ResourceAsColor")
 public class ChatAdapter extends BaseAdapter {
 	private LayoutInflater mInflater = null;
-	private IMServiceHelper imServiceHelper;
 	private List<RecentInfo> recentSessionList = new LinkedList<RecentInfo>();
 	private static Logger logger = Logger.getLogger(ChatAdapter.class);
 
@@ -135,7 +132,6 @@ public class ChatAdapter extends BaseAdapter {
 				avatarUrl = "";
 			}
 			
-			
 			IMUIHelper.setEntityImageViewAvatar(holder.avatar, avatarUrl, sessionType);
 
 			// 设置其它信息
@@ -150,11 +146,6 @@ public class ChatAdapter extends BaseAdapter {
 			logger.e(e.getMessage());
 			return null;
 		}
-	}
-
-	public void setIMService(IMServiceHelper imServiceHelper) {
-		logger.d("recent#setIMService");
-		this.imServiceHelper = imServiceHelper;
 	}
 
 	public void setData(List<RecentInfo> recentSessionList) {

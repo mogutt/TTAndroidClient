@@ -62,6 +62,9 @@ import com.mogujie.tt.widget.MGProgressbar;
 import com.mogujie.tt.widget.MessageOperatePopup;
 import com.mogujie.tt.widget.SpeekerToast;
 import com.mogujie.widget.imageview.MGWebImageView;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.squareup.picasso.Picasso.LoadedFrom;
 
 /**
@@ -510,7 +513,7 @@ public class MessageAdapter extends BaseAdapter {
 							logger.d("debug#pic#found failed receiving image message");
 							updateItemState(info.msgId, SysConstant.MESSAGE_STATE_UNLOAD);
 						}
-						
+
 						int menuType = getMenuType(info);
 						if (menuType > 0) {
 							// logger.d("debug#showMenu  MessageInfo:%s", info);
@@ -1191,13 +1194,15 @@ public class MessageAdapter extends BaseAdapter {
 
 			final MessageInfo messageInfoFinal = messageInfo;
 
-			MGWebImageView.fetchBitmap(context, smallImageUrl, new MGWebImageView.TargetCallback() {
-				@Override
-				public void onPrepareLoad(Drawable placeHolderDrawable) {
-				}
+			ImageLoader.getInstance().loadImage(smallImageUrl, null, null, new SimpleImageLoadingListener() {
+				//message_image
 
 				@Override
-				public void onBitmapLoaded(Bitmap bitmap, LoadedFrom from) {
+				public void onLoadingComplete(String imageUri, View view,
+						Bitmap bitmap) {
+					logger.d("chat#pic#icon onLoadingComplete");
+					//holder.image.setImageBitmap(loadedImage);
+
 					logger.d("chat#pic#onBitmapLoaded");
 					String smallImagePath = CommonUtil.getMd5Path(smallImageUrl, SysConstant.FILE_SAVE_TYPE_IMAGE);
 					File myFile = new File(smallImagePath);
@@ -1233,12 +1238,65 @@ public class MessageAdapter extends BaseAdapter {
 				}
 
 				@Override
-				public void onBitmapFailed(Drawable errorDrawable) {
+				public void onLoadingFailed(String imageUri, View view,
+						FailReason failReason) {
+					logger.d("chat#pic#icon onLoadingFailed");
+
 					logger.d("chat#pic#onBitmapFailed");
 					updateMessageState(messageInfoFinal, SysConstant.MESSAGE_STATE_FINISH_FAILED);
 					logger.d("download failed");
 				}
+
 			});
+
+			//			MGWebImageView.fetchBitmap(context, smallImageUrl, new MGWebImageView.TargetCallback() {
+			//				@Override
+			//				public void onPrepareLoad(Drawable placeHolderDrawable) {
+			//				}
+			//
+			//				@Override
+			//				public void onBitmapLoaded(Bitmap bitmap, LoadedFrom from) {
+			//					logger.d("chat#pic#onBitmapLoaded");
+			//					String smallImagePath = CommonUtil.getMd5Path(smallImageUrl, SysConstant.FILE_SAVE_TYPE_IMAGE);
+			//					File myFile = new File(smallImagePath);
+			//					if (myFile.exists()) {
+			//						logger.d("chat#pic#image already exists, no need to save");
+			//						return;
+			//					}
+			//					BufferedOutputStream bos = null;
+			//					try {
+			//						if (null != bitmap) {
+			//							FileOutputStream fout = new FileOutputStream(myFile);
+			//							bos = new BufferedOutputStream(fout);
+			//							bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
+			//							bos.flush();
+			//							bos.close();
+			//							bos = null;
+			//							logger.d("chat#pic#save image ok");
+			//							updateMessageState(messageInfoFinal, SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
+			//						}
+			//					} catch (Exception e) {
+			//						logger.e("chat#pic#downloading image got exception:%s", e.getMessage());
+			//					} finally {
+			//						try {
+			//							if (null != bos) {
+			//								bos.flush();
+			//								bos.close();
+			//							}
+			//						} catch (IOException e) {
+			//							e.printStackTrace();
+			//
+			//						}
+			//					}
+			//				}
+			//
+			//				@Override
+			//				public void onBitmapFailed(Drawable errorDrawable) {
+			//					logger.d("chat#pic#onBitmapFailed");
+			//					updateMessageState(messageInfoFinal, SysConstant.MESSAGE_STATE_FINISH_FAILED);
+			//					logger.d("download failed");
+			//				}
+			//			});
 
 		} catch (Exception e) {
 			logger.e(e.getMessage());

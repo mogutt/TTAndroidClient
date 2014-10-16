@@ -441,7 +441,6 @@ OnItemSelectedListener, OnItemClickListener, OnIMServiceListner {
 		// 绑定数据源
 		try {
 			contactAdapter = new ChatAdapter(getActivity());
-			contactAdapter.setIMService(imServiceHelper);
 			contactListView.setAdapter(contactAdapter);
 		} catch (ParseException e) {
 			logger.e(e.toString());
