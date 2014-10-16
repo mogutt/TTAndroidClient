@@ -978,6 +978,8 @@ public class MessageActivity extends TTBaseActivity
 	 * @param msgInfo
 	 */
 	public static void addItem(MessageInfo msgInfo) {
+		Logger logger = Logger.getLogger(MessageActivity.class);
+		logger.d("chat#addImte msgInfo:%s", msgInfo);
 		adapter.addItem(msgInfo);
 		adapter.notifyDataSetChanged();
 	}

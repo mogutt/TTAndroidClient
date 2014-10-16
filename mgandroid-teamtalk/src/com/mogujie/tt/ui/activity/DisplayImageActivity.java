@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import android.R.anim;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -65,11 +66,14 @@ public class DisplayImageActivity extends TTBaseActivity {
         Bitmap bigBitmap = null;
         if (bigBitmap == null) {
 
-            String bigImagePath = CommonUtil.getMd5Path(messageInfo.getUrl(),
-                    SysConstant.FILE_SAVE_TYPE_IMAGE);
+//            String bigImagePath = CommonUtil.getMd5Path(messageInfo.getUrl(), SysConstant.FILE_SAVE_TYPE_IMAGE);
+        	String bigImagePath = messageInfo.getSavePath();
 
             if (messageInfo.getUrl() != null) {
-                if (new File(bigImagePath).exists()) {
+//                if (new File(bigImagePath).exists()) {
+            	
+            	if (new File(bigImagePath).exists()) {
+
                     Bitmap bitmap = DisplayBitmapCache.getInstance(DisplayImageActivity.this).get(
                             bigImagePath);
                     closeProgressDialog(bitmap, true);

@@ -21,8 +21,12 @@ public class Logger {
      */
     private static boolean displayFlag = true;
 
-    private static int logLevel = Log.VERBOSE;
+//    private static int logLevel = Log.VERBOSE;
+    
+    private static int logLevel = Log.WARN;
 
+
+    
     private Lock lock;
 
     private Logger(String name)
