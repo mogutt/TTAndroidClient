@@ -3,7 +3,6 @@ package com.mogujie.tt.imlib;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mogujie.tt.R;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -16,12 +15,13 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.view.View;
 
-import com.mogujie.tt.config.SysConstant;
+import com.mogujie.tt.R;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.proto.MessageEntity;
 import com.mogujie.tt.imlib.utils.IMContactHelper;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
+import com.mogujie.tt.imlib.utils.IMUIHelper.SessionInfo;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.activity.MessageActivity;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
@@ -100,24 +100,27 @@ public class IMNotificationManager extends IMManager
 	private void handleMsgRecv(Intent intent) {
 		logger.d("notification#recv unhandled message");
 
-		final String sessionId = intent.getStringExtra(SysConstant.SESSION_ID_KEY);
-		String msgId = intent.getStringExtra(SysConstant.MSG_ID_KEY);
-		logger.d("notification#msg no one handled, sessionId:%s, msgId:%s", sessionId, msgId);
+		SessionInfo sessionInfo = IMUIHelper.getSessionInfoFromIntent(intent);
+		String sessionId = sessionInfo.getSessionId();
+		logger.d("notification#msg no one handled, sessionId:%s, sessionType:%d", sessionId, sessionInfo.getSessionType());
 
-		final MessageEntity msg = IMUnreadMsgManager.instance().getUnreadMsg(sessionId, msgId);
+		final MessageEntity msg = IMUnreadMsgManager.instance().getLatestMessage(sessionId);
 		if (msg == null) {
-			logger.e("notification#can't get unread msg");
+			logger.e("notification#getLatestMessage failed for sessionId:%s", sessionId);
 			return;
 		}
 
-		showNotification(msg, sessionId);
+		int sessionTotalMsgCnt = IMUnreadMsgManager.instance().getUnreadMsgListCnt(sessionId);
+		logger.d("notification#getUnreadMsgListCnt:%d", sessionTotalMsgCnt);
+
+		showNotification(msg, sessionId, sessionTotalMsgCnt);
 	}
 
-	private void showNotification(final MessageEntity msg,
-			final String sessionId) {
+	private void showNotification(final MessageEntity latestMsg,
+			final String sessionId, final int sessionTotalMsgCnt) {
 		//todo eric need to set the exact size of the big icon
 		ImageSize targetSize = new ImageSize(128, 128);
-		String avatarUrl = getSessionAvatarUrl(msg.sessionType, sessionId);
+		String avatarUrl = getSessionAvatarUrl(latestMsg.sessionType, sessionId);
 		logger.d("notification#notification avatarUrl:%s", avatarUrl);
 
 		ImageLoader.getInstance().loadImage(avatarUrl, targetSize, null, new SimpleImageLoadingListener() {
@@ -128,7 +131,7 @@ public class IMNotificationManager extends IMManager
 				logger.d("notification#icon onLoadingComplete");
 				//holder.image.setImageBitmap(loadedImage);
 
-				showInNotificationBar(msg, sessionId, msg.sessionType, loadedImage);
+				showInNotificationBar(latestMsg, sessionId, latestMsg.sessionType, loadedImage, sessionTotalMsgCnt);
 			}
 
 			@Override
@@ -136,15 +139,15 @@ public class IMNotificationManager extends IMManager
 					FailReason failReason) {
 				logger.d("notification#icon onLoadingFailed");
 
-				showInNotificationBar(msg, sessionId, msg.sessionType, null);
+				showInNotificationBar(latestMsg, sessionId, latestMsg.sessionType, null, sessionTotalMsgCnt);
 			}
 
 		});
 	}
 
 	private void showInNotificationBar(MessageEntity msg, String sessionId,
-			int sessionType, Bitmap iconBitmap) {
-		logger.d("notification#showInNotificationBar msg:%s, sessionId:%s, sessionType:%d", msg, sessionId, sessionType);
+			int sessionType, Bitmap iconBitmap, int sessionTotalMsgCnt) {
+		logger.d("notification#showInNotificationBar msg:%s, sessionId:%s, sessionType:%d, sessionTotalMsgCnt:%d", msg, sessionId, sessionType, sessionTotalMsgCnt);
 
 		NotificationManager notifyMgr = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
 		if (notifyMgr == null) {
@@ -153,9 +156,9 @@ public class IMNotificationManager extends IMManager
 
 		Builder builder = new NotificationCompat.Builder(ctx);
 		builder.setContentTitle(getNotificationTitle(msg));
-		builder.setContentText(getNotificationContentText(msg));
+		builder.setContentText(getNotificationContentText(sessionTotalMsgCnt, msg));
 		builder.setSmallIcon(R.drawable.tt_logo);
-		builder.setTicker(getRollingText(msg, false));
+		builder.setTicker(getRollingText(sessionTotalMsgCnt, msg, false));
 		builder.setWhen(System.currentTimeMillis());
 		builder.setAutoCancel(true);
 
@@ -203,7 +206,7 @@ public class IMNotificationManager extends IMManager
 		}
 	}
 
-	private String getRollingText(MessageEntity msg, boolean noName) {
+	private String getRollingText(int sessionTotalMsgCnt, MessageEntity msg, boolean noName) {
 		String msgContent = getNotificationContent(msg);
 		String contactName = msg.fromId;
 		ContactEntity contact = IMContactManager.instance().findContact(msg.fromId);
@@ -213,10 +216,11 @@ public class IMNotificationManager extends IMManager
 			contactName = contact.name;
 		}
 
+		String unit = ctx.getString(R.string.msg_cnt_unit);
 		if (noName) {
-			return msgContent;
+			return String.format("[%d%s] %s", sessionTotalMsgCnt, unit, msgContent);
 		} else {
-			return String.format("%s: %s", contactName, msgContent);
+			return String.format("[%d%s]%s: %s", sessionTotalMsgCnt, unit, contactName, msgContent);
 		}
 	}
 
@@ -242,12 +246,12 @@ public class IMNotificationManager extends IMManager
 		return "wrong message type:" + msg.fromId + " " + msg.toId;
 	}
 
-	private String getNotificationContentText(MessageEntity msg) {
+	private String getNotificationContentText(int sessionTotalMsgCnt, MessageEntity msg) {
 		if (msg.isGroupMsg()) {
 
-			return getRollingText(msg, false);
+			return getRollingText(sessionTotalMsgCnt, msg, false);
 		} else {
-			return getRollingText(msg, true);
+			return getRollingText(sessionTotalMsgCnt, msg, true);
 		}
 	}
 

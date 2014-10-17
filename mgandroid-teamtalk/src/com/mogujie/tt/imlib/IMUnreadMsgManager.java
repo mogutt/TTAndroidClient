@@ -21,6 +21,7 @@ public class IMUnreadMsgManager extends IMManager {
 
 	private Logger logger = Logger.getLogger(IMUnreadMsgManager.class);
 
+	//todo eric, add session type
 	// key = session_id
 	private HashMap<String, List<MessageInfo>> unreadMsgs = new HashMap<String, List<MessageInfo>>();
 
@@ -57,23 +58,34 @@ public class IMUnreadMsgManager extends IMManager {
 
 		return msgList.size();
 	}
-
-	public synchronized MessageInfo getUnreadMsg(String sessionId, String msgId) {
-		logger.d("unread#getUnreadMsg sessionId:%s, msgId:%s", sessionId, msgId);
-
+	
+	public synchronized MessageInfo getLatestMessage(String sessionId) {
+		logger.d("unread#getLatestMessage sessionId:%s", sessionId);
 		List<MessageInfo> msgList = unreadMsgs.get(sessionId);
-		if (msgList == null) {
-			logger.w("unread# sessionId:%s has no unreadMsgs", sessionId);
+		
+		if (msgList == null || msgList.isEmpty()) {
 			return null;
 		}
-
-		for (MessageInfo msg : msgList) {
-			if (msg.msgId.equals(msgId)) {
-				return msg;
-			}
-		}
 		
-		logger.d("unread#no such unread msg");
-		return null;
+		return msgList.get(msgList.size() - 1);
 	}
+
+//	public synchronized MessageInfo getUnreadMsg(String sessionId, String msgId) {
+//		logger.d("unread#getUnreadMsg sessionId:%s, msgId:%s", sessionId, msgId);
+//
+//		List<MessageInfo> msgList = unreadMsgs.get(sessionId);
+//		if (msgList == null) {
+//			logger.w("unread# sessionId:%s has no unreadMsgs", sessionId);
+//			return null;
+//		}
+//
+//		for (MessageInfo msg : msgList) {
+//			if (msg.msgId.equals(msgId)) {
+//				return msg;
+//			}
+//		}
+//		
+//		logger.d("unread#no such unread msg");
+//		return null;
+//	}
 }

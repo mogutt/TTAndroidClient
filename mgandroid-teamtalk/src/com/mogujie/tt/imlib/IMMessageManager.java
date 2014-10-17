@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import android.content.BroadcastReceiver;
@@ -283,19 +284,35 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 		channel.sendPacket(new MessagePacket(msgInfo));
 	}
 
-	private boolean broadcastMessage(MessageEntity msg, String action,
-			boolean ordered) {
+	private boolean broadcastMessage(String sessionId, int sessionType,
+			String action, boolean ordered) {
 		// todo eric use local broadcast
 		if (ctx != null) {
 			Intent intent = new Intent(action);
-			intent.putExtra(SysConstant.SESSION_ID_KEY, msg.sessionId);
-			intent.putExtra(SysConstant.MSG_ID_KEY, msg.msgId);
+			IMUIHelper.setSessionInIntent(intent, sessionId, sessionType);
 
 			if (ordered) {
 				ctx.sendOrderedBroadcast(intent, null);
 			} else {
 				ctx.sendBroadcast(intent);
 			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean broadcastMessageAck(MessageEntity msg, String action) {
+		// todo eric use local broadcast
+
+		if (ctx != null) {
+			Intent intent = new Intent(action);
+			
+			IMUIHelper.setSessionInIntent(intent, msg.sessionId, msg.sessionType);
+			intent.putExtra(SysConstant.MSG_ID_KEY, msg.msgId);
+
+			ctx.sendBroadcast(intent);
 
 			return true;
 		}
@@ -320,7 +337,7 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 
 		IMDbManager.instance(ctx).updateMessageStatus(msg);
 
-		if (broadcastMessage(msg, IMActions.ACTION_MSG_ACK, false)) {
+		if (broadcastMessageAck(msg, IMActions.ACTION_MSG_ACK)) {
 			logger.d("chat#broadcast receiving ack msg");
 		}
 	}
@@ -386,7 +403,10 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 	private void handleRecvMsg(MessageInfo msgInfo) {
 		logger.d("chat#handleRecvMsg");
 
-		handleUnreadMsg(msgInfo);
+		List<MessageInfo> msgInfoList = new ArrayList<MessageInfo>();
+		msgInfoList.add(msgInfo);
+
+		handleUnreadMsg(msgInfoList);
 		IMRecentSessionManager.instance().broadcast();
 	}
 
@@ -407,19 +427,36 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 		msgInfo.sessionType = IMSession.SESSION_TEMP_GROUP;
 	}
 
-	private void handleUnreadMsg(MessageInfo msgInfo) {
+	//msgInfoList should belong to the same session
+	private void handleUnreadMsg(List<MessageInfo> msgInfoList) {
 		logger.d("chat#handleUnreadMsg");
-		List<MessageInfo> splitMessageList = IMContactHelper.splitMessage(msgInfo);
+		String sessionId = "";
+		int sessionType = -1;
 
-		for (MessageInfo msg : splitMessageList) {
-			setMsgSessionType(msg);
-			IMUnreadMsgManager.instance().add(msg);
-
-			IMRecentSessionManager.instance().update(msg);
-
-			if (broadcastMessage(msg, IMActions.ACTION_MSG_RECV, true)) {
-				logger.d("chat#broadcast receiving new msg");
+		for (MessageInfo msgInfo : msgInfoList) {
+			
+			if (sessionId.isEmpty()) {
+				sessionId = msgInfo.sessionId;
+				sessionType = msgInfo.sessionType;
 			}
+
+			List<MessageInfo> splitMessageList = IMContactHelper.splitMessage(msgInfo);
+
+			for (MessageInfo msg : splitMessageList) {				
+				setMsgSessionType(msg);
+				IMUnreadMsgManager.instance().add(msg);
+
+				IMRecentSessionManager.instance().update(msg);
+			}
+		}
+
+		if (sessionId.isEmpty()) {
+			logger.e("chat#handleUnreadMsg sessionid is empty");
+			return;
+		}
+
+		if (broadcastMessage(sessionId, sessionType, IMActions.ACTION_MSG_RECV, true)) {
+			logger.d("chat#broadcast receiving new msg");
 		}
 	}
 
@@ -461,10 +498,17 @@ public class IMMessageManager extends IMManager implements OnIMServiceListner {
 	}
 
 	private void handleUnreadMsgList(List<MessageEntity> msgEntitiyList) {
+		List<MessageInfo> msgInfoList = new ArrayList<MessageInfo>();
+
 		for (MessageEntity msgEntity : msgEntitiyList) {
 			MessageInfo msgInfo = new MessageInfo(msgEntity);
-			handleUnreadMsg(msgInfo);
+			msgInfoList.add(msgInfo);
 		}
+		
+		//todo eric, why the order is reversed
+		Collections.reverse(msgInfoList);
+
+		handleUnreadMsg(msgInfoList);
 
 		IMRecentSessionManager.instance().broadcast();
 	}

@@ -183,11 +183,6 @@ public class MessageActivity extends TTBaseActivity
 			return;
 		}
 
-		// //todo eric this is meaningless param right
-		// String msgId = intent.getStringExtra(SysConstant.MSG_ID_KEY);
-		// logger.d("messageactivity#msg belongs to this session, sessionId:%s, msgId:%s",
-		// sessionId, msgId);
-
 		// eat the message, so there woould be no notification in notification
 		// bar
 		broadcastReceiver.abortBroadcast();

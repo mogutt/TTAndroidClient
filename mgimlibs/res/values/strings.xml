@@ -12,5 +12,6 @@
     <string name="no_network_notification">网络连接不可用, 请检查你的网络或稍后重试</string>
     <string name="create_temp_group_failed">操作失败，请稍后重试</string>
     <string name="change_temp_group_member_failed">操作失败，请稍后重试</string>
+    <string name="msg_cnt_unit">条</string>
 
 </resources>
