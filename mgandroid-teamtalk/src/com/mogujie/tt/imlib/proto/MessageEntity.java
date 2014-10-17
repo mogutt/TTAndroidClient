@@ -164,6 +164,7 @@ public class MessageEntity {
 		try {
 			jo.put("path", msgInfo.getSavePath());
 			jo.put("length", msgInfo.getPlayTime());
+			jo.put("readStatus", msgInfo.getMsgReadStatus());
 			return jo.toString();
 		} catch (JSONException e) {
 			Logger logger = Logger.getLogger(MessageEntity.class);
@@ -203,6 +204,18 @@ public class MessageEntity {
 		return "";
 	}
 	public static class AudioInfo {
+		private String path;
+		private int length;
+		private int readStatus;
+		
+		public int getReadStatus() {
+			return readStatus;
+		}
+
+		public void setReadStatus(int readStatus) {
+			this.readStatus = readStatus;
+		}
+
 		public String getPath() {
 			return path;
 		}
@@ -219,30 +232,33 @@ public class MessageEntity {
 			this.length = length;
 		}
 
-		private String path;
-		private int length;
-
-		public AudioInfo(String path, int length) {
+		public AudioInfo(String path, int length, int readStatus) {
 			this.path = path;
 			this.length = length;
+			this.readStatus = readStatus;
 
-			Logger.getLogger(MessageEntity.class).d("audio#path:%s, length:%d", path, length);
+			Logger.getLogger(MessageEntity.class).d("audio#path:%s, length:%d, readStatus", path, length, readStatus);
 		}
 
 		public static AudioInfo create(String info) {
-			JSONObject jo;
+			Logger logger = Logger.getLogger(AudioInfo.class);
+			String path = "";
+			int length = 0;
+			int readStatus = SysConstant.MESSAGE_UNREAD;
 			try {
-				jo = new JSONObject(info);
-				return new AudioInfo((String) jo.get("path"), (Integer) jo.get("length"));
+				JSONObject jo = new JSONObject(info);
+				
+				path = jo.getString("path");
+				length = jo.getInt("length");
+				readStatus = jo.getInt("readStatus");
 
 			} catch (JSONException e1) {
-				Logger logger = Logger.getLogger(MessageEntity.class);
 				// TODO Auto-generated catch block
-				logger.d("audio#createAudioInfo failed");
+				logger.w("audio#createAudioInfo failed");
 			}
-
-			return null;
-
+			
+			logger.d("audio#read audio info from db -> path:%s, length:%d, readStatus:%d", path, length, readStatus);
+			return new AudioInfo(path, length, readStatus);
 		}
 	}
 

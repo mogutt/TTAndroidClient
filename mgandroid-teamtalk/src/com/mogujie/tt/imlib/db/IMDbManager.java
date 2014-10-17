@@ -170,9 +170,8 @@ public class IMDbManager extends SQLiteOpenHelper {
 	}
 
 	public synchronized void updateMessageStatus(MessageInfo msg) {
-		if (msg.isAudioType()) {
-			logger.d("updateMessageStatus audio type");
-		}
+		logger.d("db#updateMessageStatus msg:%s", msg);
+		
 		SQLiteDatabase db = getWritableDatabase();
 		if (db == null) {
 			return;
@@ -185,6 +184,24 @@ public class IMDbManager extends SQLiteOpenHelper {
 
 		db.execSQL(sql);
 	}
+	
+	
+	public synchronized void updateMessageContent(MessageInfo msg) {
+		logger.d("db#updateMessageContent msg:%s", msg);
+		
+		SQLiteDatabase db = getWritableDatabase();
+		if (db == null) {
+			return;
+		}
+
+		String sqlFormat = "update session_msg set content=? where msg_id=?";
+
+		logger.d("db#upateMessageStatus sql:%s", sqlFormat);
+
+		db.execSQL(sqlFormat, new Object[]{msg.getContent(), msg.msgId});
+	}
+
+	
 
 	public synchronized void saveLoginIdentity(String loginId, String pwd) {
 		logger.d("db#loginId:%s", loginId);
@@ -328,6 +345,7 @@ public class IMDbManager extends SQLiteOpenHelper {
 			MessageEntity.AudioInfo audioInfo = MessageEntity.AudioInfo.create(content);
 			msgInfo.setPlayTime(audioInfo.getLength());
 			msgInfo.setSavePath(audioInfo.getPath());
+			msgInfo.setMsgReadStatus(audioInfo.getReadStatus());
 		}
 	}
 

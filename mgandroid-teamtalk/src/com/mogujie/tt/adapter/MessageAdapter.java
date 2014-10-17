@@ -103,8 +103,6 @@ public class MessageAdapter extends BaseAdapter {
 	private Logger logger = Logger.getLogger(MessageAdapter.class);
 	private IMSession session;
 	private IMServiceHelper imServiceHelper;
-	private IMService imService;
-	private IMMessageManager msgMgr;
 
 	public void setIMServiceHelper(IMServiceHelper imServiceHelper) {
 		this.imServiceHelper = imServiceHelper;
@@ -919,8 +917,15 @@ public class MessageAdapter extends BaseAdapter {
 						return;
 					}
 					if (msgInfo.getMsgReadStatus() < SysConstant.MESSAGE_DISPLAYED) {
-
+						logger.d("chat#audio#set audio meessage read status");
+						
 						updateItemReadState(msgInfo.msgId, SysConstant.MESSAGE_DISPLAYED);
+						
+						IMService imService = imServiceHelper.getIMService();
+						if (imService != null) {
+							msgInfo.setMsgReadStatus(SysConstant.MESSAGE_DISPLAYED);
+							imService.getDbManager().updateMessageContent(msgInfo);
+						}
 					}
 
 					if (AudioPlayerHandler.getInstance().isPlaying()) {
@@ -1138,7 +1143,7 @@ public class MessageAdapter extends BaseAdapter {
 				return;
 			}
 
-			imService = imServiceHelper.getIMService();
+			IMService imService = imServiceHelper.getIMService();
 			if (imService != null) {
 				imService.getMessageManager().resendMessage(msgInfo);
 			}
