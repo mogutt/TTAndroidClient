@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 
+import com.mogujie.tt.imlib.IMConfigurationManager;
 import com.mogujie.tt.imlib.IMContactManager;
 import com.mogujie.tt.imlib.IMGroupManager;
 import com.mogujie.tt.imlib.IMHeartBeatManager;
@@ -49,6 +50,8 @@ public class IMService extends Service {
 	private IMUnreadMsgManager unReadMsgMgr = getUnReadMsgManager();
 	@SuppressWarnings("unused")
 	private IMNotificationManager notificationMgr = getNotificationManager();
+	@SuppressWarnings("unused")
+	private IMConfigurationManager configMgr = getConfigManager();
 
 	public class IMServiceBinder extends Binder {
 		public IMService getService() {
@@ -92,6 +95,7 @@ public class IMService extends Service {
 		IMUnAckMsgManager.instance().setContext(ctx);
 		IMUnreadMsgManager.instance().setContext(ctx);
 		IMNotificationManager.instance().setContext(ctx);
+		IMConfigurationManager.instance().setContext(ctx);
 
 		dbMgr = getDbManager();
 
@@ -167,5 +171,11 @@ public class IMService extends Service {
 		logger.d("getNotificationManager");
 
 		return IMNotificationManager.instance();
+	}
+	
+	public IMConfigurationManager getConfigManager() {
+		logger.d("getConfigManager");
+
+		return IMConfigurationManager.instance();
 	}
 }

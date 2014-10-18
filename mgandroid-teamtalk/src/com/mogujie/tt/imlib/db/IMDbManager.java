@@ -20,7 +20,7 @@ import com.mogujie.tt.log.Logger;
 
 public class IMDbManager extends SQLiteOpenHelper {
 
-	private static final int DB_VERSION = 3;
+	private static final int DB_VERSION = 4;
 	private static final String TABLE_SESSION_MSG = "session_msg";
 
 	private Logger logger = Logger.getLogger(IMDbManager.class);
@@ -42,6 +42,8 @@ public class IMDbManager extends SQLiteOpenHelper {
 	}
 
 	private void createMsgTable(SQLiteDatabase db) {
+		logger.d("db#createMsgTable");
+
 		String sql = "create table if not exists session_msg ("
 				+ "id int auto increment primary key,"
 				+ "login_id varchar(50) not null,"
@@ -65,7 +67,8 @@ public class IMDbManager extends SQLiteOpenHelper {
 	}
 
 	private void createLoginTable(SQLiteDatabase db) {
-		logger.d("createLoginTable");
+		logger.d("db#createLoginTable");
+
 		String sql = "create table if not exists login_identity ("
 				+ "id int auto increment primary key,"
 				+ "login_id varchar(50) not null,"
@@ -74,6 +77,22 @@ public class IMDbManager extends SQLiteOpenHelper {
 				+ "gmt_modified datetime not null)";
 
 		logger.d("db#create login_identity table -> sql:%s", sql);
+
+		// todo eric check ret value
+		db.execSQL(sql);
+	}
+
+	private void createConfigurationTable(SQLiteDatabase db) {
+		logger.d("db#config#createConfigurationTable");
+
+		String sql = "create table if not exists configuration ("
+				+ "id int auto increment primary key,"
+				+ "category varchar(50) not null,"
+				+ "key varchar(50) not null," + "value text not null,"
+				+ "gmt_created datetime not null,"
+				+ "gmt_modified datetime not null)";
+
+		logger.d("db#create configuration table -> sql:%s", sql);
 
 		// todo eric check ret value
 		db.execSQL(sql);
@@ -89,6 +108,7 @@ public class IMDbManager extends SQLiteOpenHelper {
 
 		createLoginTable(db);
 
+		createConfigurationTable(db);
 	}
 
 	@Override
@@ -142,6 +162,8 @@ public class IMDbManager extends SQLiteOpenHelper {
 				+ "(?, ?, datetime('now'), datetime('now'), ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 		logger.d("db#saveMsg -> sql:%s", sql);
+
+		//todo eric use id to reference login id
 		db.execSQL(sql, new Object[]{IMLoginManager.instance().getLoginId(),
 				msg.msgId, sessionId, msg.sessionType, msg.fromId, msg.toId,
 				msg.createTime, msg.type, msg.getDisplayType(),
@@ -171,7 +193,7 @@ public class IMDbManager extends SQLiteOpenHelper {
 
 	public synchronized void updateMessageStatus(MessageInfo msg) {
 		logger.d("db#updateMessageStatus msg:%s", msg);
-		
+
 		SQLiteDatabase db = getWritableDatabase();
 		if (db == null) {
 			return;
@@ -184,11 +206,10 @@ public class IMDbManager extends SQLiteOpenHelper {
 
 		db.execSQL(sql);
 	}
-	
-	
+
 	public synchronized void updateMessageContent(MessageInfo msg) {
 		logger.d("db#updateMessageContent msg:%s", msg);
-		
+
 		SQLiteDatabase db = getWritableDatabase();
 		if (db == null) {
 			return;
@@ -200,8 +221,6 @@ public class IMDbManager extends SQLiteOpenHelper {
 
 		db.execSQL(sqlFormat, new Object[]{msg.getContent(), msg.msgId});
 	}
-
-	
 
 	public synchronized void saveLoginIdentity(String loginId, String pwd) {
 		logger.d("db#loginId:%s", loginId);
@@ -219,6 +238,68 @@ public class IMDbManager extends SQLiteOpenHelper {
 
 		// todo eric sql injection
 		db.execSQL(sql);
+	}
+
+	public synchronized void updateConfiguration(String category, String key,
+			String value) {
+		logger.d("db#config#updateConfiguration -> category:%s, key:%s, value:%s", category, key, value);
+
+		if (category == null || key == null) {
+			logger.e("db#config#invalid args");
+			return;
+		}
+
+		if (value == null) {
+			value = "";
+		}
+
+		SQLiteDatabase db = getWritableDatabase();
+		if (db == null) {
+			return;
+		}
+
+		db.beginTransaction();
+		try {
+
+			String sqlFmt = "delete from configuration where category = ? and key = ?";
+			logger.d("db#config#sqlFmt:%s", sqlFmt);
+
+			db.execSQL(sqlFmt, new Object[]{category, key});
+
+			sqlFmt = "insert into configuration (category, key, value, gmt_created, gmt_modified) values (?, ?, ?, datetime('now'), datetime('now'))";
+			logger.d("db#config#sqlFmt:%s", sqlFmt);
+
+			db.execSQL(sqlFmt, new Object[]{category, key, value});
+
+			db.setTransactionSuccessful();
+		} finally {
+			db.endTransaction();
+			logger.i("db#config#updateConfiguration transaction ok");
+		}
+	}
+
+	public synchronized String getConfiguration(String category, String key) {
+		logger.d("db#config#getConfiguration category:%s, key:%s", category, key);
+
+		String sql = "select value from configuration where key = ? order by gmt_created desc limit 1";
+		logger.d("db#config#sql:%s", sql);
+		SQLiteDatabase db = getReadableDatabase();
+		if (db == null) {
+			logger.e("db#db is null");
+			return null;
+		}
+
+		Cursor cursor = db.rawQuery(sql, new String[]{key});
+
+		for (cursor.moveToFirst(); !cursor.isAfterLast(); /* cursor.moveToNext() */) {
+			String value = cursor.getString(0);
+			
+			logger.d("db#config#value:%s", value);
+			
+			return value;
+		}
+
+		return null;
 	}
 
 	public class LoginIdentity {
@@ -243,7 +324,7 @@ public class IMDbManager extends SQLiteOpenHelper {
 			loginIdentity.loginId = cursor.getString(0);
 			loginIdentity.pwd = cursor.getString(1);
 
-			logger.d("db#todo eric remove this log!loginId:%s, pwd:%s", loginIdentity.loginId, loginIdentity.pwd);
+			logger.d("db#loginId:%s", loginIdentity.loginId);
 
 			return loginIdentity;
 		}
@@ -272,7 +353,7 @@ public class IMDbManager extends SQLiteOpenHelper {
 				}
 			}
 		}
-		
+
 		return dbStatus;
 	}
 

@@ -9,7 +9,7 @@
         android:layout_height="match_parent"
         android:background="@color/default_fragment_bk_color"
         android:orientation="vertical"
-        android:visibility="gone" >
+        android:visibility="visible" >
 
         <RelativeLayout
             android:id="@+id/user_container"
@@ -75,6 +75,7 @@
         </RelativeLayout>
 
         <RelativeLayout
+            android:id="@+id/openSetttingPage"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"

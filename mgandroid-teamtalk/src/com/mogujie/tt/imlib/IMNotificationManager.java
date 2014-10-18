@@ -16,6 +16,7 @@ import android.support.v4.app.NotificationCompat.Builder;
 import android.view.View;
 
 import com.mogujie.tt.R;
+import com.mogujie.tt.imlib.common.ConfigDefs;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.proto.MessageEntity;
@@ -100,6 +101,11 @@ public class IMNotificationManager extends IMManager
 	private void handleMsgRecv(Intent intent) {
 		logger.d("notification#recv unhandled message");
 
+		if (!shouldShowNotification()) {
+			logger.d("notification#shouldShowNotification is false, return");
+			return;
+		}
+
 		SessionInfo sessionInfo = IMUIHelper.getSessionInfoFromIntent(intent);
 		String sessionId = sessionInfo.getSessionId();
 		logger.d("notification#msg no one handled, sessionId:%s, sessionType:%d", sessionId, sessionInfo.getSessionType());
@@ -114,6 +120,23 @@ public class IMNotificationManager extends IMManager
 		logger.d("notification#getUnreadMsgListCnt:%d", sessionTotalMsgCnt);
 
 		showNotification(msg, sessionId, sessionTotalMsgCnt);
+	}
+
+	private boolean shouldShowNotification() {
+		if (IMConfigurationManager.instance().getBoolean(ConfigDefs.CATEGORY_GLOBAL, ConfigDefs.KEY_NOTIFICATION_NO_DISTURB, ConfigDefs.DEF_VALUE_NOTIFICATION_NO_DISTURB)) {
+			logger.d("notification#global setting: no disturb");
+			return false;
+		}
+
+		return true;
+	}
+
+	private boolean shouldUseNotificationSound() {
+		return IMConfigurationManager.instance().getBoolean(ConfigDefs.CATEGORY_GLOBAL, ConfigDefs.KEY_NOTIFICATION_GOT_SOUND, ConfigDefs.DEF_VALUE_NOTIFICATION_GOT_SOUND);
+	}
+
+	private boolean shouldUseNotificationVibration() {
+		return IMConfigurationManager.instance().getBoolean(ConfigDefs.CATEGORY_GLOBAL, ConfigDefs.KEY_NOTIFICATION_GOT_VIBRATION, ConfigDefs.DEF_VALUE_NOTIFICATION_GOT_VIBRATION);
 	}
 
 	private void showNotification(final MessageEntity latestMsg,
@@ -165,13 +188,20 @@ public class IMNotificationManager extends IMManager
 		//this is the content near the right bottom side
 		//builder.setContentInfo("content info");
 
-		//delay 0ms, vibrate 200ms, delay 250ms, vibrate 200ms 
-		long[] vibrate = {0, 200, 250, 200};
-		builder.setVibrate(vibrate);
+		if (shouldUseNotificationVibration()) {
+			//delay 0ms, vibrate 200ms, delay 250ms, vibrate 200ms 
+			long[] vibrate = {0, 200, 250, 200};
+			builder.setVibrate(vibrate);
+		} else {
+			logger.d("notification#setting is not using vibration");
+		}
 
 		//sound
-		builder.setDefaults(Notification.DEFAULT_SOUND);
-
+		if (shouldUseNotificationSound()) {
+			builder.setDefaults(Notification.DEFAULT_SOUND);
+		} else {
+			logger.d("notification#setting is not using sound");
+		}
 		if (iconBitmap != null) {
 			logger.d("notification#fetch icon from network ok");
 			builder.setLargeIcon(iconBitmap);
@@ -206,7 +236,8 @@ public class IMNotificationManager extends IMManager
 		}
 	}
 
-	private String getRollingText(int sessionTotalMsgCnt, MessageEntity msg, boolean noName) {
+	private String getRollingText(int sessionTotalMsgCnt, MessageEntity msg,
+			boolean noName) {
 		String msgContent = getNotificationContent(msg);
 		String contactName = msg.fromId;
 		ContactEntity contact = IMContactManager.instance().findContact(msg.fromId);
@@ -246,7 +277,8 @@ public class IMNotificationManager extends IMManager
 		return "wrong message type:" + msg.fromId + " " + msg.toId;
 	}
 
-	private String getNotificationContentText(int sessionTotalMsgCnt, MessageEntity msg) {
+	private String getNotificationContentText(int sessionTotalMsgCnt,
+			MessageEntity msg) {
 		if (msg.isGroupMsg()) {
 
 			return getRollingText(sessionTotalMsgCnt, msg, false);

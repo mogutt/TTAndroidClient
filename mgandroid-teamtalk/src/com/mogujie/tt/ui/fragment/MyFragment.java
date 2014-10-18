@@ -18,6 +18,7 @@ import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
+import com.mogujie.tt.ui.activity.SettingActivity;
 import com.mogujie.tt.ui.activity.UserInfoActivity;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
@@ -27,6 +28,7 @@ public class MyFragment extends MainFragment implements OnIMServiceListner {
 	private View curView = null;
 	private IMServiceHelper imServiceHelper = new IMServiceHelper();
 	private View contentView;
+	private View settingView;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -53,6 +55,15 @@ public class MyFragment extends MainFragment implements OnIMServiceListner {
 		super.init(curView);
 		
 		contentView = curView.findViewById(R.id.content);
+		settingView = curView.findViewById(R.id.openSetttingPage);
+		
+		settingView.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				startActivity(new Intent(MyFragment.this.getActivity(), SettingActivity.class));
+			}
+		});
 		hideContent();
 
 		// 设置顶部标题栏
