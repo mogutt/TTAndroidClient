@@ -21,5 +21,8 @@
     <string name="save_traffic">省流量模式</string>
     <string name="exit_teamtalk">退出TeamTalk</string>
      <string name="setting_page_name">设置</string>
+     <string name="check_profile">查看资料</string>
+     <string name="call_phone">拨打电话</string>
+     <string name="empty_phone_no">号码为空</string>
 
 </resources>

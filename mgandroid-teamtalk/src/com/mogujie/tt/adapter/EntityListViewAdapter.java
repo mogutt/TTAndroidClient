@@ -7,9 +7,13 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
@@ -21,16 +25,15 @@ import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.utils.EntityList;
-import com.mogujie.widget.imageview.MGWebImageView;
 
 public class EntityListViewAdapter extends BaseAdapter implements
-		SectionIndexer, ContactBaseAdapter {
+		SectionIndexer, ContactBaseAdapter, OnItemClickListener, OnItemLongClickListener {
 
 	// private static int VIEW_TYPE_CONTACT = 0;
 	// private static int VIEW_TYPE_GROUP = 1;
 	// EntityList could be a group of ContactEntity, or GroupEntity
 
-	private Context context;
+	private Context ctx;
 
 	private Logger logger = Logger.getLogger(EntityListViewAdapter.class);
 
@@ -40,11 +43,17 @@ public class EntityListViewAdapter extends BaseAdapter implements
 	
 
 	public EntityListViewAdapter(Context context) {
-		this.context = context;
+		this.ctx = context;
 	}
 
+	
+	public void initClickEvents(ListView listView) {
+		listView.setOnItemClickListener(this);
+		listView.setOnItemLongClickListener(this);
+	}
+	
 	public void add(int position, EntityList entityList) {
-		logger.d("contactUI#add entityList, current size:%d",
+		logger.d("entityListViewAdapter#add entityList, current size:%d",
 				entityListMgr.size());
 
 		entityListMgr.add(position, entityList);
@@ -66,7 +75,7 @@ public class EntityListViewAdapter extends BaseAdapter implements
 	}
 
 	public void showCheckbox() {
-		logger.d("contactUI#showCheckBox");
+		logger.d("entityListViewAdapter#showCheckBox");
 		showCheckBox = true;
 	}
 
@@ -77,7 +86,7 @@ public class EntityListViewAdapter extends BaseAdapter implements
 		ViewHolder viewHolder = null;
 		if (view == null) {
 			viewHolder = new ViewHolder();
-			view = LayoutInflater.from(context).inflate(
+			view = LayoutInflater.from(ctx).inflate(
 					R.layout.tt_item_contact, null);
 			viewHolder.nameView = (TextView) view
 					.findViewById(R.id.contact_item_title);
@@ -148,25 +157,25 @@ public class EntityListViewAdapter extends BaseAdapter implements
 	}
 
 	private PositionInfo getListPosition(int position, List<Object> entityList) {
-		logger.d("contactUI#getListPosition:%d", position);
+		logger.d("entityListViewAdapter#getListPosition:%d", position);
 		PositionInfo positionInfo = new PositionInfo(true, 0);
 		if (entityList == null) {
-			logger.d("contactUI#entityList is null");
+			logger.d("entityListViewAdapter#entityList is null");
 			return positionInfo;
 		}
 
 		int entitySize = entityList.size();
-		logger.d("contactUI#entitySize:%d", entitySize);
+		logger.d("entityListViewAdapter#entitySize:%d", entitySize);
 
 		if (position >= entitySize) {
-			logger.d("contactUI#overflow");
+			logger.d("entityListViewAdapter#overflow");
 			positionInfo.setPosition(position - entitySize);
 
 			return positionInfo;
 		}
 
 		// right case
-		logger.d("contactUI#not overFlow");
+		logger.d("entityListViewAdapter#not overFlow");
 
 		positionInfo.setOverflow(false);
 		positionInfo.setPosition(position);
@@ -199,7 +208,7 @@ public class EntityListViewAdapter extends BaseAdapter implements
 
 	private View getEntityView(EntityList entityList, final int position,
 			View convertView) {
-		logger.d("contactUI#getEntityView position:%d", position);
+		logger.d("entityListViewAdapter#getEntityView position:%d", position);
 
 		Object object = entityList.list.get(position);
 		if (object instanceof ContactEntity) {
@@ -218,7 +227,7 @@ public class EntityListViewAdapter extends BaseAdapter implements
 
 		for (EntityList entityList : entityListMgr) {
 			PositionInfo pi = getListPosition(position, entityList.list);
-			logger.d("contactUI#groupPosition:%s", pi);
+			logger.d("entityListViewAdapter#groupPosition:%s", pi);
 
 			if (!pi.isOverflow()) {
 				return getEntityView(entityList, pi.getPosition(), view);
@@ -277,11 +286,11 @@ public class EntityListViewAdapter extends BaseAdapter implements
 	}
 
 	public void handleItemClick(View view, Context ctx, int position) {
-		logger.d("contactUI#handleItemClick position:%d", position);
+		logger.d("entityListViewAdapter#handleItemClick position:%d", position);
 
 		for (EntityList entityList : entityListMgr) {
 			PositionInfo pi = getListPosition(position, entityList.list);
-			logger.d("contactUI#groupPosition:%s", pi);
+			logger.d("entityListViewAdapter#groupPosition:%s", pi);
 
 			if (!pi.isOverflow()) {
 				entityList.onItemClick(view, pi.position);
@@ -292,6 +301,23 @@ public class EntityListViewAdapter extends BaseAdapter implements
 
 		}
 	}
+	
+	public void handleItemLongClick(View view, Context ctx, int position) {
+		logger.d("entityListViewAdapter#handleItemLongClick position:%d", position);
+
+		for (EntityList entityList : entityListMgr) {
+			PositionInfo pi = getListPosition(position, entityList.list);
+			logger.d("entityListViewAdapter#groupPosition:%s", pi);
+
+			if (!pi.isOverflow()) {
+				entityList.onItemLongClick(view, ctx, pi.position);
+				return;
+			}
+
+			position = pi.getPosition();
+		}
+	}
+	
 
 	@Override
 	public void updateListView(List<ContactSortEntity> list) {
@@ -312,7 +338,7 @@ public class EntityListViewAdapter extends BaseAdapter implements
 	}
 
 	public void onSearch(String key) {
-		logger.d("contactUI#onSearch key:%s", key);
+		logger.d("entityListViewAdapter#onSearch key:%s", key);
 
 		key = key.toUpperCase();
 
@@ -321,6 +347,23 @@ public class EntityListViewAdapter extends BaseAdapter implements
 		}
 
 		notifyDataSetChanged();
+	}
+
+
+	@Override
+	public boolean onItemLongClick(AdapterView<?> parent, View view,
+			int position, long id) {
+		
+		handleItemLongClick(view, ctx, position);
+		
+		return true;
+	}
+
+
+	@Override
+	public void onItemClick(AdapterView<?> parent, View view, int position,
+			long id) {
+		handleItemClick(view, ctx, position);
 	}
 
 }

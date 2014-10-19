@@ -156,9 +156,7 @@ public class MyFragment extends MainFragment implements OnIMServiceListner {
 		userContainer.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
-				Intent intent = new Intent(getActivity(), UserInfoActivity.class);
-				IMUIHelper.setSessionInIntent(intent, loginContact.id, IMSession.SESSION_P2P);
-				getActivity().startActivity(intent);
+				IMUIHelper.openUserProfileActivity(getActivity(), loginContact.id);
 			}
 		});
 	}

@@ -17,8 +17,6 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -44,9 +42,10 @@ import com.mogujie.tt.widget.SearchEditText;
 import com.mogujie.tt.widget.SortSideBar;
 import com.mogujie.tt.widget.SortSideBar.OnTouchingLetterChangedListener;
 
-public class ContactFragment extends MainFragment implements
-		OnTouchingLetterChangedListener, OnItemClickListener,
-		OnIMServiceListner {
+public class ContactFragment extends MainFragment
+		implements
+			OnTouchingLetterChangedListener,
+			OnIMServiceListner {
 	private View curView = null;
 	private static Handler uiHandler = null;
 	private ListView allContactListView;
@@ -84,22 +83,19 @@ public class ContactFragment extends MainFragment implements
 		ArrayList<String> actions = new ArrayList<String>();
 		actions.add(IMActions.ACTION_CONTACT_READY);
 		actions.add(IMActions.ACTION_GROUP_READY);
-		imServiceHelper.connect(getActivity(), actions,
-				IMServiceHelper.INTENT_NO_PRIORITY, this);
+		imServiceHelper.connect(getActivity(), actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
 
 		if (null != curView) {
 			((ViewGroup) curView.getParent()).removeView(curView);
 			return curView;
 		}
-		curView = inflater
-				.inflate(R.layout.tt_fragment_contact, topContentView);
+		curView = inflater.inflate(R.layout.tt_fragment_contact, topContentView);
 
 		initRes();
 
 		return curView;
 	}
 
-	
 	private List<Object> getDepartmentTabSortedList(
 			Map<String, ContactEntity> contacts) {
 		// todo eric efficiency
@@ -110,15 +106,12 @@ public class ContactFragment extends MainFragment implements
 				ContactEntity entity1 = (ContactEntity) objEntity1;
 				ContactEntity entity2 = (ContactEntity) objEntity2;
 
-				DepartmentEntity group1 = contactMgr
-						.findDepartment(entity1.departmentId);
-				DepartmentEntity group2 = contactMgr
-						.findDepartment(entity2.departmentId);
+				DepartmentEntity group1 = contactMgr.findDepartment(entity1.departmentId);
+				DepartmentEntity group2 = contactMgr.findDepartment(entity2.departmentId);
 
 				if (group1.title.equals(group2.title)) {
 					// todo eric efficiency
-					return new IMUIHelper.ContactPinyinComparator().compare(
-							objEntity1, objEntity2);
+					return new IMUIHelper.ContactPinyinComparator().compare(objEntity1, objEntity2);
 				} else {
 					return group1.title.compareToIgnoreCase(group2.title);
 				}
@@ -131,7 +124,7 @@ public class ContactFragment extends MainFragment implements
 
 	private void onContactsReady() {
 		hideProgressBar();
-		
+
 		contactTabOnContactsReady();
 		departmentTabOnContactsReady();
 	}
@@ -147,13 +140,11 @@ public class ContactFragment extends MainFragment implements
 			@Override
 			public void onItemClick(View view, int position) {
 				// TODO Auto-generated method stub
-				handleContactItemClick(ContactFragment.this.getActivity(),
-						position);
+				handleContactItemClick(ContactFragment.this.getActivity(), position);
 			}
 
 			private void handleContactItemClick(Context ctx, int position) {
-				logger.d("contactUI#handleContactItemClick position:%d",
-						position);
+				logger.d("contactUI#handleContactItemClick position:%d", position);
 
 				ContactEntity contact = (ContactEntity) list.get(position);
 				logger.d("chat#clicked contact:%s", contact);
@@ -165,8 +156,7 @@ public class ContactFragment extends MainFragment implements
 				if (contact == null) {
 					return "";
 				}
-				DepartmentEntity group = contactMgr
-						.findDepartment(contact.departmentId);
+				DepartmentEntity group = contactMgr.findDepartment(contact.departmentId);
 				if (group == null) {
 					return "";
 				}
@@ -181,8 +171,7 @@ public class ContactFragment extends MainFragment implements
 				}
 
 				// TODO Auto-generated method stub
-				final ContactEntity contact = (ContactEntity) list
-						.get(position);
+				final ContactEntity contact = (ContactEntity) list.get(position);
 				if (contact == null) {
 					return "";
 				}
@@ -192,8 +181,7 @@ public class ContactFragment extends MainFragment implements
 					return sectionName;
 				}
 
-				ContactEntity upperContact = (ContactEntity) list
-						.get(position - 1);
+				ContactEntity upperContact = (ContactEntity) list.get(position - 1);
 				if (sectionName.equals(getContactSectioName(upperContact))) {
 					return "";
 				} else {
@@ -208,8 +196,7 @@ public class ContactFragment extends MainFragment implements
 
 			public int getPinYinFirstCharacter(int position) {
 				// TODO Auto-generated method stub
-				final ContactEntity contact = (ContactEntity) list
-						.get(position);
+				final ContactEntity contact = (ContactEntity) list.get(position);
 				if (contact == null) {
 					return 0;
 				}
@@ -246,13 +233,11 @@ public class ContactFragment extends MainFragment implements
 			@Override
 			public void onItemClick(View view, int position) {
 				// TODO Auto-generated method stub
-				handleContactItemClick(ContactFragment.this.getActivity(),
-						position);
+				handleContactItemClick(ContactFragment.this.getActivity(), position);
 			}
 
 			private void handleContactItemClick(Context ctx, int position) {
-				logger.d("contactUI#handleContactItemClick position:%d",
-						position);
+				logger.d("contactUI#handleContactItemClick position:%d", position);
 
 				ContactEntity contact = (ContactEntity) list.get(position);
 				logger.d("chat#clicked contact:%s", contact);
@@ -267,8 +252,7 @@ public class ContactFragment extends MainFragment implements
 				}
 
 				// TODO Auto-generated method stub
-				final ContactEntity contact = (ContactEntity) list
-						.get(position);
+				final ContactEntity contact = (ContactEntity) list.get(position);
 				if (contact == null) {
 					return "";
 				}
@@ -278,10 +262,8 @@ public class ContactFragment extends MainFragment implements
 					return sectionName;
 				}
 
-				ContactEntity upperContact = (ContactEntity) list
-						.get(position - 1);
-				if (sectionName.equals(ContactUtils
-						.getSectionName(upperContact))) {
+				ContactEntity upperContact = (ContactEntity) list.get(position - 1);
+				if (sectionName.equals(ContactUtils.getSectionName(upperContact))) {
 					return "";
 				} else {
 					return sectionName;
@@ -295,8 +277,7 @@ public class ContactFragment extends MainFragment implements
 
 			public int getPinYinFirstCharacter(int position) {
 				// TODO Auto-generated method stub
-				final ContactEntity contact = (ContactEntity) list
-						.get(position);
+				final ContactEntity contact = (ContactEntity) list.get(position);
 				if (contact == null) {
 					return 0;
 				}
@@ -326,10 +307,9 @@ public class ContactFragment extends MainFragment implements
 		logger.d("group#onGroupReady");
 
 		hideProgressBar();
-		
+
 		// todo efficiency
-		List<Object> groupList = new ArrayList<Object>(imService
-				.getGroupManager().getNormalGroupList());
+		List<Object> groupList = new ArrayList<Object>(imService.getGroupManager().getNormalGroupList());
 		Collections.sort(groupList, new Comparator<Object>() {
 
 			@Override
@@ -348,8 +328,7 @@ public class ContactFragment extends MainFragment implements
 			@Override
 			public void onItemClick(View view, int position) {
 				// TODO Auto-generated method stub
-				handleGroupItemClick(ContactFragment.this.getActivity(),
-						position);
+				handleGroupItemClick(ContactFragment.this.getActivity(), position);
 			}
 
 			private void handleGroupItemClick(Context ctx, int position) {
@@ -424,21 +403,17 @@ public class ContactFragment extends MainFragment implements
 		// });
 		// }
 		//
-		
+
 		super.init(curView);
 		showProgressBar();
-		
+
 		sortSideBar = (SortSideBar) curView.findViewById(R.id.sidrbar);
 		dialog = (TextView) curView.findViewById(R.id.dialog);
 		sortSideBar.setTextView(dialog);
 		sortSideBar.setOnTouchingLetterChangedListener(this);
 
-		allContactListView = (ListView) curView
-				.findViewById(R.id.all_contact_list);
-		allContactListView.setOnItemClickListener(this);
-		departmentContactListView = (ListView) curView
-				.findViewById(R.id.department_contact_list);
-		departmentContactListView.setOnItemClickListener(this);
+		allContactListView = (ListView) curView.findViewById(R.id.all_contact_list);
+		departmentContactListView = (ListView) curView.findViewById(R.id.department_contact_list);
 
 		characterParser = CharacterParser.getInstance();
 		sortComparator = new SortComparator();
@@ -458,8 +433,10 @@ public class ContactFragment extends MainFragment implements
 		allContactListView.setAdapter(contactAdapter);
 		departmentContactListView.setAdapter(departmentAdapter);
 
-		searchEditText = (SearchEditText) curView
-				.findViewById(R.id.filter_edit);
+		contactAdapter.initClickEvents(allContactListView);
+		departmentAdapter.initClickEvents(departmentContactListView);
+
+		searchEditText = (SearchEditText) curView.findViewById(R.id.filter_edit);
 
 		searchEditText.addTextChangedListener(new TextWatcher() {
 
@@ -552,19 +529,18 @@ public class ContactFragment extends MainFragment implements
 			public void handleMessage(Message msg) {
 				super.handleMessage(msg);
 				switch (msg.what) {
-				case HandlerConstant.HANDLER_CHANGE_CONTACT_TAB:
-					if (null != msg.obj) {
-						curTabIndex = (Integer) msg.obj;
-						if (0 == curTabIndex) {
-							allContactListView.setVisibility(View.VISIBLE);
-							departmentContactListView.setVisibility(View.GONE);
-						} else {
-							departmentContactListView
-									.setVisibility(View.VISIBLE);
-							allContactListView.setVisibility(View.GONE);
+					case HandlerConstant.HANDLER_CHANGE_CONTACT_TAB :
+						if (null != msg.obj) {
+							curTabIndex = (Integer) msg.obj;
+							if (0 == curTabIndex) {
+								allContactListView.setVisibility(View.VISIBLE);
+								departmentContactListView.setVisibility(View.GONE);
+							} else {
+								departmentContactListView.setVisibility(View.VISIBLE);
+								allContactListView.setVisibility(View.GONE);
+							}
 						}
-					}
-					break;
+						break;
 				}
 			}
 		};
@@ -576,24 +552,6 @@ public class ContactFragment extends MainFragment implements
 		if (position != -1) {
 			getCurListView().setSelection(position);
 		}
-	}
-
-	@Override
-	public void onItemClick(AdapterView<?> adapterView, View view,
-			int position, long id) {
-		// if (chooseMode) {
-		// GroupManagerEntity user = new GroupManagerEntity(
-		// R.drawable.tt_group_manager_add_user,
-		// ((ContactSortEntity) getCurAdapter().getItem(position))
-		// .getName());
-		// Bundle bundle = new Bundle();
-		// bundle.putSerializable(SysConstant.OBJECT_PARAM, user);
-		// getActivity().setResult(Activity.RESULT_OK,
-		// new Intent().putExtras(bundle));
-		// getActivity().finish();
-		// } else {
-		((EntityListViewAdapter)getCurAdapter()).handleItemClick(view, getActivity(), position);
-		// }
 	}
 
 	@Override
@@ -622,11 +580,11 @@ public class ContactFragment extends MainFragment implements
 		if (imService != null) {
 			contactMgr = imService.getContactManager();
 		}
-		
+
 		if (contactMgr.ContactsDataReady()) {
 			onContactsReady();
 		}
-		
+
 		if (imService.getGroupManager().groupReadyConditionOk()) {
 			onGroupReady();
 		}

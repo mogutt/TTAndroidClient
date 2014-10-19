@@ -21,6 +21,7 @@
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
 
     <application
         android:name=".imlib.IMApplication"
@@ -62,7 +63,7 @@
             android:label="@string/app_name"
             android:screenOrientation="portrait" >
         </activity>
-        
+
         <service
             android:name=".imlib.service.IMService"
             android:exported="false" >
@@ -106,7 +107,7 @@
             android:screenOrientation="portrait"
             android:theme="@android:style/Theme.NoTitleBar" >
         </activity>
-         <activity
+        <activity
             android:name=".ui.activity.SettingActivity"
             android:screenOrientation="portrait"
             android:theme="@android:style/Theme.NoTitleBar" >

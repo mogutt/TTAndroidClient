@@ -6,8 +6,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.net.Uri;
+import android.view.ContextThemeWrapper;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -23,12 +28,75 @@ import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.activity.MessageActivity;
+import com.mogujie.tt.ui.activity.UserInfoActivity;
 import com.mogujie.widget.imageview.MGWebImageView;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 
 public class IMUIHelper {
+	public static void handleContactItemLongClick(final Context ctx, final ContactEntity contact) {
+		if (contact == null) {
+			return;
+		}
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(ctx, android.R.style.Theme_Holo_Light_Dialog));
+		builder.setTitle(contact.name);
+		String[] items = new String[] {
+			ctx.getString(R.string.check_profile),
+			getCallPhoneDescription(ctx, contact)
+		};
+		
+		builder.setItems(items, new OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				switch (which) {
+					case 0:
+						IMUIHelper.openUserProfileActivity(ctx, contact.id);
+						break;
+					case 1:
+						IMUIHelper.dialUser(ctx, contact.telephone);
+						break;
+				}
+			}
+		});
+		builder.show();
+	}
+	
+	private static String getCallPhoneDescription(Context ctx, ContactEntity contact) {
+		return String.format("%s(%s)",ctx.getString(R.string.call_phone), getPhoneNumberDescription(ctx, contact));
+	}
+	
+	private static String getPhoneNumberDescription(Context ctx, ContactEntity contact) {
+		if (contact.telephone.isEmpty()) {
+			return ctx.getString(R.string.empty_phone_no);
+		} else {
+			return contact.telephone;
+		}
+	}
+	
+	public static void dialUser(Context ctx, String phoneNumber) {
+		if (ctx == null) {
+			return;
+		}
+
+		if (phoneNumber.isEmpty()) {
+			return;
+		}
+		
+		Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + phoneNumber));
+		
+		ctx.startActivity(intent);
+
+	}
+
+	public static void openUserProfileActivity(Context ctx, String contactId) {
+		Intent intent = new Intent(ctx, UserInfoActivity.class);
+		IMUIHelper.setSessionInIntent(intent, contactId, IMSession.SESSION_P2P);
+		ctx.startActivity(intent);
+	}
+
 	public static boolean openSessionChatActivity(Logger logger, Context ctx,
 			String sessionId, int sessionType, IMService imService) {
 		if (logger == null || ctx == null || sessionId == null
@@ -181,29 +249,20 @@ public class IMUIHelper {
 
 	public static void setEntityImageViewAvatar(ImageView imageView,
 			String avatarUrl, int sessionType) {
-		
+
 		Logger logger = Logger.getLogger(IMUIHelper.class);
-		
+
 		logger.d("debug#setEntityImageViewAvatar imageView:%s, avatarUrl:%s", imageView, avatarUrl);
-		
+
 		if (avatarUrl == null) {
 			return;
 		}
 
 		int defaultResId = getDefaultAvatarResId(sessionType);
-		
+
 		//todo eric created too many options, but I can't find a way to change showImageOnLoading resource id
 		// dynamically based on sessionType
-		DisplayImageOptions options = new DisplayImageOptions.Builder()
-									.showImageOnLoading(defaultResId)
-									.showImageForEmptyUri(defaultResId)
-									.showImageOnFail(defaultResId)
-									.cacheInMemory(true)
-									.cacheOnDisk(true)
-									.considerExifParams(true)
-									.displayer(new RoundedBitmapDisplayer(5))
-									.build();
-		
+		DisplayImageOptions options = new DisplayImageOptions.Builder().showImageOnLoading(defaultResId).showImageForEmptyUri(defaultResId).showImageOnFail(defaultResId).cacheInMemory(true).cacheOnDisk(true).considerExifParams(true).displayer(new RoundedBitmapDisplayer(5)).build();
 
 		String realAvatarUrl = IMContactHelper.getRealAvatarUrl(avatarUrl);
 

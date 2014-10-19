@@ -17,7 +17,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
@@ -37,7 +36,6 @@ import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
-import com.mogujie.tt.imlib.utils.IMUIHelper.SessionInfo;
 import com.mogujie.tt.ui.base.TTBaseFragment;
 import com.mogujie.tt.ui.utils.EntityList;
 import com.mogujie.tt.ui.utils.IMGroupMemberGridViewHelper;
@@ -51,8 +49,7 @@ import com.mogujie.tt.widget.SortSideBar.OnTouchingLetterChangedListener;
 public class GroupMemberSelectFragment extends TTBaseFragment
 		implements
 			OnIMServiceListner,
-			OnTouchingLetterChangedListener,
-			OnItemClickListener {
+			OnTouchingLetterChangedListener {
 	@Override
 	public void onDestroyView() {
 		imServiceHelper.disconnect(getActivity());
@@ -188,11 +185,12 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 		sortSideBar.setTextView(dialog);
 
 		contactListView = (ListView) curView.findViewById(R.id.all_contact_list);
-		contactListView.setOnItemClickListener(this);
 
 		contactAdapter = new EntityListViewAdapter(getActivity());
 		contactAdapter.showCheckbox();
+
 		contactListView.setAdapter(contactAdapter);
+		contactAdapter.initClickEvents(contactListView);
 
 		searchEditText = (SearchEditText) curView.findViewById(R.id.filter_edit);
 
@@ -438,12 +436,4 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 
 	}
 
-	@Override
-	public void onItemClick(AdapterView<?> arg0, View view, int position,
-			long arg3) {
-		logger.d("groupmgr#onItemClick position:%d", position);
-
-		// TODO Auto-generated method stub
-		contactAdapter.handleItemClick(view, getActivity(), position);
-	}
 }
