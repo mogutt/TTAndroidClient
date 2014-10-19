@@ -162,6 +162,16 @@ public class UserInfoFragment extends TTBaseFragment
 				IMUIHelper.openContactChatActivity(getActivity(), contact);
 			}
 		});
+		
+		View phoneView = curView.findViewById(R.id.phoneArea);
+		IMUIHelper.setViewTouchHightlighted(phoneView);
+		phoneView.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				IMUIHelper.callPhone(getActivity(), contact.telephone);
+			}
+		});
 	}
 
 	private void setTextViewContent(int id, String content) {

@@ -16,6 +16,7 @@ import com.mogujie.tt.R;
 import com.mogujie.tt.imlib.IMConfigurationManager;
 import com.mogujie.tt.imlib.common.ConfigDefs;
 import com.mogujie.tt.imlib.service.IMService;
+import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.base.TTBaseFragment;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
@@ -116,18 +117,7 @@ public class SettingFragment extends TTBaseFragment
 				}
 			});
 
-			exitTeamTalkView.setOnTouchListener(new View.OnTouchListener() {
-
-				@Override
-				public boolean onTouch(View v, MotionEvent event) {
-					if (event.getAction() == MotionEvent.ACTION_DOWN) {
-						exitTeamTalkView.setBackgroundColor(Color.rgb(1, 175, 244));
-					} else if (event.getAction() == MotionEvent.ACTION_UP) {
-						exitTeamTalkView.setBackgroundColor(Color.rgb(255, 255, 255));
-					}
-					return false;
-				}
-			});
+			IMUIHelper.setViewTouchHightlighted(exitTeamTalkView);
 		}
 	}
 

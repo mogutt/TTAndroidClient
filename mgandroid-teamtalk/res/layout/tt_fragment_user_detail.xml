@@ -126,7 +126,7 @@
             android:layout_height="0.5dp"
             android:background="@color/default_line_color" />
 
-        <TableRow>
+        <TableRow android:id="@+id/phoneArea" android:clickable="true">
 
             <TextView
                 android:layout_height="45dp"

@@ -11,8 +11,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.view.ContextThemeWrapper;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -35,6 +38,25 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 
 public class IMUIHelper {
+	public static void setViewTouchHightlighted(final View view) {
+		if (view == null) {
+			return;
+		}
+		
+		view.setOnTouchListener(new View.OnTouchListener() {
+
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				if (event.getAction() == MotionEvent.ACTION_DOWN) {
+					view.setBackgroundColor(Color.rgb(1, 175, 244));
+				} else if (event.getAction() == MotionEvent.ACTION_UP) {
+					view.setBackgroundColor(Color.rgb(255, 255, 255));
+				}
+				return false;
+			}
+		});
+	}
+	
 	public static void handleContactItemLongClick(final Context ctx, final ContactEntity contact) {
 		if (contact == null) {
 			return;
@@ -56,7 +78,7 @@ public class IMUIHelper {
 						IMUIHelper.openUserProfileActivity(ctx, contact.id);
 						break;
 					case 1:
-						IMUIHelper.dialUser(ctx, contact.telephone);
+						IMUIHelper.callPhone(ctx, contact.telephone);
 						break;
 				}
 			}
@@ -76,7 +98,7 @@ public class IMUIHelper {
 		}
 	}
 	
-	public static void dialUser(Context ctx, String phoneNumber) {
+	public static void callPhone(Context ctx, String phoneNumber) {
 		if (ctx == null) {
 			return;
 		}
