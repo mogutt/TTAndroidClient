@@ -1,5 +1,6 @@
 package com.mogujie.tt.imlib.service;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -71,6 +72,10 @@ public class IMService extends Service {
 		logger.i("IMService onCreate");
 
 		super.onCreate();
+		
+		//make the service foreground, so stop "360 yi jian qingli"(a clean tool) to stop our app
+		//todo eric study wechat's mechanism, use a better solution
+		startForeground((int)System.currentTimeMillis(),new Notification());
 	}
 
 	@Override

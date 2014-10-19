@@ -245,10 +245,8 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 		instance = this;
 
 		mNameView = (EditText) findViewById(R.id.name);
-		// mNameView.setText("子腾");
 
 		mPasswordView = (EditText) findViewById(R.id.password);
-		// mPasswordView.setText("123456");
 
 		mPasswordView
 
