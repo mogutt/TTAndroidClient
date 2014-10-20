@@ -590,7 +590,7 @@ public class MessageAdapter extends BaseAdapter {
 			return MESSAGE_TYPE_INVALID;
 		}
 	}
-
+	
 	private int getMenuType(MessageInfo msg) {
 		if (msg.getDisplayType() == SysConstant.DISPLAY_TYPE_TEXT) {
 			return SysConstant.POPUP_MENU_TYPE_TEXT;

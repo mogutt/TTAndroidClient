@@ -45,10 +45,22 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 
 public class IMUIHelper {
-	public static boolean triggerSearchDataReady(Logger logger, Context ctx, IMContactManager contactMgr, IMGroupManager groupMgr) {
+	public static class GroupPinyinComparator implements Comparator<Object> {
+
+		@Override
+		public int compare(Object objEntity1, Object objEntity2) {
+			GroupEntity entity1 = (GroupEntity) objEntity1;
+			GroupEntity entity2 = (GroupEntity) objEntity2;
+
+			return entity1.pinyinElement.pinyin.compareToIgnoreCase(entity2.pinyinElement.pinyin);
+		}
+	};
+
+	public static boolean triggerSearchDataReady(Logger logger, Context ctx,
+			IMContactManager contactMgr, IMGroupManager groupMgr) {
 		//contact,department, group data are all ready
 		logger.d("search#triggerSearchDataReady");
-		
+
 		if (isSearchDataReady(contactMgr, groupMgr)) {
 			logger.i("search#conditions are all ready, broadcast");
 
@@ -56,41 +68,44 @@ public class IMUIHelper {
 				logger.d("search#start boradcast search_data_ready action");
 				ctx.sendBroadcast(new Intent(IMActions.ACTION_SEARCH_DATA_READY));
 				return true;
-			} 
+			}
 
 		}
 
 		logger.d("search#didn't broadcast anything because conditions are still not ready");
 
 		return false;
-		
+
 	}
-	
-	public static boolean isSearchDataReady(IMContactManager contactMgr, IMGroupManager groupMgr) {
-		return contactMgr.ContactsDataReady() && groupMgr.groupReadyConditionOk();
+
+	public static boolean isSearchDataReady(IMContactManager contactMgr,
+			IMGroupManager groupMgr) {
+		return contactMgr.ContactsDataReady()
+				&& groupMgr.groupReadyConditionOk();
 	}
-	
-	public static boolean handleContactPinyinSearch(Logger logger, PinYinElement contactPinyinElement, String key, SearchElement contactSearchElement) {
+
+	public static boolean handleContactPinyinSearch(Logger logger,
+			PinYinElement contactPinyinElement, String key,
+			SearchElement contactSearchElement) {
 		contactSearchElement.reset();
-		
+
 		String pinyin = contactPinyinElement.pinyin;
 
 		//the first char # was added manually when creating pinyin
 		if (pinyin.startsWith("#")) {
 			pinyin = pinyin.substring(1);
 		}
-		
+
 		SearchElement pinyinSearchElement = new SearchElement();
 		if (!IMUIHelper.handleNameSearch(pinyin, key, pinyinSearchElement)) {
 			return false;
 		}
-		
+
 		logger.d("pinyin#pinyinSearchElement:%s", pinyinSearchElement);
 
 		return IMUIHelper.locateNameAreaByPinyinIndex(contactPinyinElement, contactSearchElement, pinyinSearchElement.startIndex, pinyinSearchElement.endIndex);
 	}
 
-	
 	public static boolean locateNameAreaByPinyinIndex(
 			PinYinElement pinYinElement, SearchElement searchElement,
 			int pinyinStartIndex, int pinyinEndIndex) {
@@ -523,6 +538,15 @@ public class IMUIHelper {
 		Collections.sort(contactList, new ContactPinyinComparator());
 
 		return contactList;
+	}
+
+	public static List<Object> getGroupSortedList(
+			Map<String, GroupEntity> groups) {
+		// todo eric efficiency
+		List<Object> groupList = new ArrayList<Object>(groups.values());
+		Collections.sort(groupList, new GroupPinyinComparator());
+
+		return groupList;
 	}
 
 	public static boolean isSameSession(SessionInfo sessionInfo,

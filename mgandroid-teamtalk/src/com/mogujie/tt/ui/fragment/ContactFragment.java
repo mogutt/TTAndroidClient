@@ -139,22 +139,6 @@ public class ContactFragment extends MainFragment
 		List<Object> contactList = getDepartmentTabSortedList(contacts);
 
 		EntityList entityList = new EntityList(contactList) {
-
-			@Override
-			public void onItemClick(View view, int position) {
-				// TODO Auto-generated method stub
-				handleContactItemClick(ContactFragment.this.getActivity(), position);
-			}
-
-			private void handleContactItemClick(Context ctx, int position) {
-				logger.d("contactUI#handleContactItemClick position:%d", position);
-
-				ContactEntity contact = (ContactEntity) list.get(position);
-				logger.d("chat#clicked contact:%s", contact);
-
-				IMUIHelper.openContactChatActivity(ctx, contact);
-			}
-
 			private String getContactSectioName(ContactEntity contact) {
 				if (contact == null) {
 					return "";
@@ -204,7 +188,12 @@ public class ContactFragment extends MainFragment
 					return 0;
 				}
 
-				return contact.pinyinElement.pinyin.charAt(0);
+				DepartmentEntity department = contactMgr.findDepartment(contact.departmentId);
+				if (department == null) {
+					return 0;
+				}
+				
+				return department.pinYinElement.pinyin.charAt(0);
 			}
 
 			@Override
@@ -232,22 +221,6 @@ public class ContactFragment extends MainFragment
 		List<Object> contactList = IMUIHelper.getContactSortedList(contacts);
 
 		EntityList entityList = new EntityList(contactList) {
-
-			@Override
-			public void onItemClick(View view, int position) {
-				// TODO Auto-generated method stub
-				handleContactItemClick(ContactFragment.this.getActivity(), position);
-			}
-
-			private void handleContactItemClick(Context ctx, int position) {
-				logger.d("contactUI#handleContactItemClick position:%d", position);
-
-				ContactEntity contact = (ContactEntity) list.get(position);
-				logger.d("chat#clicked contact:%s", contact);
-
-				IMUIHelper.openContactChatActivity(ctx, contact);
-			}
-
 			@Override
 			public String getSectionName(int position) {
 				if (searchMode) {
@@ -313,36 +286,11 @@ public class ContactFragment extends MainFragment
 
 		// todo efficiency
 		List<Object> groupList = new ArrayList<Object>(imService.getGroupManager().getNormalGroupList());
-		Collections.sort(groupList, new Comparator<Object>() {
-
-			@Override
-			public int compare(Object objEntity1, Object objEntity2) {
-				GroupEntity entity1 = (GroupEntity) objEntity1;
-				GroupEntity entity2 = (GroupEntity) objEntity2;
-
-				return entity1.pinyinElement.pinyin.compareToIgnoreCase(entity2.pinyinElement.pinyin);
-			}
-		});
+		Collections.sort(groupList, new IMUIHelper.GroupPinyinComparator());
 
 		logger.d("group#groupList size:%d", groupList.size());
 
 		EntityList entityList = new EntityList(groupList) {
-
-			@Override
-			public void onItemClick(View view, int position) {
-				// TODO Auto-generated method stub
-				handleGroupItemClick(ContactFragment.this.getActivity(), position);
-			}
-
-			private void handleGroupItemClick(Context ctx, int position) {
-				logger.d("contactUI#handleGroupItemClick position:%d", position);
-
-				GroupEntity group = (GroupEntity) list.get(position);
-				logger.d("chat#clicked group:%s", group);
-
-				IMUIHelper.openGroupChatActivity(ctx, group);
-			}
-
 			@Override
 			public String getSectionName(int position) {
 				if (searchMode) {

@@ -298,7 +298,7 @@ public class EntityListViewAdapter extends BaseAdapter
 			logger.d("entityListViewAdapter#groupPosition:%s", pi);
 
 			if (!pi.isOverflow()) {
-				entityList.onItemClick(view, pi.position);
+				entityList.onItemClick(ctx, view, pi.position);
 				return;
 			}
 

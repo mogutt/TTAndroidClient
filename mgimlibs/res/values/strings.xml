@@ -26,5 +26,6 @@
     <string name="empty_phone_no">号码为空</string>
     <string name="fixed_group_name">群</string>
     <string name="contact">联系人</string>
+    <string name="fixed_group_or_temp_group">群或讨论组</string>
 
 </resources>

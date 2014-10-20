@@ -6,6 +6,7 @@ import android.content.Context;
 import android.view.View;
 
 import com.mogujie.tt.imlib.proto.ContactEntity;
+import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
 
@@ -34,7 +35,23 @@ public abstract class EntityList {
 
 	public abstract String getSectionName(int position);
 
-	public abstract void onItemClick(View view, int position);
+	public void onItemClick(Context ctx, View view, int position) {
+		Object object = list.get(position);
+		if (object instanceof ContactEntity) {
+			handleContactItemClick(ctx, (ContactEntity)object);
+		} else if (object instanceof GroupEntity) {
+			handleGroupItemClick(ctx, (GroupEntity)object);
+		}
+	}
+	
+	protected void handleContactItemClick(Context ctx, ContactEntity contact) {
+		IMUIHelper.openContactChatActivity(ctx, contact);
+	}
+
+	protected void handleGroupItemClick(Context ctx, GroupEntity group) {
+		IMUIHelper.openGroupChatActivity(ctx, group);
+	}
+	
 
 	public void onSearch(String key) {
 		if (key.isEmpty()) {

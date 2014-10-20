@@ -28,7 +28,8 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="小明"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:visibility="gone" />
 
         <LinearLayout
             android:id="@+id/content_layout"
@@ -42,13 +43,14 @@
 
             <TextView
                 android:id="@+id/message_content"
-                android:layout_width="200dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/tt_other_text_background"
+                android:background="@drawable/im_other_item_bg_normal"
                 android:paddingBottom="13dp"
                 android:paddingLeft="20dp"
                 android:paddingRight="13dp"
                 android:paddingTop="13dp"
+                android:gravity="center"
                 android:text="1111111111111"
                 android:textColor="#070707"
                 android:textSize="14sp" />

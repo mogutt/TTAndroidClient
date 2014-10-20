@@ -18,6 +18,7 @@ import android.widget.ListView;
 import com.mogujie.tt.R;
 import com.mogujie.tt.adapter.EntityListViewAdapter;
 import com.mogujie.tt.imlib.proto.ContactEntity;
+import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.imlib.utils.SearchElement;
@@ -112,7 +113,9 @@ public class SearchFragment extends TTBaseFragment
 	}
 
 	private void initSearchEntityLists() {
+		initGroupEntityList();
 		initContactEntityList();
+		
 	}
 
 	private void initContactEntityList() {
@@ -124,22 +127,6 @@ public class SearchFragment extends TTBaseFragment
 		List<Object> contactList = IMUIHelper.getContactSortedList(contacts);
 
 		EntityList entityList = new EntityList(contactList) {
-
-			@Override
-			public void onItemClick(View view, int position) {
-				// TODO Auto-generated method stub
-				handleContactItemClick(SearchFragment.this.getActivity(), position);
-			}
-
-			private void handleContactItemClick(Context ctx, int position) {
-				logger.d("contactUI#handleContactItemClick position:%d", position);
-
-				ContactEntity contact = (ContactEntity) list.get(position);
-				logger.d("chat#clicked contact:%s", contact);
-
-				IMUIHelper.openContactChatActivity(ctx, contact);
-			}
-
 			@Override
 			public String getSectionName(int position) {
 				if (!list.isEmpty() && position == 0) {
@@ -157,6 +144,43 @@ public class SearchFragment extends TTBaseFragment
 
 					if (IMUIHelper.handleNameSearch(contact.name, key, contact.searchElement)
 							|| IMUIHelper.handleContactPinyinSearch(logger, contact.pinyinElement, key, contact.searchElement)) {
+						searchList.add(obj);
+					}
+				}
+
+				list = searchList;
+			}
+		};
+
+		adapter.add(0, entityList);
+	}
+	
+	private void initGroupEntityList() {
+		if (imService == null) {
+			return;
+		}
+
+		Map<String, GroupEntity> groups = imService.getGroupManager().getGroups();
+		List<Object> groupList = IMUIHelper.getGroupSortedList(groups);
+
+		EntityList entityList = new EntityList(groupList) {
+			@Override
+			public String getSectionName(int position) {
+				if (!list.isEmpty() && position == 0) {
+					return getString(R.string.fixed_group_or_temp_group);
+				}
+
+				return "";
+			}
+
+			@Override
+			public void onSearchImpl(String key) {
+				ArrayList<Object> searchList = new ArrayList<Object>();
+				for (Object obj : backupList) {
+					GroupEntity group = (GroupEntity) obj;
+
+					if (IMUIHelper.handleNameSearch(group.name, key, group.searchElement)
+							|| IMUIHelper.handleContactPinyinSearch(logger, group.pinyinElement, key, group.searchElement)) {
 						searchList.add(obj);
 					}
 				}

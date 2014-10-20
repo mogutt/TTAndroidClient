@@ -35,10 +35,10 @@
 
         <ProgressBar
             android:id="@+id/progressBar1"
+            style="?android:attr/progressBarStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            style="?android:attr/progressBarStyleSmall"
             android:visibility="gone" />
 
         <!--
@@ -60,16 +60,15 @@
             android:id="@+id/message_content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="6dp"
-            android:layout_marginTop="15dp"
             android:background="@drawable/tt_my_message_bkgnd"
+            android:gravity="left"
             android:paddingBottom="13dp"
-            android:paddingLeft="13dp"
             android:paddingRight="20dp"
+            android:paddingLeft="13dp"
             android:paddingTop="13dp"
             android:text="哈哈"
-            android:textColor="@android:color/white"
-            android:textSize="16sp" />
+            android:textColor="#eeeeee"
+            android:textSize="14sp" />
     </LinearLayout>
 
 </RelativeLayout>

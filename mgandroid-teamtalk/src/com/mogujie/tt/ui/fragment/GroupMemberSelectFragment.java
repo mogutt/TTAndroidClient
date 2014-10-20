@@ -263,7 +263,7 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 			}
 
 			@Override
-			public void onItemClick(View view, int position) {
+			public void onItemClick(Context ctx, View view, int position) {
 				// TODO Auto-generated method stub
 				handleContactItemClick(view, GroupMemberSelectFragment.this.getActivity(), position);
 			}
