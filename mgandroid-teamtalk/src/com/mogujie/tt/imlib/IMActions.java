@@ -3,6 +3,7 @@ package com.mogujie.tt.imlib;
 public interface IMActions {
 	String ACTION_LOGIN_RESULT = "com.mogujie.tt.imlib.action.login.result";
 	String ACTION_CONTACT_READY = "com.mogujie.tt.imlib.action.contact.ready";
+	String ACTION_SEARCH_DATA_READY = "com.mogujie.tt.imlib.action.search_data.ready";
 	
 	String ACTION_MSG_ACK = "com.mogujie.tt.imlib.action.msg.ack";
 	String ACTION_MSG_RECV = "com.mogujie.tt.imlib.action.msg.recv";

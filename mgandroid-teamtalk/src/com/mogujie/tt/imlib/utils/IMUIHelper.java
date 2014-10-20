@@ -28,6 +28,8 @@ import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
 import com.mogujie.tt.imlib.IMActions;
+import com.mogujie.tt.imlib.IMContactManager;
+import com.mogujie.tt.imlib.IMGroupManager;
 import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
@@ -43,6 +45,31 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 
 public class IMUIHelper {
+	public static boolean triggerSearchDataReady(Logger logger, Context ctx, IMContactManager contactMgr, IMGroupManager groupMgr) {
+		//contact,department, group data are all ready
+		logger.d("search#triggerSearchDataReady");
+		
+		if (isSearchDataReady(contactMgr, groupMgr)) {
+			logger.i("search#conditions are all ready, broadcast");
+
+			if (ctx != null) {
+				logger.d("search#start boradcast search_data_ready action");
+				ctx.sendBroadcast(new Intent(IMActions.ACTION_SEARCH_DATA_READY));
+				return true;
+			} 
+
+		}
+
+		logger.d("search#didn't broadcast anything because conditions are still not ready");
+
+		return false;
+		
+	}
+	
+	public static boolean isSearchDataReady(IMContactManager contactMgr, IMGroupManager groupMgr) {
+		return contactMgr.ContactsDataReady() && groupMgr.groupReadyConditionOk();
+	}
+	
 	public static boolean handleContactPinyinSearch(Logger logger, PinYinElement contactPinyinElement, String key, SearchElement contactSearchElement) {
 		contactSearchElement.reset();
 		

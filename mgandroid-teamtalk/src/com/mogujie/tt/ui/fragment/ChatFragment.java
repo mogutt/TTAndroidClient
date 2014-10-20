@@ -107,6 +107,7 @@ public class ChatFragment extends MainFragment
 		actions.add(IMActions.ACTION_ADD_RECENT_CONTACT_OR_GROUP);
 		actions.add(IMActions.ACTION_SERVER_DISCONNECTED);
 		actions.add(IMActions.ACTION_LOGIN_RESULT);
+		actions.add(IMActions.ACTION_SEARCH_DATA_READY);
 
 		imServiceHelper.connect(getActivity(), actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
 
@@ -219,31 +220,6 @@ public class ChatFragment extends MainFragment
 		// 设置标题
 		setTopTitle(getActivity().getString(R.string.chat_title));
 
-		// todo eric
-		 setTopRightButton(R.drawable.tt_top_search);
-		topRightBtn.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View arg0) {
-				showSearchView();
-			}
-		});
-	}
-
-	private void showSearchView() {
-//		searchTransparentView.setVisibility(View.VISIBLE);
-//		setTopBar(R.color.half_transparent_light);
-//		showTopSearchBar();
-//		setTopLeftButton(R.drawable.tt_top_back);
-//		hideTopRightButton();
-//		topLeftBtn.setOnClickListener(new View.OnClickListener() {
-//
-//			@Override
-//			public void onClick(View arg0) {
-//				hideSearchView();
-//			}
-//		});
-		
-		startActivity(new Intent(getActivity(), SearchActivity.class));
 	}
 
 	private void hideSearchView() {
@@ -733,7 +709,8 @@ public class ChatFragment extends MainFragment
 		} else if (action.equals(IMActions.ACTION_LOGIN_RESULT)) {
 			handleOnLoginResult(intent);
 		}
-
+		
+		tryHandleSearchAction(action);
 	}
 
 	private void handleOnLoginResult(Intent intent) {
@@ -765,15 +742,22 @@ public class ChatFragment extends MainFragment
 
 		hideProgressBar();
 	}
+	
 
 	@Override
 	public void onIMServiceConnected() {
 		// TODO Auto-generated method stub
 		logger.d("chatfragment#recent#onIMServiceConnected");
 
-		if (imServiceHelper.getIMService().getContactManager().recentContactsDataReady()) {
+		IMService imService = imServiceHelper.getIMService();
+		if (imService == null) {
+			return;
+		}
+		if (imService.getContactManager().recentContactsDataReady()) {
 			onRecentContactDataReady();
 		}
+		
+		tryInitSearch(imService);
 	}
 
 	@Override

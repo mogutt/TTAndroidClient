@@ -16,6 +16,7 @@ import com.mogujie.tt.imlib.proto.RecentContactsPacket;
 import com.mogujie.tt.imlib.proto.UnreadMsgContactListPacket;
 import com.mogujie.tt.imlib.proto.UnreadMsgPacket;
 import com.mogujie.tt.imlib.utils.IMContactHelper;
+import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.utils.pinyin.PinYin;
@@ -155,6 +156,11 @@ public class IMContactManager extends IMManager {
 		departmentDataReady = true;
 
 		triggerContactsDataReady();
+		triggerSearchDataReady();
+	}
+	
+	private void triggerSearchDataReady() {
+		IMUIHelper.triggerSearchDataReady(logger, ctx, this, IMGroupManager.instance());
 	}
 
 	public void onRepAllUsers(DataBuffer buffer) {
@@ -184,7 +190,7 @@ public class IMContactManager extends IMManager {
 		allContactsDataReady = true;
 
 		triggerContactsDataReady();
-		
+		triggerSearchDataReady();
 		triggerAddRecentContacts();
 
 		triggerReqUnreadMsgs();

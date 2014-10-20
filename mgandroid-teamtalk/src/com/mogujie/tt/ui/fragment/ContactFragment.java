@@ -32,6 +32,7 @@ import com.mogujie.tt.imlib.proto.DepartmentEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
+import com.mogujie.tt.ui.activity.SearchActivity;
 import com.mogujie.tt.ui.utils.EntityList;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
@@ -83,6 +84,8 @@ public class ContactFragment extends MainFragment
 		ArrayList<String> actions = new ArrayList<String>();
 		actions.add(IMActions.ACTION_CONTACT_READY);
 		actions.add(IMActions.ACTION_GROUP_READY);
+		actions.add(IMActions.ACTION_SEARCH_DATA_READY);
+
 		imServiceHelper.connect(getActivity(), actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
 
 		if (null != curView) {
@@ -371,7 +374,8 @@ public class ContactFragment extends MainFragment
 				for (Object obj : list) {
 					GroupEntity group = (GroupEntity) obj;
 					logger.d("search#pinyin:%s", group.pinyinElement.pinyin);
-					if (group.pinyinElement.pinyin.contains(key) || group.name.contains(key)) {
+					if (group.pinyinElement.pinyin.contains(key)
+							|| group.name.contains(key)) {
 						logger.d("search#group contains the key");
 						searchList.add(obj);
 					}
@@ -384,6 +388,7 @@ public class ContactFragment extends MainFragment
 
 		contactAdapter.add(0, entityList);
 	}
+	
 
 	/**
 	 * @Description 初始化界面资源
@@ -391,6 +396,8 @@ public class ContactFragment extends MainFragment
 	private void initRes() {
 		// 设置顶部标题栏
 		showContactTopBar();
+		
+
 		// if (chooseMode) {
 		// setTopLeftButton(R.drawable.tt_top_back);
 		// setTopLeftText(getActivity().getString(R.string.top_left_back));
@@ -568,6 +575,8 @@ public class ContactFragment extends MainFragment
 
 			onGroupReady();
 		}
+		
+		tryHandleSearchAction(action);
 	}
 
 	@Override
@@ -587,6 +596,7 @@ public class ContactFragment extends MainFragment
 		if (imService.getGroupManager().groupReadyConditionOk()) {
 			onGroupReady();
 		}
-
+		
+		tryInitSearch(imService);
 	}
 }

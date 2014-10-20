@@ -21,6 +21,7 @@ import com.mogujie.tt.imlib.proto.GroupUnreadMsgPacket;
 import com.mogujie.tt.imlib.proto.UnreadMsgGroupListPacket;
 import com.mogujie.tt.imlib.utils.DumpUtils;
 import com.mogujie.tt.imlib.utils.IMContactHelper;
+import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.packet.base.Header;
@@ -193,6 +194,8 @@ public class IMGroupManager extends IMManager {
 		if (groupReadyConditionOk()) {
 			ctx.sendBroadcast(new Intent(IMActions.ACTION_GROUP_READY));
 			logger.d("group#broadcast group ready msg");
+			
+			IMUIHelper.triggerSearchDataReady(logger, ctx, IMContactManager.instance(), this);
 		}
 
 		triggerAddRecentInfo();
