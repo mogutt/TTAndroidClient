@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,6 +16,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -32,7 +32,6 @@ import com.mogujie.tt.imlib.proto.DepartmentEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
-import com.mogujie.tt.ui.activity.SearchActivity;
 import com.mogujie.tt.ui.utils.EntityList;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
@@ -124,6 +123,45 @@ public class ContactFragment extends MainFragment
 		return contactList;
 
 	}
+	
+	public void locateDepartment(String departmentId) {
+		logger.d("department#locateDepartment id:%s", departmentId);
+		
+		if (topContactTitle == null) {
+			logger.e("department#TopTabButton is null");
+			return;
+		}
+		
+		Button tabDepartmentBtn = topContactTitle.getTabDepartmentBtn();
+		if (tabDepartmentBtn == null) {
+			return;
+		}
+		
+		tabDepartmentBtn.performClick();
+		locateDepartmentImpl(departmentId);
+	}
+	
+	private void locateDepartmentImpl(String departmentId) {
+		if (imService == null) {
+			return;
+		}
+		
+		DepartmentEntity department = imService.getContactManager().findDepartment(departmentId);
+		if (department == null) {
+			logger.e("department:no such id:%s", departmentId);
+			return;
+		}
+		
+		int position = departmentAdapter.locateDepartment(department.title);
+		logger.d("department#located position:%d", position);
+		
+		if (position < 0) {
+			logger.e("department#locateDepartment id:%s failed", departmentId);
+			return;
+		}
+		
+		departmentContactListView.setSelection(position);
+	}
 
 	private void onContactsReady() {
 		hideProgressBar();
@@ -193,7 +231,7 @@ public class ContactFragment extends MainFragment
 					return 0;
 				}
 				
-				return department.pinYinElement.pinyin.charAt(0);
+				return department.pinyinElement.pinyin.charAt(0);
 			}
 
 			@Override

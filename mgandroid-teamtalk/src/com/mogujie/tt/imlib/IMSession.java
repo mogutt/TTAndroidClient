@@ -7,6 +7,7 @@ import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 
 public class IMSession {
+	public static final int SESSION_ERROR = -1;
 	public static final int SESSION_P2P = 0;
 	public static final int SESSION_GROUP = 1;
 	public static final int SESSION_TEMP_GROUP = 2; // 讨论组

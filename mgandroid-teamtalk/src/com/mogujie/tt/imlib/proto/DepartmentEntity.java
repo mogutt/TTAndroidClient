@@ -11,7 +11,7 @@ public class DepartmentEntity {
 	public String leaderId;
 	public int status;
 	
-	public PinYinElement pinYinElement = new PinYinElement();
+	public PinYinElement pinyinElement = new PinYinElement();
 	public SearchElement searchElement = new SearchElement();
 
 	@Override

@@ -148,7 +148,7 @@ public class IMContactManager extends IMManager {
 
 		for (DepartmentEntity department : resp.entityList) {
 			logger.i("department -> entity:%s", department);
-			PinYin.getPinYin(logger, department.title, department.pinYinElement);
+			PinYin.getPinYin(logger, department.title, department.pinyinElement);
 
 			departments.put(department.id, department);
 		}

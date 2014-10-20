@@ -32,6 +32,7 @@ import com.mogujie.tt.imlib.IMContactManager;
 import com.mogujie.tt.imlib.IMGroupManager;
 import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
+import com.mogujie.tt.imlib.proto.DepartmentEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.log.Logger;
@@ -45,6 +46,19 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 
 public class IMUIHelper {
+	public static class DepartmentPinyinComparator
+			implements
+				Comparator<Object> {
+
+		@Override
+		public int compare(Object objEntity1, Object objEntity2) {
+			DepartmentEntity entity1 = (DepartmentEntity) objEntity1;
+			DepartmentEntity entity2 = (DepartmentEntity) objEntity2;
+
+			return entity1.pinyinElement.pinyin.compareToIgnoreCase(entity2.pinyinElement.pinyin);
+		}
+	};
+
 	public static class GroupPinyinComparator implements Comparator<Object> {
 
 		@Override
@@ -547,6 +561,15 @@ public class IMUIHelper {
 		Collections.sort(groupList, new GroupPinyinComparator());
 
 		return groupList;
+	}
+
+	public static List<Object> getDepartmentSortedList(
+			Map<String, DepartmentEntity> departments) {
+		// todo eric efficiency
+		List<Object> departmentList = new ArrayList<Object>(departments.values());
+		Collections.sort(departmentList, new DepartmentPinyinComparator());
+
+		return departmentList;
 	}
 
 	public static boolean isSameSession(SessionInfo sessionInfo,

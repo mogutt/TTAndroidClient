@@ -19,7 +19,11 @@ public class TopTabButton extends FrameLayout {
     private Button tabALLBtn = null;
     private Button tabDepartmentBtn = null;
 
-    public TopTabButton(Context cxt) {
+    public Button getTabDepartmentBtn() {
+		return tabDepartmentBtn;
+	}
+
+	public TopTabButton(Context cxt) {
         super(cxt);
         this.context = cxt;
         initView();

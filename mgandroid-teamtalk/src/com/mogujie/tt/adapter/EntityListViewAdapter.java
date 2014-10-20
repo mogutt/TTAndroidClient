@@ -22,6 +22,7 @@ import com.mogujie.tt.R;
 import com.mogujie.tt.entity.ContactSortEntity;
 import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
+import com.mogujie.tt.imlib.proto.DepartmentEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.imlib.utils.SearchElement;
@@ -88,10 +89,11 @@ public class EntityListViewAdapter extends BaseAdapter
 		showCheckBox = true;
 	}
 
-	// todo eric
-	private View getViewImpl(boolean isSearchMode, SearchElement searchElement,
-			EntityList entityList, int position, View view, String sectionName,
-			String avatarUrl, String name, int sessionType) {
+	// todo eric too many args, need refactor
+	private View getViewImpl(boolean noAvatar, boolean isSearchMode,
+			SearchElement searchElement, EntityList entityList, int position,
+			View view, String sectionName, String avatarUrl, String name,
+			int sessionType) {
 
 		ViewHolder viewHolder = null;
 		if (view == null) {
@@ -128,8 +130,14 @@ public class EntityListViewAdapter extends BaseAdapter
 			viewHolder.nameView.setText(name);
 		}
 
-		IMUIHelper.setEntityImageViewAvatar(viewHolder.avatar, avatarUrl, sessionType);
-
+		//handle avatar, todo eric, move it a sub function?
+		viewHolder.avatar.setVisibility(View.VISIBLE);
+		if (!noAvatar) {
+			IMUIHelper.setEntityImageViewAvatar(viewHolder.avatar, avatarUrl, sessionType);
+		} else {
+			viewHolder.avatar.setVisibility(View.INVISIBLE);
+		}
+		
 		return view;
 
 	}
@@ -200,7 +208,7 @@ public class EntityListViewAdapter extends BaseAdapter
 			return null;
 		}
 
-		return getViewImpl(isSearchMode, contact.searchElement, entityList, position, convertView, entityList.getSectionName(position), contact.avatarUrl, contact.name, IMSession.SESSION_P2P);
+		return getViewImpl(false, isSearchMode, contact.searchElement, entityList, position, convertView, entityList.getSectionName(position), contact.avatarUrl, contact.name, IMSession.SESSION_P2P);
 	}
 
 	// todo eric use generic
@@ -210,7 +218,18 @@ public class EntityListViewAdapter extends BaseAdapter
 			return null;
 		}
 
-		return getViewImpl(isSearchMode, group.searchElement, entityList, position, convertView, entityList.getSectionName(position), group.avatarUrl, group.name, group.type);
+		return getViewImpl(false, isSearchMode, group.searchElement, entityList, position, convertView, entityList.getSectionName(position), group.avatarUrl, group.name, group.type);
+	}
+
+	// todo eric use generic
+	private View getDepartmentEntityView(View convertView,
+			EntityList entityList, final int position, DepartmentEntity department,
+			boolean isSearchMode) {
+		if (department == null) {
+			return null;
+		}
+
+		return getViewImpl(true, isSearchMode, department.searchElement, entityList, position, convertView, entityList.getSectionName(position), "", department.title, IMSession.SESSION_ERROR);
 	}
 
 	private View getEntityView(EntityList entityList, final int position,
@@ -222,6 +241,8 @@ public class EntityListViewAdapter extends BaseAdapter
 			return getContactEntityView(convertView, entityList, position, (ContactEntity) object, entityList.isSearchMode());
 		} else if (object instanceof GroupEntity) {
 			return getGroupEntityView(convertView, entityList, position, (GroupEntity) object, entityList.isSearchMode());
+		} else if (object instanceof DepartmentEntity) {
+			return getDepartmentEntityView(convertView, entityList, position, (DepartmentEntity) object, entityList.isSearchMode());
 		}
 
 		return null;
@@ -258,6 +279,25 @@ public class EntityListViewAdapter extends BaseAdapter
 		return null;
 	}
 
+	public int locateDepartment(String departmentTitle) {
+		logger.d("department#locateDepartment departmentTitle:%s", departmentTitle);
+
+		int index = 0;
+		for (EntityList entityList : entityListMgr) {
+			List<Object> list = entityList.list;
+			for (int i = 0; i < list.size(); ++i) {
+				String sectionName = entityList.getSectionName(i);
+				if (sectionName != null && !sectionName.isEmpty() && (0 == sectionName.compareToIgnoreCase(departmentTitle)) ) {
+					return index;
+				}
+				
+				index++;
+			}
+		}
+		
+		return -1;
+	}
+				
 	// todo eric make section as a string
 	@Override
 	public int getPositionForSection(int section) {

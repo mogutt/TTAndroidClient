@@ -17,12 +17,15 @@ import android.widget.ListView;
 
 import com.mogujie.tt.R;
 import com.mogujie.tt.adapter.EntityListViewAdapter;
+import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.imlib.proto.ContactEntity;
+import com.mogujie.tt.imlib.proto.DepartmentEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.imlib.utils.SearchElement;
 import com.mogujie.tt.log.Logger;
+import com.mogujie.tt.ui.activity.MainActivity;
 import com.mogujie.tt.ui.base.TTBaseFragment;
 import com.mogujie.tt.ui.utils.EntityList;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
@@ -113,6 +116,7 @@ public class SearchFragment extends TTBaseFragment
 	}
 
 	private void initSearchEntityLists() {
+		initDepartmentEntityList();
 		initGroupEntityList();
 		initContactEntityList();
 		
@@ -191,6 +195,61 @@ public class SearchFragment extends TTBaseFragment
 
 		adapter.add(0, entityList);
 	}
+	
+	private void initDepartmentEntityList() {
+		if (imService == null) {
+			return;
+		}
+
+		Map<String, DepartmentEntity> departments = imService.getContactManager().getDepartments();
+		List<Object> departmentList = IMUIHelper.getDepartmentSortedList(departments);
+
+		EntityList entityList = new EntityList(departmentList) {
+			@Override
+			public String getSectionName(int position) {
+				if (!list.isEmpty() && position == 0) {
+					return getString(R.string.department);
+				}
+
+				return "";
+			}
+
+			@Override
+			public void onSearchImpl(String key) {
+				ArrayList<Object> searchList = new ArrayList<Object>();
+				for (Object obj : backupList) {
+					DepartmentEntity department = (DepartmentEntity) obj;
+
+					if (IMUIHelper.handleNameSearch(department.title, key, department.searchElement)
+							|| IMUIHelper.handleContactPinyinSearch(logger, department.pinyinElement, key, department.searchElement)) {
+						searchList.add(obj);
+					}
+				}
+
+				list = searchList;
+			}
+
+			@Override
+			public void onItemClick(Context ctx, View view, int position) {
+				DepartmentEntity department = (DepartmentEntity) list.get(position);
+				locateDepartment(ctx, department);
+			}
+			
+			private void locateDepartment(Context ctx, DepartmentEntity department) {
+				if (ctx == null || department == null) {
+					return;
+				}
+				
+				Intent intent = new Intent(ctx, MainActivity.class);
+				intent.putExtra(SysConstant.KEY_LOCATE_DEPARTMENT, department.id);
+				
+				ctx.startActivity(intent);
+			}
+		};
+
+		adapter.add(0, entityList);
+	}
+
 
 
 	

@@ -27,5 +27,6 @@
     <string name="fixed_group_name">群</string>
     <string name="contact">联系人</string>
     <string name="fixed_group_or_temp_group">群或讨论组</string>
+    <string name="department">部门</string>
 
 </resources>

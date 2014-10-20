@@ -3,6 +3,7 @@ package com.mogujie.tt.config;
 import android.media.AudioManager;
 
 public interface SysConstant {
+	String KEY_LOCATE_DEPARTMENT = "key_locate_department";
 	String lOGIN_ERROR_CODE_KEY = "login_error_code";
 	String CONTACT_ID_KEY = "contact_id";
 	String FROM_ID_KEY = "from_id";
@@ -14,6 +15,7 @@ public interface SysConstant {
 	String OPERATION_RESULT_KEY = "tt_opeartion_result";
 	String STATUS_KEY = "status";
 
+	
 	// todo eric
 	// 122.225.68.125:8001
 
