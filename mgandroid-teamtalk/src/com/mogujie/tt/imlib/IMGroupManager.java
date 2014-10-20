@@ -163,7 +163,7 @@ public class IMGroupManager extends IMManager {
 	private void addGroup(GroupEntity group) {
 		logger.i("group#addGroup -> entity:%s", group);
 
-		group.pinyin = PinYin.getPinYin(group.name);
+		PinYin.getPinYin(logger, group.name, group.pinyinElement);
 		groups.put(group.id, group);
 	}
 

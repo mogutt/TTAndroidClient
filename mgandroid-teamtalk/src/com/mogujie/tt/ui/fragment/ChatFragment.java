@@ -48,6 +48,7 @@ import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.packet.MessageDispatchCenter;
 import com.mogujie.tt.ui.activity.MainActivity;
+import com.mogujie.tt.ui.activity.SearchActivity;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 import com.mogujie.tt.utils.CommonUtil;
@@ -219,7 +220,7 @@ public class ChatFragment extends MainFragment
 		setTopTitle(getActivity().getString(R.string.chat_title));
 
 		// todo eric
-		// setTopRightButton(R.drawable.tt_top_search);
+		 setTopRightButton(R.drawable.tt_top_search);
 		topRightBtn.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
@@ -229,18 +230,20 @@ public class ChatFragment extends MainFragment
 	}
 
 	private void showSearchView() {
-		searchTransparentView.setVisibility(View.VISIBLE);
-		setTopBar(R.color.half_transparent_light);
-		showTopSearchBar();
-		setTopLeftButton(R.drawable.tt_top_back);
-		hideTopRightButton();
-		topLeftBtn.setOnClickListener(new View.OnClickListener() {
-
-			@Override
-			public void onClick(View arg0) {
-				hideSearchView();
-			}
-		});
+//		searchTransparentView.setVisibility(View.VISIBLE);
+//		setTopBar(R.color.half_transparent_light);
+//		showTopSearchBar();
+//		setTopLeftButton(R.drawable.tt_top_back);
+//		hideTopRightButton();
+//		topLeftBtn.setOnClickListener(new View.OnClickListener() {
+//
+//			@Override
+//			public void onClick(View arg0) {
+//				hideSearchView();
+//			}
+//		});
+		
+		startActivity(new Intent(getActivity(), SearchActivity.class));
 	}
 
 	private void hideSearchView() {

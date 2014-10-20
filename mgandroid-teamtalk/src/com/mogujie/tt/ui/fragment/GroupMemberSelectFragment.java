@@ -327,7 +327,7 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 					return 0;
 				}
 
-				return contact.pinyin.charAt(0);
+				return contact.pinyinElement.pinyin.charAt(0);
 			}
 
 			@Override
@@ -335,7 +335,7 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 				ArrayList<Object> searchList = new ArrayList<Object>();
 				for (Object obj : list) {
 					ContactEntity contact = (ContactEntity) obj;
-					if (contact.pinyin.contains(key)
+					if (contact.pinyinElement.pinyin.contains(key)
 							|| contact.name.contains(key)) {
 						searchList.add(obj);
 					}

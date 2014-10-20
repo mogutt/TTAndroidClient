@@ -64,7 +64,7 @@
                 android:drawableLeft="@drawable/tt_search"
                 android:drawablePadding="10dp"
                 android:gravity="left|center_vertical"
-                android:hint="搜索"
+                android:hint="搜索联系人，部门，会话，群"
                 android:paddingLeft="10dp"
                 android:singleLine="true"
                 android:textColor="@android:color/black"

@@ -201,7 +201,7 @@ public class ContactFragment extends MainFragment
 					return 0;
 				}
 
-				return contact.pinyin.charAt(0);
+				return contact.pinyinElement.pinyin.charAt(0);
 			}
 
 			@Override
@@ -209,7 +209,7 @@ public class ContactFragment extends MainFragment
 				ArrayList<Object> searchList = new ArrayList<Object>();
 				for (Object obj : list) {
 					ContactEntity contact = (ContactEntity) obj;
-					if (contact.pinyin.contains(key)
+					if (contact.pinyinElement.pinyin.contains(key)
 							|| contact.name.contains(key)) {
 						searchList.add(obj);
 					}
@@ -282,7 +282,7 @@ public class ContactFragment extends MainFragment
 					return 0;
 				}
 
-				return contact.pinyin.charAt(0);
+				return contact.pinyinElement.pinyin.charAt(0);
 			}
 
 			@Override
@@ -290,7 +290,7 @@ public class ContactFragment extends MainFragment
 				ArrayList<Object> searchList = new ArrayList<Object>();
 				for (Object obj : list) {
 					ContactEntity contact = (ContactEntity) obj;
-					if (contact.pinyin.contains(key)
+					if (contact.pinyinElement.pinyin.contains(key)
 							|| contact.name.contains(key)) {
 						searchList.add(obj);
 					}
@@ -317,7 +317,7 @@ public class ContactFragment extends MainFragment
 				GroupEntity entity1 = (GroupEntity) objEntity1;
 				GroupEntity entity2 = (GroupEntity) objEntity2;
 
-				return entity1.pinyin.compareToIgnoreCase(entity2.pinyin);
+				return entity1.pinyinElement.pinyin.compareToIgnoreCase(entity2.pinyinElement.pinyin);
 			}
 		});
 
@@ -351,8 +351,7 @@ public class ContactFragment extends MainFragment
 				}
 
 				if (position == 0) {
-					// todo
-					return "群";
+					return getString(R.string.fixed_group_name);
 				}
 
 				return "";
@@ -371,8 +370,8 @@ public class ContactFragment extends MainFragment
 				ArrayList<Object> searchList = new ArrayList<Object>();
 				for (Object obj : list) {
 					GroupEntity group = (GroupEntity) obj;
-					logger.d("search#pinyin:%s", group.pinyin);
-					if (group.pinyin.contains(key) || group.name.contains(key)) {
+					logger.d("search#pinyin:%s", group.pinyinElement.pinyin);
+					if (group.pinyinElement.pinyin.contains(key) || group.name.contains(key)) {
 						logger.d("search#group contains the key");
 						searchList.add(obj);
 					}

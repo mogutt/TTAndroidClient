@@ -11,8 +11,16 @@ import com.mogujie.tt.log.Logger;
 
 public abstract class EntityList {
 	public List<Object> list;
-	private List<Object> backupList;
+	protected List<Object> backupList;
 	protected boolean searchMode = false;
+	public boolean isSearchMode() {
+		return searchMode;
+	}
+
+	public void setSearchMode(boolean searchMode) {
+		this.searchMode = searchMode;
+	}
+
 	Logger logger = Logger.getLogger(EntityList.class);
 
 	public EntityList(List<Object> list) {

@@ -20,8 +20,13 @@ import org.jboss.netty.channel.WriteCompletionEvent;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
+import com.mogujie.tt.imlib.utils.IMUIHelper;
+import com.mogujie.tt.imlib.utils.SearchElement;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.utils.Md5Helper;
+import com.mogujie.tt.utils.pinyin.PinYin;
+import com.mogujie.tt.utils.pinyin.PinYin.PinYinArea;
+import com.mogujie.tt.utils.pinyin.PinYin.PinYinElement;
 
 public class CommonTest {
 
@@ -230,8 +235,37 @@ public class CommonTest {
 		logger.d("md5#%s", result);
 	}
 
+	private static void testPinyin() {
+		
+		PinYinElement pinyinElement = new PinYinElement();
+		PinYin.getPinYin(logger, "你y好", pinyinElement);
+		logger.d("pinyin#pinyinElement:%s", pinyinElement);
+	}
+	
+	private static void testHandleNameSearch() {
+		SearchElement searchElement = new SearchElement();
+		IMUIHelper.handleNameSearch("我是满山xyz啊", "满山", searchElement);
+		
+		logger.d("pinyin#testHandleNameSearch searchElement:%s", searchElement);
+	}
+	
+	private static void testhandleContactPinyinSearch() {
+		PinYinElement pinyinElement = new PinYinElement();
+		PinYin.getPinYin(logger, "你y好", pinyinElement);
+		logger.d("pinyin#pinyinElement:%s", pinyinElement);
+		
+		SearchElement searchElement = new SearchElement();
+		boolean ret = IMUIHelper.handleContactPinyinSearch(logger, pinyinElement, "IY", searchElement);
+		
+		logger.d("pinyin#searchElement:%s, ret:%s", searchElement, ret);
+		
+	}
+	
 	public static void test() {
-		testMd5();
+		testhandleContactPinyinSearch();
+		//testHandleNameSearch();
+		//testPinyin();
+		//testMd5();
 		//testLog();
 //		testNettyServer();
 		//crash

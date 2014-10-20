@@ -160,6 +160,7 @@ public class UserInfoFragment extends TTBaseFragment
 			@Override
 			public void onClick(View arg0) {
 				IMUIHelper.openContactChatActivity(getActivity(), contact);
+				getActivity().finish();
 			}
 		});
 		

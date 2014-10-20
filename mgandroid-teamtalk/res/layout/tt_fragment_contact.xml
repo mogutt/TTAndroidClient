@@ -25,7 +25,8 @@
             android:singleLine="true"
             android:textColor="@android:color/black"
             android:textColorHint="@color/default_key_color"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:visibility="gone" />
 
         <FrameLayout
             android:layout_width="fill_parent"

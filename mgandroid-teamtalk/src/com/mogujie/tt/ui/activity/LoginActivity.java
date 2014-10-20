@@ -231,10 +231,10 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 			logger.e("login#fatal,  connect im service failed");
 		}
 
-		// if (true) {
-		// CommonTest.test();
-		// return;
-		// }
+//		 if (true) {
+//		 CommonTest.test();
+//		 return;
+//		 }
 
 		IMEntrance.getInstance().setContext(LoginActivity.this);
 

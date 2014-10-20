@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,11 +24,16 @@ import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
+import com.mogujie.tt.imlib.utils.SearchElement;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.utils.EntityList;
 
-public class EntityListViewAdapter extends BaseAdapter implements
-		SectionIndexer, ContactBaseAdapter, OnItemClickListener, OnItemLongClickListener {
+public class EntityListViewAdapter extends BaseAdapter
+		implements
+			SectionIndexer,
+			ContactBaseAdapter,
+			OnItemClickListener,
+			OnItemLongClickListener {
 
 	// private static int VIEW_TYPE_CONTACT = 0;
 	// private static int VIEW_TYPE_GROUP = 1;
@@ -40,21 +46,20 @@ public class EntityListViewAdapter extends BaseAdapter implements
 	private List<EntityList> entityListMgr = new ArrayList<EntityList>();
 
 	private boolean showCheckBox = false;
-	
+
+	private boolean enabled = true;
 
 	public EntityListViewAdapter(Context context) {
 		this.ctx = context;
 	}
 
-	
 	public void initClickEvents(ListView listView) {
 		listView.setOnItemClickListener(this);
 		listView.setOnItemLongClickListener(this);
 	}
-	
+
 	public void add(int position, EntityList entityList) {
-		logger.d("entityListViewAdapter#add entityList, current size:%d",
-				entityListMgr.size());
+		logger.d("entityListViewAdapter#add entityList, current size:%d", entityListMgr.size());
 
 		entityListMgr.add(position, entityList);
 
@@ -62,6 +67,10 @@ public class EntityListViewAdapter extends BaseAdapter implements
 	}
 
 	public int getCount() {
+		if (!isEnabled()) {
+			return 0;
+		}
+
 		int cnt = 0;
 		for (EntityList entityList : entityListMgr) {
 			cnt += entityList.list.size();
@@ -80,20 +89,17 @@ public class EntityListViewAdapter extends BaseAdapter implements
 	}
 
 	// todo eric
-	private View getViewImpl(EntityList entityList, int position, View view,
-			String sectionName, String avatarUrl, String name, int sessionType) {
+	private View getViewImpl(boolean isSearchMode, SearchElement searchElement,
+			EntityList entityList, int position, View view, String sectionName,
+			String avatarUrl, String name, int sessionType) {
 
 		ViewHolder viewHolder = null;
 		if (view == null) {
 			viewHolder = new ViewHolder();
-			view = LayoutInflater.from(ctx).inflate(
-					R.layout.tt_item_contact, null);
-			viewHolder.nameView = (TextView) view
-					.findViewById(R.id.contact_item_title);
-			viewHolder.sectionView = (TextView) view
-					.findViewById(R.id.contact_category_title);
-			viewHolder.avatar = (ImageView) view
-					.findViewById(R.id.contact_portrait);
+			view = LayoutInflater.from(ctx).inflate(R.layout.tt_item_contact, null);
+			viewHolder.nameView = (TextView) view.findViewById(R.id.contact_item_title);
+			viewHolder.sectionView = (TextView) view.findViewById(R.id.contact_category_title);
+			viewHolder.avatar = (ImageView) view.findViewById(R.id.contact_portrait);
 			viewHolder.checkBox = (CheckBox) view.findViewById(R.id.checkBox);
 			if (showCheckBox) {
 				viewHolder.checkBox.setVisibility(View.VISIBLE);
@@ -115,7 +121,12 @@ public class EntityListViewAdapter extends BaseAdapter implements
 			viewHolder.sectionView.setText(sectionName);
 		}
 
-		viewHolder.nameView.setText(name);
+		if (isSearchMode) {
+			logger.d("pinyin#isSearchMode, searchElement:%s", searchElement);
+			IMUIHelper.setTextViewCharHilighted(viewHolder.nameView, name, searchElement.startIndex, searchElement.endIndex, Color.rgb(69, 192, 26));
+		} else {
+			viewHolder.nameView.setText(name);
+		}
 
 		IMUIHelper.setEntityImageViewAvatar(viewHolder.avatar, avatarUrl, sessionType);
 
@@ -184,26 +195,22 @@ public class EntityListViewAdapter extends BaseAdapter implements
 	}
 
 	private View getContactEntityView(View convertView, EntityList entityList,
-			final int position, ContactEntity contact) {
+			final int position, ContactEntity contact, boolean isSearchMode) {
 		if (contact == null) {
 			return null;
 		}
 
-		return getViewImpl(entityList, position, convertView,
-				entityList.getSectionName(position), contact.avatarUrl,
-				contact.name, IMSession.SESSION_P2P);
+		return getViewImpl(isSearchMode, contact.searchElement, entityList, position, convertView, entityList.getSectionName(position), contact.avatarUrl, contact.name, IMSession.SESSION_P2P);
 	}
 
 	// todo eric use generic
 	private View getGroupEntityView(View convertView, EntityList entityList,
-			final int position, GroupEntity group) {
+			final int position, GroupEntity group, boolean isSearchMode) {
 		if (group == null) {
 			return null;
 		}
 
-		return getViewImpl(entityList, position, convertView,
-				entityList.getSectionName(position), group.avatarUrl,
-				group.name, group.type);
+		return getViewImpl(isSearchMode, group.searchElement, entityList, position, convertView, entityList.getSectionName(position), group.avatarUrl, group.name, group.type);
 	}
 
 	private View getEntityView(EntityList entityList, final int position,
@@ -212,11 +219,9 @@ public class EntityListViewAdapter extends BaseAdapter implements
 
 		Object object = entityList.list.get(position);
 		if (object instanceof ContactEntity) {
-			return getContactEntityView(convertView, entityList, position,
-					(ContactEntity) object);
+			return getContactEntityView(convertView, entityList, position, (ContactEntity) object, entityList.isSearchMode());
 		} else if (object instanceof GroupEntity) {
-			return getGroupEntityView(convertView, entityList, position,
-					(GroupEntity) object);
+			return getGroupEntityView(convertView, entityList, position, (GroupEntity) object, entityList.isSearchMode());
 		}
 
 		return null;
@@ -301,7 +306,7 @@ public class EntityListViewAdapter extends BaseAdapter implements
 
 		}
 	}
-	
+
 	public void handleItemLongClick(View view, Context ctx, int position) {
 		logger.d("entityListViewAdapter#handleItemLongClick position:%d", position);
 
@@ -317,7 +322,6 @@ public class EntityListViewAdapter extends BaseAdapter implements
 			position = pi.getPosition();
 		}
 	}
-	
 
 	@Override
 	public void updateListView(List<ContactSortEntity> list) {
@@ -349,21 +353,27 @@ public class EntityListViewAdapter extends BaseAdapter implements
 		notifyDataSetChanged();
 	}
 
-
 	@Override
 	public boolean onItemLongClick(AdapterView<?> parent, View view,
 			int position, long id) {
-		
+
 		handleItemLongClick(view, ctx, position);
-		
+
 		return true;
 	}
-
 
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position,
 			long id) {
 		handleItemClick(view, ctx, position);
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	public boolean isEnabled() {
+		return enabled;
 	}
 
 }

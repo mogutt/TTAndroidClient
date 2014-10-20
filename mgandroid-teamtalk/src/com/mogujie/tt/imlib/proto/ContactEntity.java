@@ -1,6 +1,10 @@
 package com.mogujie.tt.imlib.proto;
 
+import com.mogujie.tt.imlib.utils.SearchElement;
+import com.mogujie.tt.utils.pinyin.PinYin.PinYinElement;
+
 public class ContactEntity {
+	
 	public String id;
 	public String name;
 	public String nickName;
@@ -16,16 +20,17 @@ public class ContactEntity {
 	public String email;
 	
 	//not protocol
-	public String pinyin;
-
+	public PinYinElement pinyinElement = new PinYinElement();
+	public SearchElement searchElement = new SearchElement();
+	
 	@Override
 	public String toString() {
 		return String.format(
 				"id:%s, name:%s, nickName:%s, avatarUrl:%s, title:%s, position:%s, "
 						+ "roleStatus:%d, sex:%d, departmentId:%s, jobNum:%d,"
-						+ " telephone:%s, email:%s, pinyin:%s", id, name, nickName,
+						+ " telephone:%s, email:%s, pinyinElement:%s", id, name, nickName,
 				avatarUrl, title, position, roleStatus, sex, departmentId,
-				jobNum, telephone, email, pinyin);
+				jobNum, telephone, email, pinyinElement);
 	}
 	
 }

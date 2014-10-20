@@ -13,11 +13,14 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.text.Spannable;
+import android.text.style.ForegroundColorSpan;
 import android.view.ContextThemeWrapper;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.TextView.BufferType;
 
 import com.mogujie.tt.R;
 import com.mogujie.tt.adapter.GroupManagerAdapter;
@@ -32,17 +35,97 @@ import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.activity.MessageActivity;
 import com.mogujie.tt.ui.activity.UserInfoActivity;
+import com.mogujie.tt.utils.pinyin.PinYin.PinYinArea;
+import com.mogujie.tt.utils.pinyin.PinYin.PinYinElement;
 import com.mogujie.widget.imageview.MGWebImageView;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 
 public class IMUIHelper {
+	public static boolean handleContactPinyinSearch(Logger logger, PinYinElement contactPinyinElement, String key, SearchElement contactSearchElement) {
+		contactSearchElement.reset();
+		
+		String pinyin = contactPinyinElement.pinyin;
+
+		//the first char # was added manually when creating pinyin
+		if (pinyin.startsWith("#")) {
+			pinyin = pinyin.substring(1);
+		}
+		
+		SearchElement pinyinSearchElement = new SearchElement();
+		if (!IMUIHelper.handleNameSearch(pinyin, key, pinyinSearchElement)) {
+			return false;
+		}
+		
+		logger.d("pinyin#pinyinSearchElement:%s", pinyinSearchElement);
+
+		return IMUIHelper.locateNameAreaByPinyinIndex(contactPinyinElement, contactSearchElement, pinyinSearchElement.startIndex, pinyinSearchElement.endIndex);
+	}
+
+	
+	public static boolean locateNameAreaByPinyinIndex(
+			PinYinElement pinYinElement, SearchElement searchElement,
+			int pinyinStartIndex, int pinyinEndIndex) {
+		for (int i = 0; i < pinYinElement.pinyinArea.size(); ++i) {
+			PinYinArea area = pinYinElement.pinyinArea.get(i);
+
+			if (pinyinStartIndex >= area.startIndex
+					&& pinyinStartIndex <= area.endIndex) {
+				searchElement.startIndex = i;
+			}
+
+			if (pinyinEndIndex >= area.startIndex
+					&& pinyinEndIndex <= area.endIndex) {
+				searchElement.endIndex = i + 1;
+				return true;
+			}
+		}
+
+		return false;
+	}
+	public static boolean handleNameSearch(String name, String key,
+			SearchElement searchElement) {
+		int index = name.indexOf(key);
+		if (index == -1) {
+			return false;
+		}
+
+		searchElement.startIndex = index;
+		searchElement.endIndex = index + key.length();
+
+		return true;
+	}
+
+	public static void setTextViewCharHilighted(TextView textView, String text,
+			int startIndex, int endIndex, int color) {
+		if (textView == null || text == null) {
+			return;
+		}
+
+		if (startIndex < 0) {
+			return;
+		}
+
+		if (endIndex > text.length()) {
+			return;
+		}
+
+		textView.setText(text, BufferType.SPANNABLE);
+
+		Spannable span = (Spannable) textView.getText();
+		if (span == null) {
+			return;
+		}
+
+		span.setSpan(new ForegroundColorSpan(color), startIndex, endIndex, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+	}
+
 	public static void setViewTouchHightlighted(final View view) {
 		if (view == null) {
 			return;
 		}
-		
+
 		view.setOnTouchListener(new View.OnTouchListener() {
 
 			@Override
@@ -56,28 +139,27 @@ public class IMUIHelper {
 			}
 		});
 	}
-	
-	public static void handleContactItemLongClick(final Context ctx, final ContactEntity contact) {
+
+	public static void handleContactItemLongClick(final Context ctx,
+			final ContactEntity contact) {
 		if (contact == null) {
 			return;
 		}
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(ctx, android.R.style.Theme_Holo_Light_Dialog));
 		builder.setTitle(contact.name);
-		String[] items = new String[] {
-			ctx.getString(R.string.check_profile),
-			getCallPhoneDescription(ctx, contact)
-		};
-		
+		String[] items = new String[]{ctx.getString(R.string.check_profile),
+				getCallPhoneDescription(ctx, contact)};
+
 		builder.setItems(items, new OnClickListener() {
-			
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				switch (which) {
-					case 0:
+					case 0 :
 						IMUIHelper.openUserProfileActivity(ctx, contact.id);
 						break;
-					case 1:
+					case 1 :
 						IMUIHelper.callPhone(ctx, contact.telephone);
 						break;
 				}
@@ -85,19 +167,21 @@ public class IMUIHelper {
 		});
 		builder.show();
 	}
-	
-	private static String getCallPhoneDescription(Context ctx, ContactEntity contact) {
-		return String.format("%s(%s)",ctx.getString(R.string.call_phone), getPhoneNumberDescription(ctx, contact));
+
+	private static String getCallPhoneDescription(Context ctx,
+			ContactEntity contact) {
+		return String.format("%s(%s)", ctx.getString(R.string.call_phone), getPhoneNumberDescription(ctx, contact));
 	}
-	
-	private static String getPhoneNumberDescription(Context ctx, ContactEntity contact) {
+
+	private static String getPhoneNumberDescription(Context ctx,
+			ContactEntity contact) {
 		if (contact.telephone.isEmpty()) {
 			return ctx.getString(R.string.empty_phone_no);
 		} else {
 			return contact.telephone;
 		}
 	}
-	
+
 	public static void callPhone(Context ctx, String phoneNumber) {
 		if (ctx == null) {
 			return;
@@ -106,9 +190,10 @@ public class IMUIHelper {
 		if (phoneNumber.isEmpty()) {
 			return;
 		}
-		
-		Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + phoneNumber));
-		
+
+		Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:"
+				+ phoneNumber));
+
 		ctx.startActivity(intent);
 
 	}
@@ -392,14 +477,14 @@ public class IMUIHelper {
 			ContactEntity entity2 = (ContactEntity) objEntity2;
 
 			// TODO Auto-generated method stub
-			if (entity2.pinyin.startsWith("#")) {
+			if (entity2.pinyinElement.pinyin.startsWith("#")) {
 				return -1;
-			} else if (entity1.pinyin.startsWith("#")) {
+			} else if (entity1.pinyinElement.pinyin.startsWith("#")) {
 				// todo eric guess: latter is > 0
 				return 1;
 			} else {
 
-				return entity1.pinyin.compareToIgnoreCase(entity2.pinyin);
+				return entity1.pinyinElement.pinyin.compareToIgnoreCase(entity2.pinyinElement.pinyin);
 			}
 		}
 	}
@@ -411,7 +496,6 @@ public class IMUIHelper {
 		Collections.sort(contactList, new ContactPinyinComparator());
 
 		return contactList;
-
 	}
 
 	public static boolean isSameSession(SessionInfo sessionInfo,

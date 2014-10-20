@@ -64,7 +64,7 @@ public class ContactAllAdapter extends BaseAdapter implements SectionIndexer,
 			@Override
 			public int compare(GroupEntity entity1, GroupEntity entity2) {
 
-				return entity1.pinyin.compareToIgnoreCase(entity2.pinyin);
+				return entity1.pinyinElement.pinyin.compareToIgnoreCase(entity2.pinyinElement.pinyin);
 			}
 		});
 
@@ -84,13 +84,13 @@ public class ContactAllAdapter extends BaseAdapter implements SectionIndexer,
 			@Override
 			public int compare(ContactEntity entity1, ContactEntity entity2) {
 				// TODO Auto-generated method stub
-				if (entity2.pinyin.startsWith("#")) {
+				if (entity2.pinyinElement.pinyin.startsWith("#")) {
 					return -1;
-				} else if (entity1.pinyin.startsWith("#")) {
+				} else if (entity1.pinyinElement.pinyin.startsWith("#")) {
 					return 1;
 				} else {
 
-					return entity1.pinyin.compareToIgnoreCase(entity2.pinyin);
+					return entity1.pinyinElement.pinyin.compareToIgnoreCase(entity2.pinyinElement.pinyin);
 				}
 			}
 		});
@@ -290,7 +290,7 @@ public class ContactAllAdapter extends BaseAdapter implements SectionIndexer,
 	public int getPositionForSection(int section) {
 		for (int i = 0; i < contactList.size(); ++i) {
 			ContactEntity contact = contactList.get(i);
-			if (contact.pinyin.charAt(0) == section) {
+			if (contact.pinyinElement.pinyin.charAt(0) == section) {
 				return i;
 			}
 		}

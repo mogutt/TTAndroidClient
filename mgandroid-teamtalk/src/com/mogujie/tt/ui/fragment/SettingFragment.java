@@ -43,7 +43,6 @@ public class SettingFragment extends TTBaseFragment
 		//		ArrayList<String> actions = new ArrayList<String>();
 
 		imServiceHelper.connect(this.getActivity(), null, IMServiceHelper.INTENT_MAX_PRIORITY, this);
-		logger.d("messageactivity#register im service");
 
 		if (null != curView) {
 			((ViewGroup) curView.getParent()).removeView(curView);
