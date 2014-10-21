@@ -2,6 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="#ebebeb"
     android:paddingBottom="20dp"
     android:paddingRight="15dp" >
 
@@ -31,13 +32,13 @@
             android:contentDescription="@string/message_image_desc"
             android:src="@drawable/tt_msg_tip"
             android:visibility="gone" />
-        
-         <ProgressBar
+
+        <ProgressBar
             android:id="@+id/progressBar1"
+            style="?android:attr/progressBarStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            style="?android:attr/progressBarStyleSmall"
             android:visibility="gone" />
 
         <FrameLayout

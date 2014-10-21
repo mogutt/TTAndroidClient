@@ -2,6 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="#ebebeb"
     android:paddingBottom="20dp"
     android:paddingRight="15dp" >
 
@@ -63,8 +64,8 @@
             android:background="@drawable/tt_my_message_bkgnd"
             android:gravity="left"
             android:paddingBottom="13dp"
-            android:paddingRight="20dp"
             android:paddingLeft="13dp"
+            android:paddingRight="20dp"
             android:paddingTop="13dp"
             android:text="哈哈"
             android:textColor="#eeeeee"
