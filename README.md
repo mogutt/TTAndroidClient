@@ -36,10 +36,10 @@ Build steps:
 ## Manual
 use below identities to login:
 * **id:** eric
-* **password:** 12345
+* **password:** 123456
 
 * **id:** tom
-* **password:** 12345
+* **password:** 123456
 
 
 ![loginpage] (http://s6.sinaimg.cn/mw690/003j8GoBgy6MMp9gLNra5&690)
