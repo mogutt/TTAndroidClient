@@ -46,7 +46,7 @@ use below identities to login:
 
 ![contactpage](http://s9.sinaimg.cn/mw690/003j8GoBgy6MMp9dHmM38&690)
 
-or you can go to our oficial [website](http://tt.mogu.io/home/sign)(Chinease) to register an account
+or you can go to our official [website](http://tt.mogu.io/home/sign)(In Chinese) to register an account
 
 
 ## Acknowledgements
