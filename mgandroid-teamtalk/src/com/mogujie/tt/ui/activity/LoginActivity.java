@@ -322,7 +322,7 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 		if (TextUtils.isEmpty(mPassword)) {
 
 			// mPasswordView.setError(getString(R.string.error_field_required));
-			Toast.makeText(this, getString(R.string.error_field_required),
+			Toast.makeText(this, getString(R.string.error_password_required),
 					Toast.LENGTH_SHORT).show();
 
 			focusView = mPasswordView;
