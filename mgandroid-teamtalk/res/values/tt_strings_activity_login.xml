@@ -13,6 +13,7 @@
     <string name="error_invalid_password">亲，密码太短了</string>
     <string name="error_incorrect_user">请检查用户名密码是否正确</string>
     <string name="error_field_required">请输入用户名</string>
+    <string name="error_password_required">请输入密码</string>
     <string name="invalid_account">登录失败,请重试</string>
     <string name="invalid_network">请检查网络是否正常！</string>
      <string name="login_timeout">登陆超时,请重试</string>
