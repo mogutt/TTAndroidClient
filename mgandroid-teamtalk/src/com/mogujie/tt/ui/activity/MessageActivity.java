@@ -974,7 +974,7 @@ public class MessageActivity extends TTBaseActivity
 	 */
 	public static void addItem(MessageInfo msgInfo) {
 		Logger logger = Logger.getLogger(MessageActivity.class);
-		logger.d("chat#addImte msgInfo:%s", msgInfo);
+		logger.d("chat#addItem msgInfo:%s", msgInfo);
 		adapter.addItem(msgInfo);
 		adapter.notifyDataSetChanged();
 	}
@@ -1288,7 +1288,7 @@ public class MessageActivity extends TTBaseActivity
 			logger.d("messageactivity#send btn clicked");
 
 			String content = messageEdt.getText().toString();
-			logger.e("messageactivity#chat content:%s", content);
+			logger.d("messageactivity#chat content:%s", content);
 			if (content.trim().equals("")) {
 				Toast.makeText(MessageActivity.this, getResources().getString(R.string.message_null), Toast.LENGTH_LONG).show();
 				return;

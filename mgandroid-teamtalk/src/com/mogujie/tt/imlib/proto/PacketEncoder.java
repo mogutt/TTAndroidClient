@@ -6,6 +6,7 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelDownstreamHandler;
 
+import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.packet.base.Packet;
 
@@ -28,7 +29,7 @@ public class PacketEncoder extends SimpleChannelDownstreamHandler {
         try {
             buffer = request.encode();
         } catch (Exception e2) {
-
+        	Logger.getLogger(PacketEncoder.class).e("packet#got exception:%s", e2.getMessage() == null ? "" : e2.getMessage());
         }
         if (null != buffer) {
             Channels.write(ctx, e.getFuture(), buffer.getOrignalBuffer());

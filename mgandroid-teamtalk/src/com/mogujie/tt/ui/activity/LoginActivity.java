@@ -3,10 +3,6 @@ package com.mogujie.tt.ui.activity;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.Header;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -20,9 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.PersistentCookieStore;
-import com.loopj.android.http.RequestParams;
 import com.mogujie.tt.R;
 import com.mogujie.tt.app.IMEntrance;
 import com.mogujie.tt.cache.biz.CacheHub;
@@ -63,15 +57,6 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 	public static Context instance = null;
 
 	private LoginIdentity loginIdentity;
-	
-	private  AsyncHttpClient client = new AsyncHttpClient();
-	private PersistentCookieStore myCookieStore;
-
-	// public static Handler getUiHandler() {
-	//
-	// return uiHandler;
-	//
-	// }
 
 	private String getLoginErrorTip(int errorCode) {
 		switch (errorCode) {
@@ -150,66 +135,7 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 		}
 	}
 
-	private void reqLoginServerAddrs () {
-		RequestParams paramMap = new RequestParams();
-		paramMap.put("imclient", "1.0");
-		paramMap.put("macim", "ooxx");
-		paramMap.put("remember", "1");
-		paramMap.put("user_email", "满山");
-		paramMap.put("user_pass", "xmg9273168275");
-		
-		client.setUserAgent("Android-TT");
-		client.post("http://www.mogujie.com/user/zlogin/", paramMap, new JsonHttpResponseHandler() {
-
-			@Override
-			public void onFailure(int statusCode, Header[] headers,
-					String responseString, Throwable throwable) {
-				logger.d("login#onFailure1, responseString:%s", responseString);
-				super.onFailure(statusCode, headers, responseString, throwable);
-			}
-
-			@Override
-			public void onFailure(int statusCode, Header[] headers,
-					Throwable throwable, JSONArray errorResponse) {
-				logger.d("login#onFailure2, errorResponse:%s", errorResponse);
-
-				super.onFailure(statusCode, headers, throwable, errorResponse);
-			}
-
-			@Override
-			public void onFailure(int statusCode, Header[] headers,
-					Throwable throwable, JSONObject errorResponse) {
-				logger.d("login#onFailure3, errorResponse:%s", errorResponse);
-
-				super.onFailure(statusCode, headers, throwable, errorResponse);
-			}
-
-			@Override
-			public void onSuccess(int statusCode, Header[] headers,
-					JSONArray response) {
-				logger.d("login#onSuccess1, response:%s", response);
-
-				super.onSuccess(statusCode, headers, response);
-			}
-
-			@Override
-			public void onSuccess(int statusCode, Header[] headers,
-					JSONObject response) {
-				logger.d("login#onSuccess2, response:%s", response);
-
-				super.onSuccess(statusCode, headers, response);
-			}
-
-			@Override
-			public void onSuccess(int statusCode, Header[] headers,
-					String responseString) {
-				logger.d("login#onSuccess3, responseString:%s", responseString);
-
-				super.onSuccess(statusCode, headers, responseString);
-			}
-			
-		});
-	}
+	
 
 	
 	@Override
@@ -219,11 +145,6 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 		
 		logger.d("login#onCreate");
 		
-		myCookieStore = new PersistentCookieStore(this);
-		client.setCookieStore(myCookieStore);
-		
-		reqLoginServerAddrs();
-
 		List<String> actions = new ArrayList<String>();
 		actions.add(IMActions.ACTION_LOGIN_RESULT);
 		if (!imServiceHelper.connect(getApplicationContext(), actions,
