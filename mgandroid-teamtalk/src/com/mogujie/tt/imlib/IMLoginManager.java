@@ -1,7 +1,7 @@
 package com.mogujie.tt.imlib;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import android.content.Intent;
 import android.os.Handler;
@@ -20,6 +20,7 @@ import com.mogujie.tt.imlib.proto.MsgServerPacket;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.ui.utils.Md5Helper;
+import com.mogujie.tt.utils.DateUtil;
 
 public class IMLoginManager extends IMManager {
 	private static IMLoginManager inst;
@@ -39,7 +40,7 @@ public class IMLoginManager extends IMManager {
 	private String loginPwd;
 	private String loginId;
 	private SocketThread loginServerThread;
-	private List<String> msgServerAddrs;
+	private Set<String> msgServerAddrs;
 	private int msgServerPort;
 	private SocketThread msgServerThread;
 	// todo eric make it to ContactEntity too
@@ -92,7 +93,7 @@ public class IMLoginManager extends IMManager {
 	public boolean isDoingLogin() {
 		return currentStatus <= STATUS_LOGINING_MSG_SERVER;
 	}
-	
+
 	public String getLoginId() {
 		return loginId;
 	}
@@ -108,19 +109,19 @@ public class IMLoginManager extends IMManager {
 
 	public boolean relogin() {
 		logger.d("login#relogin");
-		
+
 		if (isDoingLogin()) {
 			logger.d("login#isDoingLogin, no need");
 			return false;
 		}
-		
+
 		if (loggined) {
 			logger.d("login#already logined, no need");
 			return false;
 		}
-		
+
 		connectLoginServer();
-		
+
 		return true;
 	}
 
@@ -251,8 +252,9 @@ public class IMLoginManager extends IMManager {
 			return;
 		}
 
+		// use Set to store the result, avoid duplicated server address
 		if (msgServerAddrs == null) {
-			msgServerAddrs = new ArrayList<String>();
+			msgServerAddrs = new HashSet<String>();
 		}
 
 		msgServerAddrs.add(resp.getStrIp1());
@@ -268,8 +270,9 @@ public class IMLoginManager extends IMManager {
 
 	private String pickLoginServerIp() {
 		// todo eric
-		// pick the second one right now
-		return msgServerAddrs.get(1);
+		// pick server based on current timestamp
+		int index = DateUtil.getCurTimeStamp() % msgServerAddrs.size();
+		return msgServerAddrs.toArray(new String[0])[index];
 	}
 
 	private void disconnectLoginServer() {
