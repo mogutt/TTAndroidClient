@@ -1,3 +1,7 @@
+# 公告
+我们没有预料到大家对我们Teamtalk反响如此热烈，还没正式对外开放就有这么多人关注，目前github上的代码是早期版本，还存在一些问题，最新的代码还没来得及提交，开发人员正在努力中，非常感谢大家对Teamtalk开源的关注和支持~
+
+
 # mogujie Open Source IM App  ![Logo](https://avatars2.githubusercontent.com/u/8542441?v=2&s=200)
 
 [mogujie](http://www.mogujie.com) Open Source IM is aiming to provide another IM solution in your company for colleagues to communicate with each other. 
