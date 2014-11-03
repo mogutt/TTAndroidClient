@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -295,8 +296,11 @@ public class ContactFragment extends MainFragment
 				if (contact == null) {
 					return 0;
 				}
-
-				return contact.pinyinElement.pinyin.charAt(0);
+				if(!TextUtils.isEmpty(contact.pinyinElement.pinyin)){
+				    return contact.pinyinElement.pinyin.charAt(0);
+				}else{
+				    return 0;
+				}
 			}
 
 			@Override
