@@ -51,7 +51,8 @@ public class PreviewActivity extends Activity
 	private ViewGroup group;
 	private ImageView back;
 	private ImageView select;
-	private TextView send;
+	//todo eric
+//	private TextView send;
 	private final ImageGridAdapter adapter = ImageGridActivity.getAdapter();
 	private Map<Integer, Integer> removePosition = new HashMap<Integer, Integer>();
 	private int curImagePosition = -1;
@@ -60,6 +61,7 @@ public class PreviewActivity extends Activity
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		logger.d("pic#PreviewActivity onCreate");
 		super.onCreate(savedInstanceState);
 
 		imServiceHelper.connect(this, null, IMServiceHelper.INTENT_NO_PRIORITY, this);
@@ -74,51 +76,52 @@ public class PreviewActivity extends Activity
 		group = (ViewGroup) findViewById(R.id.viewGroup);
 		back = (ImageView) findViewById(R.id.back_btn);
 		select = (ImageView) findViewById(R.id.select_btn);
-		send = (TextView) findViewById(R.id.send_btn);
+		//todo eric
+//		send = (TextView) findViewById(R.id.send_btn);
 		setSendText(adapter.getSelectMap().size());
-		send.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Iterator<Integer> iterator = removePosition.keySet().iterator();
-				while (iterator.hasNext()) {
-					int key = (Integer) iterator.next();
-					if (adapter.getSelectMap().containsKey(key))
-						adapter.getSelectMap().remove(key);
-				}
-				removePosition.clear();
-
-				if (adapter.getSelectMap().size() > 0) {
-					List<MessageInfo> messageList = new ArrayList<MessageInfo>();
-					Iterator<Integer> iter = adapter.getSelectMap().keySet().iterator();
-					while (iter.hasNext()) {
-						int position = iter.next();
-						ImageItem imgItem = adapter.getSelectMap().get(position);
-						MessageInfo msg = ImageGridActivity.drawMessageInfo(PreviewActivity.this, imgItem);
-						messageList.add(msg);
-					}
-					ImageGridActivity.setSendText(0);
-					ImageGridActivity.setAdapterSelectedMap(null);
-
-					IMUIHelper.SessionInfo sessionInfo = CacheHub.getInstance().getSessionInfo();
-					if (sessionInfo != null) {
-						logger.e("pic#sessionInfo is null");
-						return;
-					}
-
-					IMService imService = imServiceHelper.getIMService();
-					if (imService != null) {
-						imService.getMessageManager().sendImages(sessionInfo.getSessionId(), sessionInfo.getSessionType(), messageList);
-					}
-
-					Intent data = new Intent();
-					data.putExtra("finish", true);
-					setResult(RESULT_OK, data);
-					PreviewActivity.this.finish();
-				} else {
-					Toast.makeText(PreviewActivity.this, R.string.need_choose_images, Toast.LENGTH_SHORT).show();
-				}
-			}
-		});
+//		send.setOnClickListener(new OnClickListener() {
+//			@Override
+//			public void onClick(View v) {
+//				Iterator<Integer> iterator = removePosition.keySet().iterator();
+//				while (iterator.hasNext()) {
+//					int key = (Integer) iterator.next();
+//					if (adapter.getSelectMap().containsKey(key))
+//						adapter.getSelectMap().remove(key);
+//				}
+//				removePosition.clear();
+//
+//				if (adapter.getSelectMap().size() > 0) {
+//					List<MessageInfo> messageList = new ArrayList<MessageInfo>();
+//					Iterator<Integer> iter = adapter.getSelectMap().keySet().iterator();
+//					while (iter.hasNext()) {
+//						int position = iter.next();
+//						ImageItem imgItem = adapter.getSelectMap().get(position);
+//						MessageInfo msg = ImageGridActivity.drawMessageInfo(PreviewActivity.this, imgItem);
+//						messageList.add(msg);
+//					}
+//					ImageGridActivity.setSendText(0);
+//					ImageGridActivity.setAdapterSelectedMap(null);
+//
+//					IMUIHelper.SessionInfo sessionInfo = CacheHub.getInstance().getSessionInfo();
+//					if (sessionInfo != null) {
+//						logger.e("pic#sessionInfo is null");
+//						return;
+//					}
+//
+//					IMService imService = imServiceHelper.getIMService();
+//					if (imService != null) {
+//						imService.getMessageManager().sendImages(sessionInfo.getSessionId(), sessionInfo.getSessionType(), messageList);
+//					}
+//
+//					Intent data = new Intent();
+//					data.putExtra("finish", true);
+//					setResult(RESULT_OK, data);
+//					PreviewActivity.this.finish();
+//				} else {
+//					Toast.makeText(PreviewActivity.this, R.string.need_choose_images, Toast.LENGTH_SHORT).show();
+//				}
+//			}
+//		});
 		back.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -170,13 +173,14 @@ public class PreviewActivity extends Activity
 		imServiceHelper.disconnect(this);
 	}
 
+	//todo eric
 	private void setSendText(int selTotal) {
-		if (selTotal > 0) {
-			send.setText(getResources().getString(R.string.send) + "("
-					+ selTotal + ")");
-		} else {
-			send.setText(getResources().getString(R.string.send));
-		}
+//		if (selTotal > 0) {
+//			send.setText(getResources().getString(R.string.send) + "("
+//					+ selTotal + ")");
+//		} else {
+//			send.setText(getResources().getString(R.string.send));
+//		}
 	}
 
 	private void loadView() {

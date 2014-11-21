@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.text.Spannable;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.view.ContextThemeWrapper;
 import android.view.MotionEvent;
@@ -24,7 +25,6 @@ import android.widget.TextView.BufferType;
 
 import com.mogujie.tt.R;
 import com.mogujie.tt.adapter.GroupManagerAdapter;
-import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.MessageInfo;
 import com.mogujie.tt.imlib.IMActions;
@@ -38,14 +38,15 @@ import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.activity.MessageActivity;
 import com.mogujie.tt.ui.activity.UserInfoActivity;
-import com.mogujie.tt.utils.pinyin.PinYin.PinYinArea;
 import com.mogujie.tt.utils.pinyin.PinYin.PinYinElement;
-import com.mogujie.widget.imageview.MGWebImageView;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 
 public class IMUIHelper {
+	public static String getSessionKey(String sessionId, int sessionType) {
+		return String.format("%s_%d", sessionId, sessionType);
+	}
+	
 	public static class DepartmentPinyinComparator
 			implements
 				Comparator<Object> {
@@ -98,48 +99,43 @@ public class IMUIHelper {
 				&& groupMgr.groupReadyConditionOk();
 	}
 
-	public static boolean handleContactPinyinSearch(Logger logger,
-			PinYinElement contactPinyinElement, String key,
-			SearchElement contactSearchElement) {
-		contactSearchElement.reset();
-
-		String pinyin = contactPinyinElement.pinyin;
-
-		//the first char # was added manually when creating pinyin
-		if (pinyin.startsWith("#")) {
-			pinyin = pinyin.substring(1);
-		}
-
-		SearchElement pinyinSearchElement = new SearchElement();
-		if (!IMUIHelper.handleNameSearch(pinyin, key, pinyinSearchElement)) {
+	public static boolean handleDepartmentSearch(String key, DepartmentEntity department) {
+		if (TextUtils.isEmpty(key) || department == null) {
 			return false;
 		}
-
-		logger.d("pinyin#pinyinSearchElement:%s", pinyinSearchElement);
-
-		return IMUIHelper.locateNameAreaByPinyinIndex(contactPinyinElement, contactSearchElement, pinyinSearchElement.startIndex, pinyinSearchElement.endIndex);
+		
+		department.searchElement.reset();
+		
+		return handleTokenFirstCharsSearch(key, department.pinyinElement, department.searchElement)
+		|| handleTokenPinyinFullSearch(key, department.pinyinElement, department.searchElement)
+		|| handleNameSearch(department.title, key, department.searchElement);
 	}
-
-	public static boolean locateNameAreaByPinyinIndex(
-			PinYinElement pinYinElement, SearchElement searchElement,
-			int pinyinStartIndex, int pinyinEndIndex) {
-		for (int i = 0; i < pinYinElement.pinyinArea.size(); ++i) {
-			PinYinArea area = pinYinElement.pinyinArea.get(i);
-
-			if (pinyinStartIndex >= area.startIndex
-					&& pinyinStartIndex <= area.endIndex) {
-				searchElement.startIndex = i;
-			}
-
-			if (pinyinEndIndex >= area.startIndex
-					&& pinyinEndIndex <= area.endIndex) {
-				searchElement.endIndex = i + 1;
-				return true;
-			}
+	
+	
+	public static boolean handleGroupSearch(String key, GroupEntity group) {
+		if (TextUtils.isEmpty(key) || group == null) {
+			return false;
 		}
-
-		return false;
+		
+		group.searchElement.reset();
+		
+		return handleTokenFirstCharsSearch(key, group.pinyinElement, group.searchElement)
+		|| handleTokenPinyinFullSearch(key, group.pinyinElement, group.searchElement)
+		|| handleNameSearch(group.name, key, group.searchElement);
 	}
+	
+	public static boolean handleContactSearch(String key, ContactEntity contact) {
+		if (TextUtils.isEmpty(key) || contact == null) {
+			return false;
+		}
+		
+		contact.searchElement.reset();
+		
+		return handleTokenFirstCharsSearch(key, contact.pinyinElement, contact.searchElement)
+		|| handleTokenPinyinFullSearch(key, contact.pinyinElement, contact.searchElement)
+		|| handleNameSearch(contact.name, key, contact.searchElement);
+	}
+	
 	public static boolean handleNameSearch(String name, String key,
 			SearchElement searchElement) {
 		int index = name.indexOf(key);
@@ -152,6 +148,69 @@ public class IMUIHelper {
 
 		return true;
 	}
+	
+	public static boolean handleTokenFirstCharsSearch(String key, PinYinElement pinYinElement, SearchElement searchElement) {
+		return handleNameSearch(pinYinElement.tokenFirstChars, key.toUpperCase(), searchElement);
+	}
+	
+	public static boolean handleTokenPinyinFullSearch(String key, PinYinElement pinYinElement, SearchElement searchElement) {
+		if (TextUtils.isEmpty(key)) {
+			return false;
+		}
+		
+		String searchKey = key.toUpperCase();
+		
+		//clear the old search result
+		searchElement.reset();
+		
+		int tokenCnt = pinYinElement.tokenPinyinList.size();
+		int startIndex = -1;
+		int endIndex = -1;
+		
+		for (int i = 0; i < tokenCnt; ++i) {
+			String tokenPinyin = pinYinElement.tokenPinyinList.get(i);
+			
+			int tokenPinyinSize = tokenPinyin.length();
+			int searchKeySize = searchKey.length();
+			
+			int keyCnt = Math.min(searchKeySize, tokenPinyinSize);
+			String keyPart = searchKey.substring(0, keyCnt);
+			
+			if (tokenPinyin.startsWith(keyPart)) {
+				
+				if (startIndex == -1) {
+					startIndex = i;
+				} 
+				
+				endIndex = i + 1;
+			} else {
+				continue;
+			}
+			
+			if (searchKeySize <= tokenPinyinSize) {
+				searchKey = "";
+				break;
+			}
+			
+			searchKey = searchKey.substring(keyCnt, searchKeySize);
+		}
+		
+		if (!searchKey.isEmpty()) {
+			return false;
+		}
+		
+		if (startIndex >= 0 && endIndex > 0) {
+			searchElement.startIndex = startIndex;
+			searchElement.endIndex = endIndex;
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	
+	
 
 	public static void setTextViewCharHilighted(TextView textView, String text,
 			int startIndex, int endIndex, int color) {
@@ -231,7 +290,7 @@ public class IMUIHelper {
 
 	private static String getPhoneNumberDescription(Context ctx,
 			ContactEntity contact) {
-		if (contact.telephone.isEmpty()) {
+		if (contact.telephone == null || contact.telephone.isEmpty()) {
 			return ctx.getString(R.string.empty_phone_no);
 		} else {
 			return contact.telephone;
@@ -243,7 +302,7 @@ public class IMUIHelper {
 			return;
 		}
 
-		if (phoneNumber.isEmpty()) {
+		if (phoneNumber == null || phoneNumber.isEmpty()) {
 			return;
 		}
 
@@ -264,6 +323,7 @@ public class IMUIHelper {
 			String sessionId, int sessionType, IMService imService) {
 		if (logger == null || ctx == null || sessionId == null
 				|| imService == null) {
+			logger.e("chat#openSessionChatActivity invalid args");
 			return false;
 		}
 
@@ -310,14 +370,16 @@ public class IMUIHelper {
 
 	public static void openChatActivity(Context ctx, int sessionType,
 			String sessionId) {
+//		//explicitly send a broadcast to notify that the session could be changed
+//		//so that messageactivity would reload
+//		Intent intent = new Intent(IMActions.ACTION_NEW_MESSAGE_SESSION);
+//		setSessionInIntent(intent, sessionId, sessionType);
+//		ctx.sendBroadcast(intent);
+		
 		Intent i = new Intent(ctx, MessageActivity.class);
-		i.setAction(IMActions.ACTION_NEW_MESSAGE_SESSION);
-
 		setSessionInIntent(i, sessionId, sessionType);
 
-		CacheHub.getInstance().setSessionInfo(new SessionInfo(sessionId, sessionType));
 		ctx.startActivity(i);
-
 	}
 
 	public static boolean setMessageOwnerName(Logger logger, IMSession session,
@@ -344,9 +406,9 @@ public class IMUIHelper {
 	}
 
 	public static boolean setMessageOwnerAvatar(Logger logger,
-			IMSession session, MessageInfo msgInfo, MGWebImageView webImageView) {
+			IMSession session, MessageInfo msgInfo, ImageView imageView) {
 		if (logger == null || session == null || msgInfo == null
-				|| webImageView == null) {
+				|| imageView == null) {
 			return false;
 		}
 
@@ -364,8 +426,8 @@ public class IMUIHelper {
 		}
 
 		if (contact != null) {
-			logger.d("avatar#setWebImageViewAvatar avatarUrl:%s", contact.avatarUrl);
-			setWebImageViewAvatar(webImageView, contact.avatarUrl, IMSession.SESSION_P2P);
+			logger.d("avatar#setEntityImageViewAvatar avatarUrl:%s", contact.avatarUrl);
+			setEntityImageViewAvatar(imageView, contact.avatarUrl, IMSession.SESSION_P2P);
 
 			return true;
 		} else {
@@ -387,53 +449,99 @@ public class IMUIHelper {
 		return R.drawable.tt_default_user_portrait_corner;
 	}
 
-	public static void setWebImageViewAvatar(MGWebImageView webImageView,
-			String avatarUrl, int sessionType) {
-		if (avatarUrl == null) {
-			return;
-		}
-
-		// logger.d("contactUI#getView avatarUrl:%s", avatarUrl);
-
-		String realAvatarUrl = IMContactHelper.getRealAvatarUrl(avatarUrl);
-
-		Logger logger = Logger.getLogger(IMUIHelper.class);
-		logger.d("contactUI#realAvatarUrl:%s", realAvatarUrl);
-
-		if (realAvatarUrl.isEmpty()) {
-			webImageView.setImageResource(getDefaultAvatarResId(sessionType));
-
-		} else {
-			webImageView.setDefaultImageResId(getDefaultAvatarResId(sessionType));
-			webImageView.setImageUrlNeedFit(realAvatarUrl);
-		}
-
-	}
-
+//	public static void setWebImageViewAvatar(MGWebImageView webImageView,
+//			String avatarUrl, int sessionType) {
+//		if (avatarUrl == null) {
+//			return;
+//		}
+//
+//		// logger.d("contactUI#getView avatarUrl:%s", avatarUrl);
+//
+//		String realAvatarUrl = IMContactHelper.getRealAvatarUrl(avatarUrl);
+//
+//		Logger logger = Logger.getLogger(IMUIHelper.class);
+//		logger.d("contactUI#realAvatarUrl:%s", realAvatarUrl);
+//
+//		if (realAvatarUrl.isEmpty()) {
+//			webImageView.setImageResource(getDefaultAvatarResId(sessionType));
+//
+//		} else {
+//			webImageView.setDefaultImageResId(getDefaultAvatarResId(sessionType));
+//			webImageView.setImageUrlNeedFit(realAvatarUrl);
+//		}
+//
+//	}
+	
+	
 	public static void setEntityImageViewAvatar(ImageView imageView,
 			String avatarUrl, int sessionType) {
+		
+		setEntityImageViewAvatarImpl(imageView, avatarUrl, sessionType, true);
+	}
+	
+	public static void setEntityImageViewAvatarNoDefaultPortrait(ImageView imageView,
+			String avatarUrl, int sessionType) {
+		setEntityImageViewAvatarImpl(imageView, avatarUrl, sessionType, false);
+	}
+	
+	public static void setEntityImageViewAvatarImpl(ImageView imageView,
+			String avatarUrl, int sessionType, boolean showDefaultPortrait) {
+		if (avatarUrl == null) {
+			avatarUrl = "";
+		}
+		
+		String fullAvatar = IMContactHelper.getRealAvatarUrl(avatarUrl);
+		int defaultResId = -1;
+		
+		if (showDefaultPortrait) {
+			defaultResId = getDefaultAvatarResId(sessionType);
+		}
+		
+		displayImage(imageView, fullAvatar, defaultResId);
+	}
+	
+	public static void displayImage(ImageView imageView,
+			String resourceUri, int defaultResId) {
 
 		Logger logger = Logger.getLogger(IMUIHelper.class);
+		
+		logger.d("displayimage#displayImage resourceUri:%s, defeaultResourceId:%d", resourceUri, defaultResId);
 
-		logger.d("debug#setEntityImageViewAvatar imageView:%s, avatarUrl:%s", imageView, avatarUrl);
-
-		if (avatarUrl == null) {
+		if (resourceUri == null) {
+			resourceUri = "";
+		}
+		
+		boolean showDefaultImage = !(defaultResId <= 0);
+		
+		if (TextUtils.isEmpty(resourceUri) && !showDefaultImage) {
+			logger.e("displayimage#, unable to display image");
 			return;
 		}
 
-		int defaultResId = getDefaultAvatarResId(sessionType);
+	
+		DisplayImageOptions options;
+		if (showDefaultImage) {
+			options = new DisplayImageOptions.Builder().
+			showImageOnLoading(defaultResId).
+			showImageForEmptyUri(defaultResId).
+			showImageOnFail(defaultResId).
+			cacheInMemory(true).
+			cacheOnDisk(true).
+			considerExifParams(true).
+	//		displayer(new RoundedBitmapDisplayer(5)).
+	//		imageScaleType(ImageScaleType.EXACTLY).
+			build();
+		} else {
+			options = new DisplayImageOptions.Builder().
+			cacheInMemory(true).
+			cacheOnDisk(true).
+			considerExifParams(true).
+			build();
+		}
 
-		//todo eric created too many options, but I can't find a way to change showImageOnLoading resource id
-		// dynamically based on sessionType
-		DisplayImageOptions options = new DisplayImageOptions.Builder().showImageOnLoading(defaultResId).showImageForEmptyUri(defaultResId).showImageOnFail(defaultResId).cacheInMemory(true).cacheOnDisk(true).considerExifParams(true).displayer(new RoundedBitmapDisplayer(5)).build();
-
-		String realAvatarUrl = IMContactHelper.getRealAvatarUrl(avatarUrl);
-
-		logger.d("contactUI#realAvatarUrl:%s", realAvatarUrl);
-
-		ImageLoader.getInstance().displayImage(realAvatarUrl, imageView, options, null);
+		ImageLoader.getInstance().displayImage(resourceUri, imageView, options, null);
 	}
-
+	
 	public static void setGroupMemberGridViewData(Logger logger, Intent intent,
 			IMService imService, GroupManagerAdapter adapter) {
 		if (adapter == null) {
@@ -448,8 +556,8 @@ public class IMUIHelper {
 			return;
 		}
 
-		String sessionId = intent.getStringExtra(SysConstant.SESSION_ID_KEY);
-		int sessiondType = intent.getIntExtra(SysConstant.SESSION_TYPE_KEY, 0);
+		String sessionId = intent.getStringExtra(SysConstant.KEY_SESSION_ID);
+		int sessiondType = intent.getIntExtra(SysConstant.KEY_SESSION_TYPE, 0);
 		logger.d("groupmgr#sessionType:%d, sessionId:%s", sessiondType, sessionId);
 
 		List<ContactEntity> contactList = new ArrayList<ContactEntity>();
@@ -479,8 +587,8 @@ public class IMUIHelper {
 		}
 
 		Logger.getLogger(IMUIHelper.class).d("notification#setSessionInIntent, sessionId:%s, sessionType:%d", sessionId, sessionType);
-		intent.putExtra(SysConstant.SESSION_ID_KEY, sessionId);
-		intent.putExtra(SysConstant.SESSION_TYPE_KEY, sessionType);
+		intent.putExtra(SysConstant.KEY_SESSION_ID, sessionId);
+		intent.putExtra(SysConstant.KEY_SESSION_TYPE, sessionType);
 	}
 
 	public static class SessionInfo {
@@ -522,7 +630,7 @@ public class IMUIHelper {
 			return null;
 		}
 
-		return new SessionInfo(intent.getStringExtra(SysConstant.SESSION_ID_KEY), intent.getIntExtra(SysConstant.SESSION_TYPE_KEY, 0));
+		return new SessionInfo(intent.getStringExtra(SysConstant.KEY_SESSION_ID), intent.getIntExtra(SysConstant.KEY_SESSION_TYPE, 0));
 
 	}
 
@@ -578,6 +686,6 @@ public class IMUIHelper {
 			return false;
 		}
 
-		return (sessionInfo.getSessionId().equals(session.getSessionId()) && sessionInfo.getSessionType() == session.getType());
+		return (sessionInfo.getSessionId().equals(session.getSessionId()) && sessionInfo.getSessionType() == session.getSessionType());
 	}
 }

@@ -76,6 +76,7 @@ public class GroupUnreadMsgPacket extends Packet {
 			for (int i = 0; i < msgCnt; ++i) {
 				String fromId = buffer.readString();
 				int createTime = buffer.readInt();
+				byte msgType = buffer.readByte();
 				int msgLen = buffer.readInt();
 				byte[] msgData = null; 
 				if (msgLen > 0) {
@@ -86,9 +87,9 @@ public class GroupUnreadMsgPacket extends Packet {
 				message.fromId = fromId;
 				message.toId = groupId;
 				message.createTime = createTime;
+				message.talkerId = fromId;
 				
-				//todo eric, didn't support group voice?
-				message.type = ProtocolConstant.MSG_TYPE_GROUP_TEXT;
+				message.type = msgType;
 				message.msgLen = msgLen;
 				message.msgData = msgData;
 				message.sessionId = message.toId;

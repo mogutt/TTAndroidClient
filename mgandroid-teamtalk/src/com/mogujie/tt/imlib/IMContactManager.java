@@ -1,12 +1,16 @@
 package com.mogujie.tt.imlib;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import android.content.BroadcastReceiver;
 import android.content.Intent;
 
+import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.RecentInfo;
+import com.mogujie.tt.imlib.common.ErrorCode;
 import com.mogujie.tt.imlib.network.SocketThread;
 import com.mogujie.tt.imlib.proto.AllContactsPacket;
 import com.mogujie.tt.imlib.proto.ContactEntity;
@@ -19,9 +23,11 @@ import com.mogujie.tt.imlib.utils.IMContactHelper;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
+import com.mogujie.tt.ui.utils.IMServiceHelper;
+import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 import com.mogujie.tt.utils.pinyin.PinYin;
 
-public class IMContactManager extends IMManager {
+public class IMContactManager extends IMManager implements OnIMServiceListner {
 
 	private static IMContactManager inst;
 	private Logger logger = Logger.getLogger(IMContactManager.class);
@@ -30,6 +36,7 @@ public class IMContactManager extends IMManager {
 	private ContactEntity loginContact;
 	private List<RecentContactsPacket.UserEntity> recentContactList;
 	private List<String> unreadMsgContactList;
+	private IMServiceHelper imServiceHelper = new IMServiceHelper();
 
 	// key = id
 	private Map<String, DepartmentEntity> departments = new ConcurrentHashMap<String, DepartmentEntity>();
@@ -47,6 +54,16 @@ public class IMContactManager extends IMManager {
 
 	private IMContactManager() {
 
+	}
+
+	public void register() {
+		logger.d("reconnect#regisgter");
+
+		List<String> actions = new ArrayList<String>();
+		actions.add(IMActions.ACTION_LOGIN_RESULT);
+
+		imServiceHelper.registerActions(ctx, actions,
+				IMServiceHelper.INTENT_NO_PRIORITY, this);
 	}
 
 	public ContactEntity getLoginContact() {
@@ -69,8 +86,6 @@ public class IMContactManager extends IMManager {
 			reqUnreadMsgContactList();
 		}
 	}
-	
-	
 
 	public Map<String, DepartmentEntity> getDepartments() {
 		return departments;
@@ -81,15 +96,29 @@ public class IMContactManager extends IMManager {
 	}
 
 	public ContactEntity findContact(String contactId) {
+		if (contactId == null) {
+			logger.e("contact#findContact contactId is null");
+			return null;
+		}
+		
 		return contacts.get(contactId);
 	}
-	
+
 	public DepartmentEntity findDepartment(String departmentId) {
 		return departments.get(departmentId);
 	}
 
 	public boolean ContactsDataReady() {
 		return departmentDataReady && allContactsDataReady;
+	}
+
+	public boolean isContactProfileReady(String contactId) {
+		ContactEntity contact = findContact(contactId);
+		if (contact == null) {
+			return false;
+		}
+
+		return contact.isProfileReady();
 	}
 
 	private void reqGetDepartments() {
@@ -158,9 +187,39 @@ public class IMContactManager extends IMManager {
 		triggerContactsDataReady();
 		triggerSearchDataReady();
 	}
-	
+
 	private void triggerSearchDataReady() {
-		IMUIHelper.triggerSearchDataReady(logger, ctx, this, IMGroupManager.instance());
+		IMUIHelper.triggerSearchDataReady(logger, ctx, this,
+				IMGroupManager.instance());
+	}
+
+	private void fillDepartment(ContactEntity contact) {
+		/*
+		 * in inner version, there's no department protocol, so we're using
+		 * department name inside ContactEntity to fill in everything
+		 * contact.departmentId actually is department name
+		 */
+
+		if (contact == null) {
+			return;
+		}
+
+		if (departments.containsKey(contact.departmentId)) {
+			return;
+		}
+
+		DepartmentEntity department = new DepartmentEntity();
+		department.id = contact.departmentId;
+		department.title = contact.departmentId;
+		department.description = "";
+		department.parentId = "";
+		department.leaderId = "";
+		department.status = 0;
+
+		PinYin.getPinYin(logger, department.title, department.pinyinElement);
+
+		departments.put(department.id, department);
+
 	}
 
 	public void onRepAllUsers(DataBuffer buffer) {
@@ -177,7 +236,7 @@ public class IMContactManager extends IMManager {
 		for (ContactEntity contact : resp.entityList) {
 			PinYin.getPinYin(logger, contact.name, contact.pinyinElement);
 
-			//logger.i("user -> entity:%s", contact);
+			// logger.i("user -> entity:%s", contact);
 
 			contacts.put(contact.id, contact);
 
@@ -185,7 +244,11 @@ public class IMContactManager extends IMManager {
 				logger.i("contact#find login contact");
 				loginContact = contact;
 			}
+
+			fillDepartment(contact);
 		}
+
+		departmentDataReady = true;
 
 		allContactsDataReady = true;
 
@@ -198,11 +261,11 @@ public class IMContactManager extends IMManager {
 	}
 
 	private void reqGetRecentContacts() {
-		logger.i("contact#reqGetRecentContacts");
+		logger.i("contact#contact#reqGetRecentContacts");
 
 		SocketThread channel = IMLoginManager.instance().getMsgServerChannel();
 		if (channel == null) {
-			logger.e("contact#channel is null");
+			logger.e("contact#contact#channel is null");
 			return;
 		}
 
@@ -212,19 +275,21 @@ public class IMContactManager extends IMManager {
 	public boolean recentContactsDataReady() {
 		return allContactsDataReady && recentContactsDataReady;
 	}
+
 	public void triggerAddRecentContacts() {
 		logger.d("contact#triggerAddRecentContacts");
-		
+
 		if (recentContactsDataReady()) {
 			logger.d("contact#condition is ready");
 			for (RecentContactsPacket.UserEntity recentContact : recentContactList) {
 				ContactEntity contact = findContact(recentContact.id);
 				if (contact == null) {
-					logger.e("recent#no such contact by id:%s",
+					logger.e("contact#no such contact by id:%s",
 							recentContact.id);
 					continue;
 				}
 
+				logger.d("contact#contact:%s", contact.name);
 				RecentInfo recentSession = IMContactHelper
 						.convertContactEntity2RecentInfo(contact,
 								recentContact.userUpdated);
@@ -239,18 +304,18 @@ public class IMContactManager extends IMManager {
 	}
 
 	public void onRepRecentContacts(DataBuffer buffer) {
-		logger.i("contact#onRepRecentContacts");
+		logger.i("contact#contact#onRepRecentContacts");
 
 		RecentContactsPacket packet = new RecentContactsPacket();
 		packet.decode(buffer);
 
 		RecentContactsPacket.PacketResponse resp = (RecentContactsPacket.PacketResponse) packet
 				.getResponse();
-		logger.i("contact#user cnt:%d", resp.entityList.size());
+		logger.i("contact#contact#user cnt:%d", resp.entityList.size());
 
-//		for (RecentContactsPacket.UserEntity entity : resp.entityList) {
-//			//logger.i("user -> entity:%s", entity);
-//		}
+		// for (RecentContactsPacket.UserEntity entity : resp.entityList) {
+		// logger.i("contact#contact#recent contact:%s", entity);
+		// }
 
 		recentContactList = resp.entityList;
 
@@ -315,6 +380,52 @@ public class IMContactManager extends IMManager {
 					contactId);
 			channel.sendPacket(new UnreadMsgPacket(contactId));
 		}
+
+	}
+
+	@Override
+	public void reset() {
+		departmentDataReady = false;
+		allContactsDataReady = false;
+		recentContactsDataReady = false;
+		unreadMsgContactListReady = false;
+		loginContact = null;
+		recentContactList = null;
+		unreadMsgContactList = null;
+
+		departments.clear();
+		contacts.clear();
+
+	}
+
+	@Override
+	public void onAction(String action, Intent intent,
+			BroadcastReceiver broadcastReceiver) {
+		if (action.equals(IMActions.ACTION_LOGIN_RESULT)) {
+			handleLoginResultAction(intent);
+
+		}
+
+	}
+
+	private void handleLoginResultAction(Intent intent) {
+		logger.d("contact#handleLoginResultAction");
+		int errorCode = intent
+				.getIntExtra(SysConstant.lOGIN_ERROR_CODE_KEY, -1);
+
+		if (errorCode == ErrorCode.S_OK) {
+			onLoginSuccess();
+		}
+	}
+
+	private void onLoginSuccess() {
+		logger.d("contact#onLogin Successful");
+		fetchContacts();
+	}
+
+	@Override
+	public void onIMServiceConnected() {
+		// TODO Auto-generated method stub
 
 	}
 }

@@ -64,8 +64,8 @@ public class SortSideBar extends View {
         }
         
         for (int i = 0; i < b.length; i++) {
-            paint.setColor(Color.parseColor("#909293"));
-            paint.setTypeface(Typeface.DEFAULT_BOLD);
+            paint.setColor(Color.parseColor("#5e5e5e"));
+            //paint.setTypeface(Typeface.DEFAULT_BOLD);
             paint.setAntiAlias(true);
            
             paint.setTextSize(singleHeight);

@@ -3,34 +3,32 @@ package com.mogujie.tt.config;
 import android.media.AudioManager;
 
 public interface SysConstant {
+	String KEY_AVATAR_URL = "key_avatar_url";
+	String KEY_IS_IMAGE_CONTACT_AVATAR = "is_image_contact_avatar";
+	String KEY_DONT_MODIFY_IMAGE_URI = "dont_modify_image_uri";
+	String KEY_LOGIN_NOT_AUTO = "login_not_auto";
+	String KEY_USER_PROFILE_ID = "user_profile_id";
 	String KEY_LOCATE_DEPARTMENT = "key_locate_department";
+	String KEY_MSG_SERVER_ERROR_CODE = "key_msg_server_error_code";
 	String lOGIN_ERROR_CODE_KEY = "login_error_code";
 	String CONTACT_ID_KEY = "contact_id";
 	String FROM_ID_KEY = "from_id";
 	String SEQ_NO_KEY = "seq_no";
 	String MSG_KEY = "msg";
 	String MSG_ID_KEY = "msg_id";
-	String SESSION_TYPE_KEY = "session_type";
-	String SESSION_ID_KEY = "session_id";
+	String KEY_SESSION_TYPE = "session_type";
+	String KEY_SESSION_ID = "session_id";
 	String OPERATION_RESULT_KEY = "tt_opeartion_result";
 	String STATUS_KEY = "status";
-
 	
-	// todo eric
-	// 122.225.68.125:8001
-
-//	String AVATAR_URL_PREFIX = "http://122.225.68.125:8600/";
-//	String DOWNLOAD_IMAGE_URL_REPFIX = "http://122.225.68.125:8600/";
-//	String UPLOAD_IMAGE_URL_PREFIX = "http://122.225.68.125:8600/";
+	int SEX_FEMALE = 0;
+	int SEX_MAILE = 1;				
+	String AVATAR_URL_PREFIX = "http://122.225.68.125:8600/";
+	String DOWNLOAD_IMAGE_URL_REPFIX = "http://122.225.68.125:8600/";
+	String UPLOAD_IMAGE_URL_PREFIX = "http://122.225.68.125:8600/";
 	
-	String AVATAR_URL_PREFIX = "http://122.225.68.125:8001/";
-	String DOWNLOAD_IMAGE_URL_REPFIX = "http://122.225.68.125:8001/";
-	String UPLOAD_IMAGE_URL_PREFIX = "http://122.225.68.125:8001/";
-
 	public static final int PROTOCOL_HEADER_LENGTH = 12;// 默认消息头的长度
-	public static final int PROTOCOL_VERSION = 3;
-	public static final int PROTOCOL_FLAG = 0;
-	public static final char PROTOCOL_ERROR = '0';
+	public static final int PROTOCOL_VERSION = 1;
 	public static final char PROTOCOL_RESERVED = '0';
 	public static final int DEFAULT_SERVICEID = 1000;// 心跳包
 	public static final int AUDIO_RECORD_MAX_LENGTH = 120;
@@ -158,10 +156,6 @@ public interface SysConstant {
 	public static final String MSG_SERVER_INFO_IP2 = "MSG_SERV_INFO_IP2";
 	public static final String MSG_SERVER_INFO_PORT = "MSG_SERV_INFO_PORT";
 
-	// public static final String LOGIN_IP = "122.225.67.108";
-	// public static final int LOGIN_PORT = 8008;
-	// public static final String LOGIN_IP = "122.225.67.109";
-	// public static final int LOGIN_PORT = 80;
 	public static final String DEFAULT_AUDIO_SUFFIX = ".spx";
 	public static final int MAX_RECONNECT_COUNT = 10;
 	public static final int MAX_HEART_BEAT_TIME = 60;
@@ -241,4 +235,6 @@ public interface SysConstant {
 	public static final int SHOW_PROGRESS_BAR_INTERVAL = 5;
 
 	public static final int DEFAULT_CUSTOM_SERVICE_TYPE = 23;
+	
+	public static final String WEBVIEW_URL = "WEBVIEW_URL";
 }

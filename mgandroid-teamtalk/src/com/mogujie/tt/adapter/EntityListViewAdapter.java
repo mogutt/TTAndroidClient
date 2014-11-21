@@ -5,6 +5,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -66,6 +67,14 @@ public class EntityListViewAdapter extends BaseAdapter
 
 		notifyDataSetChanged();
 	}
+	
+	public void addTail(EntityList entityList) {
+		logger.d("entityListViewAdapter#addTail entityList, current size:%d", entityListMgr.size());
+
+		entityListMgr.add(entityList);
+
+		notifyDataSetChanged();
+	}
 
 	public int getCount() {
 		if (!isEnabled()) {
@@ -82,6 +91,10 @@ public class EntityListViewAdapter extends BaseAdapter
 
 	public long getItemId(int position) {
 		return position;
+	}
+	
+	public void clear() {
+		entityListMgr.clear();
 	}
 
 	public void showCheckbox() {
@@ -207,8 +220,15 @@ public class EntityListViewAdapter extends BaseAdapter
 		if (contact == null) {
 			return null;
 		}
-
-		return getViewImpl(false, isSearchMode, contact.searchElement, entityList, position, convertView, entityList.getSectionName(position), contact.avatarUrl, contact.name, IMSession.SESSION_P2P);
+		String displayName=null;
+		if (!TextUtils.isEmpty(contact.nickName)) {
+            displayName = contact.nickName;
+        }else if(!TextUtils.isEmpty(contact.name)){
+            displayName = contact.name;
+        }else{
+            displayName = contact.id;
+        }
+		return getViewImpl(false, isSearchMode, contact.searchElement, entityList, position, convertView, entityList.getSectionName(position), contact.avatarUrl, displayName, IMSession.SESSION_P2P);
 	}
 
 	// todo eric use generic

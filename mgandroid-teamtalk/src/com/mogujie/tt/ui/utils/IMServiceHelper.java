@@ -89,6 +89,7 @@ public class IMServiceHelper {
 	}
 
 	public void disconnect(Context ctx) {
+		logger.d("im#disconnect:%s", imReceiver);
 		unregisterActions(ctx);
 		unbindService(ctx);
 	}
@@ -113,6 +114,8 @@ public class IMServiceHelper {
 			}
 
 			// todo eric check return value
+			logger.d("im#registerReceiver imReceiver:%s", imReceiver);
+
 			ctx.registerReceiver(imReceiver, intentFilter);
 
 			registered = true;
@@ -124,7 +127,13 @@ public class IMServiceHelper {
 	public void unregisterActions(Context ctx) {
 		if (registered) {
 			registered = false;
-			ctx.unregisterReceiver(imReceiver);
+			logger.d("im#unregisterReceiver imReceiver:%s", imReceiver);
+
+			try {
+				ctx.unregisterReceiver(imReceiver);
+			} catch (IllegalArgumentException exception) {
+				logger.w("im#got exception becuase of unmatched reg/unreg, we sould place to onStop next version.e:%s", exception.getMessage());
+			}
 		}
 	}
 
@@ -134,8 +143,7 @@ public class IMServiceHelper {
 		Intent intent = new Intent();
 		intent.setClass(ctx, IMService.class);
 
-		if (!ctx.bindService(intent, imServiceConnection,
-				android.content.Context.BIND_AUTO_CREATE)) {
+		if (!ctx.bindService(intent, imServiceConnection, android.content.Context.BIND_AUTO_CREATE)) {
 			logger.e("im#bindService(imService) failed");
 			return false;
 		} else {
@@ -146,8 +154,12 @@ public class IMServiceHelper {
 
 	public void unbindService(Context ctx) {
 
-		// todo eric .check the return value .check the right place to call it
-		ctx.unbindService(imServiceConnection);
+		try {
+			// todo eric .check the return value .check the right place to call it
+			ctx.unbindService(imServiceConnection);
+		} catch (IllegalArgumentException exception) {
+			logger.w("im#got exception becuase of unmatched bind/unbind, we sould place to onStop next version.e:%s", exception.getMessage());
+		}
 
 		logger.i("unbindservice ok");
 	}

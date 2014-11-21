@@ -1,4 +1,3 @@
-
 package com.mogujie.tt.ui.tools;
 
 import java.util.HashMap;
@@ -11,35 +10,24 @@ import android.graphics.Bitmap;
  * @author Nana
  * @date 2014-8-4
  */
+//todo eric remove this shit
 public class DisplayBitmapCache {
-    private static DisplayBitmapCache instance = null;
-    private HashMap<String, Bitmap> map = new HashMap<String, Bitmap>();
-    private Context context = null;
+	private static DisplayBitmapCache instance = null;
+	private Context context = null;
 
-    public static synchronized DisplayBitmapCache getInstance(Context c) {
-        if (null == instance) {
-            instance = new DisplayBitmapCache(c);
-        }
-        return instance;
-    }
+	public static synchronized DisplayBitmapCache getInstance(Context c) {
+		if (null == instance) {
+			instance = new DisplayBitmapCache(c);
+		}
+		return instance;
+	}
 
-    private DisplayBitmapCache(Context c) {
-        context = c;
-    }
+	private DisplayBitmapCache(Context c) {
+		context = c;
+	}
 
-    public void set(String path, Bitmap bmp) {
-        map.put(path, bmp);
-    }
-
-    public Bitmap get(String path) {
-        if (map.containsKey(path)) {
-            return map.get(path);
-        } else {
-            Bitmap bmp = ImageTool.getBigBitmapForDisplay(path, context);
-            if (null != bmp) {
-                map.put(path, bmp);
-            }
-            return bmp;
-        }
-    }
+	public Bitmap get(String path) {
+		Bitmap bmp = ImageTool.getBigBitmapForDisplay(path, context);
+		return bmp;
+	}
 }

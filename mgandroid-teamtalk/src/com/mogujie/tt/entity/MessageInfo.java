@@ -22,8 +22,8 @@ public class MessageInfo extends MessageEntity implements Serializable {
 				+ ", msgFromUserId=" + msgFromUserId + ", msgFromName="
 				+ msgFromName + ", msgFromUserNick=" + msgFromUserNick
 				+ ", msgFromUserAvatar=" + msgFromUserAvatar + ", msgType="
-				+ msgType + ", msgOverview=" + msgOverview + ", msgContent="
-				+ msgContent + ", msgLoadState=" + msgLoadState + ", targetId="
+				+ msgType + ", msgOverview=" + msgOverview + ", msgContent=*******"
+				+ msgContent + "*******, msgLoadState=" + msgLoadState + ", targetId="
 				+ targetId + ", msgRenderType=" + msgRenderType
 				+ ", msgAttachContent=" + msgAttachContent + ", savePath="
 				+ savePath + ", url=" + url + ", displayType=" + displayType
@@ -33,7 +33,7 @@ public class MessageInfo extends MessageEntity implements Serializable {
 				+ ", createTime=" + createTime + ", type=" + type + ", msgLen="
 				+ msgLen + ", attach=" + attach + ", msgId=" + msgId
 				+ ", sessionId=" + sessionId + ", sessionType=" + sessionType
-				+ ", resend=" + resend + "]";
+				+ ", resend=" + resend + ", talkerId=" + talkerId + ", originalTime=" + originalTime + "]";
 	}
 
 	protected String ownerId = CacheHub.getInstance().getLoginUserId(); // 用户id
@@ -62,6 +62,19 @@ public class MessageInfo extends MessageEntity implements Serializable {
 	private int created = 0; // 创建时间
 	private int updated = 0; // 更新时间
 	private boolean resend = false;
+	
+	//text-picture mixed message could be split into several separate messages
+	// and we have to increment sub messages' times to arrange the order 
+	// so we use originalTime to represent its original parent's time
+	private int originalTime;
+
+	public int getOriginalTime() {
+		return originalTime;
+	}
+
+	public void setOriginalTime(int originalTime) {
+		this.originalTime = originalTime;
+	}
 
 	public boolean isResend() {
 		return resend;
@@ -84,11 +97,13 @@ public class MessageInfo extends MessageEntity implements Serializable {
 		seqNo = msg.seqNo;
 		fromId = msg.fromId;
 		toId = msg.toId;
+		talkerId = msg.talkerId;
 		createTime = msg.createTime;
 		type = msg.type;
 		msgLen = msg.msgLen;
 		msgData = msg.msgData;
 		msg.attach = msg.attach;
+		multiLoginSelfMsg = msg.multiLoginSelfMsg;
 
 		generateMsgId();
 		generateSessionId(false);
@@ -101,6 +116,11 @@ public class MessageInfo extends MessageEntity implements Serializable {
 		// todo eric
 		// msgInfo.setMsgRenderType(msgRenderType);
 		setMsgAttachContent(null);
+		
+		//tod eric for repeat unread message debug test
+		if (isTextType()) {
+			setMsgContent(new String(msgData));
+		}
 
 		if (isAudioType()) {
 			logger.d("chat#recv audio msg");
@@ -108,18 +128,8 @@ public class MessageInfo extends MessageEntity implements Serializable {
 		} 
 	}
 	public boolean isMyMsg() {
-		return msgFromUserId.equals(CacheHub.getInstance().getLoginUserId());
+		return talkerId.equals(CacheHub.getInstance().getLoginUserId());
 	}
-
-	// @Override
-	// public String toString() {
-	// // TODO Auto-generated method stub
-	// //return super.toString();
-	//
-	// //return
-	// String.format("serialVersionUID:%d, ownerId:%s, isSend:%s, relateId:%d, msgFromUserId:%s, msgFromName:%s, msgFromUserNick:%s, msgFromUserAvatar:%s, msgType:%d, msgOverview:%s, ",
-	// )
-	// }
 
 	public String getOwnerId() {
 		return ownerId;
@@ -229,6 +239,7 @@ public class MessageInfo extends MessageEntity implements Serializable {
 	public void setMsgFromUserId(String msgFromUserId) {
 		this.msgFromUserId = msgFromUserId;
 		fromId = msgFromUserId;
+		talkerId = fromId;
 	}
 
 	public String getMsgFromName() {
@@ -262,6 +273,7 @@ public class MessageInfo extends MessageEntity implements Serializable {
 	public void setMsgCreateTime(int msgCreateTime) {
 		this.created = msgCreateTime;
 		this.createTime = msgCreateTime;
+		this.originalTime = msgCreateTime;
 	}
 
 	public String getMsgOverview() {
@@ -337,6 +349,7 @@ public class MessageInfo extends MessageEntity implements Serializable {
 
 		this.relateId = other.relateId; // 联系id
 		this.msgFromUserId = other.msgFromUserId; // 发送信息的用户id
+		this.talkerId = other.talkerId;
 		this.msgFromName = other.msgFromName; // 发送信息的用户名
 		this.msgFromUserNick = other.msgFromUserNick; // 发送信息的用户昵称
 		this.msgFromUserAvatar = other.msgFromUserAvatar; // 用户头像URL链接
@@ -354,6 +367,7 @@ public class MessageInfo extends MessageEntity implements Serializable {
 		this.playTime = other.playTime; // 语音播放时长
 		this.audiocontent = other.audiocontent; // 语音本地缓存
 		this.created = other.created; // 创建时间
+		this.originalTime = other.originalTime;
 		this.updated = other.updated; // 更新时间
 		this.readStatus = other.readStatus;
 		this.msgParentId = other.msgParentId;
@@ -381,4 +395,18 @@ public class MessageInfo extends MessageEntity implements Serializable {
 	public void setIsSend(Boolean isSend) {
 		this.isSend = isSend;
 	}
+	
+	public String getContent() {
+		if (isTextType()) {
+			return getMsgContent();
+		} else if (isAudioType()) {
+			return createAudioInfo(msgInfo);
+		} else if (isImage()) {
+			return createPicInfo(msgInfo);
+		}
+
+		return "";
+	}
+
+
 }

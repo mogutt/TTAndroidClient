@@ -6,19 +6,17 @@
     android:paddingBottom="20dp"
     android:paddingRight="15dp" >
 
-    <com.mogujie.widget.imageview.MGWebImageView
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <ImageView
         android:id="@+id/user_portrait"
-        android:layout_width="38dp"
-        android:layout_height="38dp"
+        android:layout_width="41dp"
+        android:layout_height="41dp"
         android:layout_alignParentRight="true"
         android:scaleType="centerCrop"
-        android:src="@drawable/tt_default_user_portrait_corner" />
-
-    <RelativeLayout
+        android:src="@drawable/tt_default_user_portrait_corner" /><RelativeLayout
         android:id="@+id/content_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignTop="@id/user_portrait"
         android:layout_marginLeft="35dp"
         android:layout_marginRight="5dp"
         android:layout_toLeftOf="@id/user_portrait" >
@@ -28,6 +26,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
+            android:layout_marginTop="0dp"
             android:background="@drawable/tt_my_message_bkgnd"
             android:gravity="right"
             android:orientation="vertical"
@@ -50,7 +49,7 @@
             android:layout_alignBottom="@id/message_layout"
             android:layout_marginBottom="13dp"
             android:layout_marginRight="7dp"
-            android:text="66666"
+            android:text=""
             android:textSize="14sp" />
 
         <View
@@ -63,22 +62,28 @@
 
         <ImageView
             android:id="@+id/message_state_failed"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginRight="5dp"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_alignBottom="@id/message_layout"
+            android:layout_marginBottom="13dp"
+            android:layout_marginRight="16dp"
             android:adjustViewBounds="true"
             android:contentDescription="@string/message_image_desc"
             android:src="@drawable/tt_msg_tip"
-            android:visibility="gone" />
+            android:visibility="visible" />
 
         <ProgressBar
             android:id="@+id/progressBar1"
             style="?android:attr/progressBarStyleSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:visibility="gone" />
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_alignBottom="@id/message_layout"
+            android:layout_marginBottom="13dp"
+            android:layout_marginRight="10dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/message_image_desc"
+            android:src="@drawable/tt_msg_tip"
+            android:visibility="visible" />
     </RelativeLayout>
 
 </RelativeLayout>

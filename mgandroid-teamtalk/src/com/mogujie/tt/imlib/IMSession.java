@@ -25,7 +25,7 @@ public class IMSession {
 		this.imServiceHelper = imServiceHelper;
 	}
 
-	public int getType() {
+	public int getSessionType() {
 		return type;
 	}
 

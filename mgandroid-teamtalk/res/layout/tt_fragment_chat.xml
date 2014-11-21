@@ -25,14 +25,6 @@
                 android:background="#ffeeee"
                 android:orientation="horizontal" >
 
-                <ImageView
-                    android:id="@+id/imageView1"
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginLeft="25dp"
-                    android:src="@drawable/warning" />
-
                 <TextView
                     android:id="@+id/textView1"
                     android:layout_width="wrap_content"
@@ -41,6 +33,18 @@
                     android:layout_marginLeft="23dp"
                     android:text="@string/no_network"
                     android:textColor="#ABABAB" />
+
+                <ProgressBar
+                    android:id="@+id/progressbar_reconnect"
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="100dp"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/tt_msg_tip"
+                    android:visibility="gone" />
+
             </LinearLayout>
 
             <TextView
@@ -61,6 +65,7 @@
             android:background="@android:color/white"
             android:cacheColorHint="@android:color/transparent"
             android:divider="@null"
+            android:listSelector="@android:color/transparent"
             android:paddingBottom="0dp" />
 
         <View
@@ -90,9 +95,7 @@
             android:paddingBottom="0dp"
             ptr:ptrMode="pullFromStart"
             ptr:ptrOverScroll="false" />
-        <!--
-     </LinearLayout>
-        -->
+        <!-- </LinearLayout> -->
     </LinearLayout>
 
     <ProgressBar

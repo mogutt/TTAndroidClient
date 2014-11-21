@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.mogujie.tt.R;
@@ -20,7 +21,6 @@ import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.utils.DumpUtils;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
-import com.mogujie.widget.imageview.MGWebImageView;
 
 public class GroupManagerAdapter extends BaseAdapter {
 	private Logger logger = Logger.getLogger(GroupManagerAdapter.class);
@@ -32,6 +32,11 @@ public class GroupManagerAdapter extends BaseAdapter {
 	private boolean hasAddButton;
 	private OnDeleteItemListener deleteItemListener;
 	private Set<String> fixedIdSet;
+	private int itemLayout = R.layout.tt_group_manage_grid_item;
+
+	public void setItemLayout(int itemLayout) {
+		this.itemLayout = itemLayout;
+	}
 
 	public interface OnDeleteItemListener {
 		void onDeleteItem(String contactId);
@@ -185,10 +190,10 @@ public class GroupManagerAdapter extends BaseAdapter {
 		GroupHolder holder = null;
 		if (convertView == null) {
 			LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-			convertView = inflater.inflate(R.layout.tt_group_manage_grid_item, null);
+			convertView = inflater.inflate(itemLayout, null);
 
 			holder = new GroupHolder();
-			holder.imageView = (MGWebImageView) convertView.findViewById(R.id.grid_item_image);
+			holder.imageView =  (ImageView) convertView.findViewById(R.id.grid_item_image);
 			holder.userTitle = (TextView) convertView.findViewById(R.id.group_manager_user_title);
 			holder.deleteImg = convertView.findViewById(R.id.deleteLayout);
 
@@ -199,9 +204,20 @@ public class GroupManagerAdapter extends BaseAdapter {
 
 		if (position >= 0 && memberList.size() > position) {
 			logger.d("groupmgr#in mebers area");
-			ContactEntity contactEntity = memberList.get(position);
+			final ContactEntity contactEntity = memberList.get(position);
 			logger.d("debug#add contact name:%s", contactEntity.name);
 			setHolder(holder, position, contactEntity.avatarUrl, 0, contactEntity.name, contactEntity);
+			
+			if (holder.imageView != null) {
+				holder.imageView.setOnClickListener( new View.OnClickListener() {
+					
+					@Override
+					public void onClick(View v) {
+						IMUIHelper.openUserProfileActivity(context, contactEntity.id);
+					}
+				});
+			}
+			
 		} else if (position >= memberList.size() && hasAddButton) {
 			logger.d("groupmgr#add + button");
 			setHolder(holder, position, null, R.drawable.tt_group_manager_add_user, "", null);
@@ -220,7 +236,7 @@ public class GroupManagerAdapter extends BaseAdapter {
 			// holder.imageView.setAdjustViewBounds(false);
 			// holder.imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
 			if (avatarUrl != null) {
-				IMUIHelper.setWebImageViewAvatar(holder.imageView, avatarUrl, IMSession.SESSION_P2P);
+				IMUIHelper.setEntityImageViewAvatar(holder.imageView, avatarUrl, IMSession.SESSION_P2P);
 			} else {
 				logger.d("groupmgr#setimageresid %d", avatarResourceId);
 
@@ -279,7 +295,7 @@ public class GroupManagerAdapter extends BaseAdapter {
 	}
 	
 	final class GroupHolder {
-		MGWebImageView imageView;
+		ImageView imageView;
 		TextView userTitle;
 		View deleteImg;
 		ContactEntity contactEntity;

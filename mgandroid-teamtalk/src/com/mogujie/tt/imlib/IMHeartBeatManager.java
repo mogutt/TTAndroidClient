@@ -39,8 +39,8 @@ public class IMHeartBeatManager extends IMManager implements OnIMServiceListner 
 
 //todo eric, ask luoning to support 4 minutes heartbeat
 //right now, it will cost the battery really bad
-//	private final int HEARTBEAT_INTERVAL = 4 * 60 * 1000;
-	private final int HEARTBEAT_INTERVAL = 10 * 1000;
+	private final int HEARTBEAT_INTERVAL = 4 * 60 * 1000;
+	//private final int HEARTBEAT_INTERVAL = 10 * 1000;
 
 	public void register() {
 		logger.d("heartbeat#regisgter");
@@ -149,6 +149,12 @@ public class IMHeartBeatManager extends IMManager implements OnIMServiceListner 
 	public void onIMServiceConnected() {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

@@ -2,6 +2,7 @@ package com.mogujie.tt.imlib.proto;
 
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
+import com.mogujie.tt.imlib.IMLoginManager;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.packet.base.DefaultHeader;
@@ -69,6 +70,14 @@ public class MessageNotifyPacket extends Packet {
 			msg.seqNo = buffer.readInt();
 			msg.fromId = buffer.readString();
 			msg.toId = buffer.readString();
+			//talker id is equal to the from  id forever
+			msg.talkerId = msg.fromId;
+			
+			if (msg.fromId.equals(IMLoginManager.instance().getLoginId())) {
+				logger.d("chat#recv multiLoginSelfMsg");
+				msg.multiLoginSelfMsg = true;
+			}
+			
 			msg.createTime = buffer.readInt();
 			msg.type = buffer.readByte();
 			

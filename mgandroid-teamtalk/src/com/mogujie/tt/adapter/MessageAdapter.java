@@ -16,7 +16,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.AnimationDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
@@ -48,6 +47,7 @@ import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
+import com.mogujie.tt.ui.activity.DetailPortraitActivity;
 import com.mogujie.tt.ui.activity.DisplayImageActivity;
 import com.mogujie.tt.ui.activity.MessageActivity;
 import com.mogujie.tt.ui.activity.PreviewTextActivity;
@@ -61,11 +61,9 @@ import com.mogujie.tt.utils.FileUtil;
 import com.mogujie.tt.widget.MGProgressbar;
 import com.mogujie.tt.widget.MessageOperatePopup;
 import com.mogujie.tt.widget.SpeekerToast;
-import com.mogujie.widget.imageview.MGWebImageView;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
-import com.squareup.picasso.Picasso.LoadedFrom;
 
 /**
  * @Description 消息适配器
@@ -103,6 +101,8 @@ public class MessageAdapter extends BaseAdapter {
 	private Logger logger = Logger.getLogger(MessageAdapter.class);
 	private IMSession session;
 	private IMServiceHelper imServiceHelper;
+	private IMService imService;
+	private IMMessageManager msgMgr;
 
 	public void setIMServiceHelper(IMServiceHelper imServiceHelper) {
 		this.imServiceHelper = imServiceHelper;
@@ -175,6 +175,8 @@ public class MessageAdapter extends BaseAdapter {
 	}
 
 	public void clearItem() {
+		// logger.d("chat#clearItem callstack:%s", Log.getStackTraceString(new
+		// Throwable()));
 		messageList.clear();
 	}
 
@@ -273,10 +275,11 @@ public class MessageAdapter extends BaseAdapter {
 	 * 
 	 * @param fromStart
 	 * @param item
-	 * 
 	 */
 	public void addItem(MessageInfo info) {
-		logger.d("chat#addItem");
+//		logger.d("chat#addItem, msg:%s, callstack:%s", info, Log.getStackTraceString(new Throwable()));
+		logger.d("chat#addItem, msg:%s", info);
+		
 		try {
 			if (null == info || messageList.contains(info)) {
 				logger.d("chat#already has this item");
@@ -324,6 +327,7 @@ public class MessageAdapter extends BaseAdapter {
 
 		return null;
 	}
+
 	/**
 	 * @Description 由MessageInfo对象修改消息状态(可修改图片文本消息)
 	 * @param messageInfo
@@ -383,8 +387,8 @@ public class MessageAdapter extends BaseAdapter {
 	public void updateItemState(String msgId, int state) {
 		try {
 
-			String stackTraceString = Log.getStackTraceString(new Throwable());
-			stackTraceString.replaceAll("\n", "###");
+//			String stackTraceString = Log.getStackTraceString(new Throwable());
+//			stackTraceString.replaceAll("\n", "###");
 			// logger.d("debug#updateItemState stack:%s", stackTraceString);
 			MessageInfo msgInfo = getMsgInfo(msgId);
 			if (msgInfo == null) {
@@ -495,7 +499,8 @@ public class MessageAdapter extends BaseAdapter {
 			// DumpUtils.dumpStacktrace(logger, "debug#getview", false);
 
 			IMUIHelper.setMessageOwnerAvatar(logger, session, info, holder.portrait);
-			IMUIHelper.setMessageOwnerName(logger, session, info, holder.name);
+
+			setName(holder, info);
 
 			final View baseView = getBaseViewForMenu(holder, info);
 
@@ -507,7 +512,7 @@ public class MessageAdapter extends BaseAdapter {
 					@Override
 					public void onClick(View arg0) {
 						logger.d("debug#onClick, msg:%s", info);
-						if (!info.isMy() && info.isImage()) {
+						if (!info.isMyMsg() && info.isImage()) {
 							logger.d("debug#pic#found failed receiving image message");
 							updateItemState(info.msgId, SysConstant.MESSAGE_STATE_UNLOAD);
 						}
@@ -551,6 +556,20 @@ public class MessageAdapter extends BaseAdapter {
 		}
 	}
 
+	private void setName(MessageHolderBase holder, MessageInfo info) {
+		if (holder.name == null) {
+			return;
+		}
+
+		if (session.getSessionType() != IMSession.SESSION_P2P) {
+			holder.name.setVisibility(View.VISIBLE);
+
+			IMUIHelper.setMessageOwnerName(logger, session, info, holder.name);
+		} else {
+			holder.name.setVisibility(View.GONE);
+		}
+	}
+
 	@Override
 	public int getItemViewType(int position) {
 		// logger.d("chat#getItemViewType -> position:%d", position);
@@ -590,7 +609,7 @@ public class MessageAdapter extends BaseAdapter {
 			return MESSAGE_TYPE_INVALID;
 		}
 	}
-	
+
 	private int getMenuType(MessageInfo msg) {
 		if (msg.getDisplayType() == SysConstant.DISPLAY_TYPE_TEXT) {
 			return SysConstant.POPUP_MENU_TYPE_TEXT;
@@ -628,7 +647,7 @@ public class MessageAdapter extends BaseAdapter {
 
 	private void fillBaseMessageholder(MessageHolderBase holder,
 			View convertView) {
-		holder.portrait = (MGWebImageView) convertView.findViewById(R.id.user_portrait);
+		holder.portrait = (ImageView) convertView.findViewById(R.id.user_portrait);
 		holder.messageFailed = (ImageView) convertView.findViewById(R.id.message_state_failed);
 		holder.loadingProgressBar = (ProgressBar) convertView.findViewById(R.id.progressBar1);
 
@@ -686,6 +705,25 @@ public class MessageAdapter extends BaseAdapter {
 			}
 		});
 		holder.message_content.setOnTouchListener(new onDoubleClick(info.getMsgContent()));
+
+		handlePortraitClick(holder, info);
+	}
+
+	private void handlePortraitClick(MessageHolderBase holder,
+			final MessageInfo msg) {
+		if (holder == null || msg == null) {
+			return;
+		}
+
+		if (holder.portrait != null) {
+			holder.portrait.setOnClickListener(new OnClickListener() {
+
+				@Override
+				public void onClick(View v) {
+					IMUIHelper.openUserProfileActivity(context, msg.talkerId);
+				}
+			});
+		}
 	}
 
 	/**
@@ -700,6 +738,9 @@ public class MessageAdapter extends BaseAdapter {
 			final MessageInfo info, int position, boolean isMine,
 			final View parent) {
 		logger.d("chat#handleImageMessage");
+
+		handlePortraitClick(holder, info);
+
 		try {
 			boolean setBackground = false;// 图片加载失败时是否显示背景
 			if (null == holder || null == info)
@@ -736,16 +777,21 @@ public class MessageAdapter extends BaseAdapter {
 					holder.message_image.setImageResource(R.drawable.tt_default_message_image);
 					setBackground = true;
 					holder.image_progress.showProgress();
-					if (!isMine) {
-						logger.d("chat#pic#not mine,  need donwload");
-						downLoadImage(info);
-					} else {
-						holder.message_image.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-						holder.message_layout.setBackgroundResource(0);
-						holder.message_image.setImageBitmap(bmp);
-						holder.image_progress.hideProgress();
-						setBackground = false;
-					}
+					// no matter the message belongs to myself(in muti-login
+					// situation) or the peer,
+					// we use the state to load the message
+					// if (!isMine) {
+					logger.d("chat#pic#not mine,  need donwload");
+					downLoadImage(info);
+					// } else {
+					// holder.message_image.setLayoutParams(new
+					// FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT,
+					// LayoutParams.MATCH_PARENT));
+					// holder.message_layout.setBackgroundResource(0);
+					// holder.message_image.setImageBitmap(bmp);
+					// holder.image_progress.hideProgress();
+					// setBackground = false;
+					// }
 				}
 					break;
 
@@ -845,6 +891,8 @@ public class MessageAdapter extends BaseAdapter {
 			int position) {
 		logger.d("chat#handleAudioMessage");
 		try {
+			handlePortraitClick(holder, info);
+
 			holder.message_layout.setOnClickListener(new BtnImageListener(info, position, isMine));
 			if (null != info.getSavePath()) {
 				holder.audio_antt_view.setBackgroundResource(isMine
@@ -870,23 +918,21 @@ public class MessageAdapter extends BaseAdapter {
 
 				holder.audio_duration.setText(String.valueOf(info.getPlayTime()) + '"');
 
-				// holder.message_layout
-				// .setOnLongClickListener(new View.OnLongClickListener() {
-				//
-				// @Override
-				// public boolean onLongClick(View v) {
-				// showMenu(context, SysConstant.POPUP_MENU_TYPE_AUDIO, parent,
-				// info,
-				// holder.message_layout);
-				// return true;
-				// }
-				// });
+				holder.message_layout.setOnLongClickListener(new View.OnLongClickListener() {
+
+					@Override
+					public boolean onLongClick(View v) {
+						showMenu(context, SysConstant.POPUP_MENU_TYPE_AUDIO, parent, info, holder.message_layout);
+						return true;
+					}
+				});
 				RelativeLayout.LayoutParams layoutParam = new RelativeLayout.LayoutParams(CommonUtil.getAudioBkSize(info.getPlayTime(), context), LayoutParams.WRAP_CONTENT);
 				holder.message_layout.setLayoutParams(layoutParam);
 				if (isMine) {
 					layoutParam.addRule(RelativeLayout.RIGHT_OF, R.id.audio_duration);
 					RelativeLayout.LayoutParams param = (android.widget.RelativeLayout.LayoutParams) holder.audio_duration.getLayoutParams();
 					param.addRule(RelativeLayout.RIGHT_OF, R.id.message_state_failed);
+					param.addRule(RelativeLayout.RIGHT_OF, R.id.progressBar1);
 				}
 			}
 
@@ -918,9 +964,9 @@ public class MessageAdapter extends BaseAdapter {
 					}
 					if (msgInfo.getMsgReadStatus() < SysConstant.MESSAGE_DISPLAYED) {
 						logger.d("chat#audio#set audio meessage read status");
-						
+
 						updateItemReadState(msgInfo.msgId, SysConstant.MESSAGE_DISPLAYED);
-						
+
 						IMService imService = imServiceHelper.getIMService();
 						if (imService != null) {
 							msgInfo.setMsgReadStatus(SysConstant.MESSAGE_DISPLAYED);
@@ -943,7 +989,7 @@ public class MessageAdapter extends BaseAdapter {
 					Thread myThread = new Thread() {
 						public void run() {
 							try {
-								Thread.sleep(500);
+								Thread.sleep(200);
 								AudioPlayerHandler.getInstance().startPlay(msgInfo.getSavePath());
 								animationDrawable.start();
 							} catch (Exception e) {
@@ -967,13 +1013,33 @@ public class MessageAdapter extends BaseAdapter {
 
 					} else {
 						// msgIndexMap.put(msgInfo.msgId, position);
-						Intent i = new Intent(context, DisplayImageActivity.class);
-						Bundle bundle = new Bundle();
-						bundle.putSerializable(SysConstant.CUR_MESSAGE, msgInfo);
-						bundle.putBoolean("ISMINE", isMine);
-						i.putExtras(bundle);
-						context.startActivity(i);
-						context.overridePendingTransition(R.anim.tt_image_enter, R.anim.tt_stay);
+						//                        Intent i = new Intent(context, DisplayImageActivity.class);
+						//                        Bundle bundle = new Bundle();
+						//                        bundle.putSerializable(SysConstant.CUR_MESSAGE, msgInfo);
+						//                        bundle.putBoolean("ISMINE", isMine);
+						//                        i.putExtras(bundle);
+						//                        context.startActivity(i);
+						//                        context.overridePendingTransition(R.anim.tt_image_enter, R.anim.tt_stay);
+
+						if (context != null) {
+							Intent intent = new Intent(context, DetailPortraitActivity.class);
+
+							String imageResPath = msgInfo.getSavePath();
+							logger.d("displayimage#imageResPath:%s", imageResPath);
+
+							if (TextUtils.isEmpty(imageResPath)) {
+								logger.e("displayimage#no local path found");
+								return;
+							}
+							//to match universal image loader format
+							imageResPath = "file:///" + imageResPath;
+
+							logger.d("displayimage#imageResourcePath:%s", imageResPath);
+
+							intent.putExtra(SysConstant.KEY_AVATAR_URL, imageResPath);
+							intent.putExtra(SysConstant.KEY_DONT_MODIFY_IMAGE_URI, true);
+							context.startActivity(intent);
+						}
 					}
 				}
 			} catch (Exception e) {
@@ -986,7 +1052,7 @@ public class MessageAdapter extends BaseAdapter {
 		/**
 		 * 头像
 		 */
-		MGWebImageView portrait;
+		ImageView portrait;
 
 		/**
 		 * 消息状态
@@ -1143,7 +1209,7 @@ public class MessageAdapter extends BaseAdapter {
 				return;
 			}
 
-			IMService imService = imServiceHelper.getIMService();
+			imService = imServiceHelper.getIMService();
 			if (imService != null) {
 				imService.getMessageManager().resendMessage(msgInfo);
 			}
@@ -1179,8 +1245,11 @@ public class MessageAdapter extends BaseAdapter {
 			updateItemState(messageInfo.msgId, SysConstant.MESSAGE_STATE_LOADDING);
 
 			// todo eric
-			final String smallImageUrl = SysConstant.DOWNLOAD_IMAGE_URL_REPFIX
-					+ messageInfo.getUrl();// StringUtil.getSmallerImageLink(messageInfo.getUrl());
+			// final String smallImageUrl =
+			// SysConstant.DOWNLOAD_IMAGE_URL_REPFIX
+			// + messageInfo.getUrl();//
+			// StringUtil.getSmallerImageLink(messageInfo.getUrl());
+			final String smallImageUrl = messageInfo.getUrl();
 
 			logger.d("chat#pic#download image ulr:%s", smallImageUrl);
 
@@ -1200,13 +1269,13 @@ public class MessageAdapter extends BaseAdapter {
 			final MessageInfo messageInfoFinal = messageInfo;
 
 			ImageLoader.getInstance().loadImage(smallImageUrl, null, null, new SimpleImageLoadingListener() {
-				//message_image
+				// message_image
 
 				@Override
 				public void onLoadingComplete(String imageUri, View view,
 						Bitmap bitmap) {
 					logger.d("chat#pic#icon onLoadingComplete");
-					//holder.image.setImageBitmap(loadedImage);
+					// holder.image.setImageBitmap(loadedImage);
 
 					logger.d("chat#pic#onBitmapLoaded");
 					String smallImagePath = CommonUtil.getMd5Path(smallImageUrl, SysConstant.FILE_SAVE_TYPE_IMAGE);
@@ -1254,54 +1323,59 @@ public class MessageAdapter extends BaseAdapter {
 
 			});
 
-			//			MGWebImageView.fetchBitmap(context, smallImageUrl, new MGWebImageView.TargetCallback() {
-			//				@Override
-			//				public void onPrepareLoad(Drawable placeHolderDrawable) {
-			//				}
+			// MGWebImageView.fetchBitmap(context, smallImageUrl, new
+			// MGWebImageView.TargetCallback() {
+			// @Override
+			// public void onPrepareLoad(Drawable placeHolderDrawable) {
+			// }
 			//
-			//				@Override
-			//				public void onBitmapLoaded(Bitmap bitmap, LoadedFrom from) {
-			//					logger.d("chat#pic#onBitmapLoaded");
-			//					String smallImagePath = CommonUtil.getMd5Path(smallImageUrl, SysConstant.FILE_SAVE_TYPE_IMAGE);
-			//					File myFile = new File(smallImagePath);
-			//					if (myFile.exists()) {
-			//						logger.d("chat#pic#image already exists, no need to save");
-			//						return;
-			//					}
-			//					BufferedOutputStream bos = null;
-			//					try {
-			//						if (null != bitmap) {
-			//							FileOutputStream fout = new FileOutputStream(myFile);
-			//							bos = new BufferedOutputStream(fout);
-			//							bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
-			//							bos.flush();
-			//							bos.close();
-			//							bos = null;
-			//							logger.d("chat#pic#save image ok");
-			//							updateMessageState(messageInfoFinal, SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
-			//						}
-			//					} catch (Exception e) {
-			//						logger.e("chat#pic#downloading image got exception:%s", e.getMessage());
-			//					} finally {
-			//						try {
-			//							if (null != bos) {
-			//								bos.flush();
-			//								bos.close();
-			//							}
-			//						} catch (IOException e) {
-			//							e.printStackTrace();
+			// @Override
+			// public void onBitmapLoaded(Bitmap bitmap, LoadedFrom from) {
+			// logger.d("chat#pic#onBitmapLoaded");
+			// String smallImagePath = CommonUtil.getMd5Path(smallImageUrl,
+			// SysConstant.FILE_SAVE_TYPE_IMAGE);
+			// File myFile = new File(smallImagePath);
+			// if (myFile.exists()) {
+			// logger.d("chat#pic#image already exists, no need to save");
+			// return;
+			// }
+			// BufferedOutputStream bos = null;
+			// try {
+			// if (null != bitmap) {
+			// FileOutputStream fout = new FileOutputStream(myFile);
+			// bos = new BufferedOutputStream(fout);
+			// bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
+			// bos.flush();
+			// bos.close();
+			// bos = null;
+			// logger.d("chat#pic#save image ok");
+			// updateMessageState(messageInfoFinal,
+			// SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
+			// }
+			// } catch (Exception e) {
+			// logger.e("chat#pic#downloading image got exception:%s",
+			// e.getMessage());
+			// } finally {
+			// try {
+			// if (null != bos) {
+			// bos.flush();
+			// bos.close();
+			// }
+			// } catch (IOException e) {
+			// e.printStackTrace();
 			//
-			//						}
-			//					}
-			//				}
+			// }
+			// }
+			// }
 			//
-			//				@Override
-			//				public void onBitmapFailed(Drawable errorDrawable) {
-			//					logger.d("chat#pic#onBitmapFailed");
-			//					updateMessageState(messageInfoFinal, SysConstant.MESSAGE_STATE_FINISH_FAILED);
-			//					logger.d("download failed");
-			//				}
-			//			});
+			// @Override
+			// public void onBitmapFailed(Drawable errorDrawable) {
+			// logger.d("chat#pic#onBitmapFailed");
+			// updateMessageState(messageInfoFinal,
+			// SysConstant.MESSAGE_STATE_FINISH_FAILED);
+			// logger.d("download failed");
+			// }
+			// });
 
 		} catch (Exception e) {
 			logger.e(e.getMessage());

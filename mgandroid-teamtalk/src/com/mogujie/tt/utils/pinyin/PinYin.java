@@ -3,33 +3,32 @@ package com.mogujie.tt.utils.pinyin;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.text.TextUtils;
+
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.utils.pinyin.HanziToPinyin3.Token;
 
 public class PinYin {
-	public static class PinYinArea {
-		public int startIndex = 1;
-		public int endIndex = -1;
-	}
-
 	public static class PinYinElement {
+		public String pinyin;
+		
+		//every token's pinyin, so "你xx好" -> ["NI", "X", "Y", "HAO"]
+		public List<String> tokenPinyinList = new ArrayList<String>();
+
+		//every first char bonds together for all token's pinyin list
+		public String tokenFirstChars = "";
+		
+		
 		@Override
 		public String toString() {
-			String part1 = "PinYinElement [pinyin=" + pinyin + "]";
-
-			String part2 = "(";
-			for (int i = 0; i < pinyinArea.size(); ++i) {
-				PinYinArea area = pinyinArea.get(i);
-
-				part2 += String.format("area%d(%d, %d)", i, area.startIndex, area.endIndex);
+			StringBuilder part1 = new StringBuilder("PinYinElement [pinyin=" + pinyin  + ", firstChars=" + tokenFirstChars + "]");
+			StringBuilder part2 = new StringBuilder("tokenPinyinList:");
+			for (String tokenPinyin : tokenPinyinList) {
+				part2.append(tokenPinyin).append(",");
 			}
-
-			return part1 + part2 + ")";
+			
+			return part1.append(part2).toString();
 		}
-
-		public String pinyin;
-
-		public List<PinYinArea> pinyinArea = new ArrayList<PinYinArea>();
 	}
 
 	// 汉字返回拼音，字母原样返回，都转换为小写
@@ -37,7 +36,6 @@ public class PinYin {
 			PinYinElement pinyinElement) {
 		ArrayList<Token> tokens = HanziToPinyin3.getInstance().get(input);
 
-		int index = 0;
 		StringBuilder sb = new StringBuilder();
 		if (tokens != null && tokens.size() > 0) {
 			for (Token token : tokens) {
@@ -45,14 +43,18 @@ public class PinYin {
 				if (Token.PINYIN == token.type) {
 					sb.append(token.target);
 
-					index = addPinyinArea(pinyinElement.pinyinArea, index, token.target);
+					if (!TextUtils.isEmpty(token.target)) {
+						pinyinElement.tokenPinyinList.add(token.target);
+						pinyinElement.tokenFirstChars += token.target.substring(0, 1);
+					}
 
 				} else {
-					//你xyz好 -> token.source = xyz, so we should seperate every original character here
+					//你xyz好 -> token.source = xyz, so we should separate every original character here
 					sb.append(token.source);
 					for (int i = 0; i < token.source.length(); ++i) {
-						String childString = token.source.substring(i, i + 1);
-						index = addPinyinArea(pinyinElement.pinyinArea, index, childString);
+						String childString = token.source.substring(i, i + 1).toUpperCase();
+						pinyinElement.tokenPinyinList.add(childString);
+						pinyinElement.tokenFirstChars += childString;
 					}
 				}
 			}
@@ -67,16 +69,5 @@ public class PinYin {
 		}
 
 		pinyinElement.pinyin = ret;
-	}
-
-	private static int addPinyinArea(List<PinYinArea> pinYinAreas,
-			int curIndex, String content) {
-		PinYinArea area = new PinYinArea();
-		area.startIndex = curIndex;
-		area.endIndex = area.startIndex + content.length();
-		
-		pinYinAreas.add(area);
-
-		return area.endIndex;
 	}
 }

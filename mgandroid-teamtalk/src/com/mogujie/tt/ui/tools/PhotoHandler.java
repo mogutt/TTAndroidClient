@@ -93,6 +93,23 @@ public class PhotoHandler {
      * @return
      * @throws IOException
      */
+    public static int calculateInSampleSize(BitmapFactory.Options options,  
+            int reqWidth, int reqHeight) {  
+        // 源图片的高度和宽度  
+        final int height = options.outHeight;  
+        final int width = options.outWidth;  
+        int inSampleSize = 1;  
+        if (height > reqHeight || width > reqWidth) {  
+            // 计算出实际宽高和目标宽高的比率  
+            final int heightRatio = Math.round((float) height / (float) reqHeight);  
+            final int widthRatio = Math.round((float) width / (float) reqWidth);  
+            // 选择宽和高中最小的比率作为inSampleSize的值，这样可以保证最终图片的宽和高  
+            // 一定都会大于等于目标的宽和高。  
+            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;  
+        }  
+        return inSampleSize;  
+    }  
+    
     public static Bitmap revitionImage(String path) throws IOException {
         if (null == path || TextUtils.isEmpty(path) || !new File(path).exists())
             return null;
@@ -102,26 +119,13 @@ public class PhotoHandler {
             in = new BufferedInputStream(new FileInputStream(new File(path)));
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
-            // options.
             BitmapFactory.decodeStream(in, null, options);
+            options.inSampleSize = calculateInSampleSize(options, 400, 600);
+            
             in.close();
-            int i = 0;
-            Bitmap bitmap = null;
-            while (true) {
-                if ((options.outWidth >> i <= 1000)
-                        && (options.outHeight >> i <= 1000)) {
-                    in = new BufferedInputStream(new FileInputStream(new File(
-                            path)));
-                    options.inSampleSize = (int) Math.pow(2.0D, i);
-                    // int height = options.outHeight * 100 / options.outWidth;
-                    // options.outWidth = 100;
-                    // options.outHeight = height;
-                    options.inJustDecodeBounds = false;
-                    bitmap = BitmapFactory.decodeStream(in, null, options);
-                    break;
-                }
-                i += 1;
-            }
+            in = new BufferedInputStream(new FileInputStream(new File(path)));
+            options.inJustDecodeBounds = false;
+            Bitmap bitmap = BitmapFactory.decodeStream(in, null, options);
             Bitmap newbitmap = rotaingImageView(degree, bitmap);
             return newbitmap;
         } catch (Exception e) {

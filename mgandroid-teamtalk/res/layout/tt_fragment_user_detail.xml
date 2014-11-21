@@ -1,159 +1,150 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/default_fragment_bk_color"
-    android:orientation="vertical" >
+    android:layout_height="match_parent" >
 
-    <RelativeLayout
-        android:id="@+id/user_container"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:background="@drawable/tt_page_item_bk"
-        android:padding="15dp" >
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/default_fragment_bk_color"
+        android:orientation="vertical" >
+        <RelativeLayout
+            android:id="@+id/user_container"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/tt_page_item_bk"
+            android:padding="15dp" >
 
-        <!--
+            <!--
              <ImageView
             android:id="@+id/user_portrait"
             android:layout_width="65dp"
             android:layout_height="65dp"
             android:layout_alignParentLeft="true"
             android:src="@drawable/tt_default_user_portrait_corner" />
-        -->
+            -->
 
-        <com.mogujie.widget.imageview.MGWebImageView
-            xmlns:app="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/user_portrait"
-            android:layout_width="65dp"
-            android:layout_height="65dp"
-            android:layout_alignParentLeft="true"
-            android:background="@drawable/tt_default_user_portrait_corner"
-            android:scaleType="centerCrop"
-            app:cornerSize="2dp"
-            app:shape="round_corner" />
+            <ImageView
+                android:id="@+id/user_portrait"
+                android:layout_width="65dp"
+                android:layout_height="65dp"
+                android:layout_alignParentLeft="true"
+                android:background="@drawable/tt_default_user_portrait_corner"
+                android:scaleType="centerCrop" />
 
-        <RelativeLayout
-            android:layout_width="wrap_content"
-            android:layout_height="60dp"
-            android:layout_marginLeft="15dp"
-            android:layout_toRightOf="@id/user_portrait"
-            android:gravity="center" >
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_marginLeft="15dp"
+                android:layout_toRightOf="@id/user_portrait"
+                android:gravity="center" >
+
+                <TextView
+                    android:id="@+id/nickName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="纳纳"
+                    android:textColor="@android:color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/userName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/nickName"
+                    android:layout_marginTop="5dp"
+                    android:text="席晓纳"
+                    android:textColor="@color/default_light_grey_color"
+                    android:textSize="15sp" />
+            </RelativeLayout>
 
             <TextView
-                android:id="@+id/nickName"
+                android:id="@+id/sex"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="纳纳"
-                android:textColor="@android:color/black"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:layout_alignBottom="@+id/user_portrait"
+                android:layout_alignParentRight="true"
+                android:gravity="center"
+                android:text="小仙"
+                android:textColor="#ff71A8"
+                android:textStyle="italic"
+                android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/userName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/nickName"
-                android:layout_marginTop="5dp"
-                android:text="席晓纳"
-                android:textColor="@color/default_light_grey_color"
-                android:textSize="15sp" />
         </RelativeLayout>
-    </RelativeLayout>
 
-    <TableLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:background="@drawable/tt_page_item_bk"
-        android:gravity="center_vertical"
-        android:paddingLeft="20dp"
-        android:shrinkColumns="1" >
-
-        <TableRow>
-
-            <TextView
-                android:layout_height="45dp"
-                android:layout_column="1"
-                android:gravity="left|center_vertical"
-                android:padding="3dip"
-                android:text="职位"
-                android:textColor="@color/default_key_color"
-                android:textSize="15sp" />
-
-            <TextView
-                android:id="@+id/position"
-                android:layout_height="45dp"
-                android:layout_column="1"
-                android:layout_marginLeft="15dp"
-                android:gravity="left|center_vertical"
-                android:padding="3dip"
-                android:text="UI设计师"
-                android:textColor="@color/default_value_color"
-                android:textSize="15sp" />
-        </TableRow>
-
-        <View
+        <TableLayout
             android:layout_width="fill_parent"
-            android:layout_height="0.5dp"
-            android:background="@color/default_line_color" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:background="@drawable/tt_page_item_bk"
+            android:gravity="center_vertical"
+            android:paddingLeft="20dp"
+            android:shrinkColumns="1" >
 
-        <TableRow>
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="0.5dp"
+                android:background="@color/default_line_color" />
 
-            <TextView
-                android:layout_height="45dp"
-                android:layout_column="1"
-                android:gravity="left|center_vertical"
-                android:padding="3dip"
-                android:text="部门"
-                android:textColor="@color/default_key_color"
-                android:textSize="15sp" />
+            <TableRow>
 
-            <TextView
-                android:id="@+id/department"
-                android:layout_height="45dp"
-                android:layout_marginLeft="15dp"
-                android:gravity="left|center_vertical"
-                android:padding="3dip"
-                android:text="产品设计"
-                android:textColor="@color/default_value_color"
-                android:textSize="15sp" />
-        </TableRow>
+                <TextView
+                    android:layout_height="45dp"
+                    android:layout_column="1"
+                    android:gravity="left|center_vertical"
+                    android:padding="3dip"
+                    android:text="部门"
+                    android:textColor="@color/default_key_color"
+                    android:textSize="15sp" />
 
-        <View
-            android:layout_width="fill_parent"
-            android:layout_height="0.5dp"
-            android:background="@color/default_line_color" />
+                <TextView
+                    android:id="@+id/department"
+                    android:layout_height="45dp"
+                    android:layout_marginLeft="15dp"
+                    android:gravity="left|center_vertical"
+                    android:padding="3dip"
+                    android:text=""
+                    android:textColor="@color/default_value_color"
+                    android:textSize="15sp" />
+            </TableRow>
 
-        <TableRow android:id="@+id/phoneArea" android:clickable="true">
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="0.5dp"
+                android:background="@color/default_line_color" />
 
-            <TextView
-                android:layout_height="45dp"
-                android:layout_column="1"
-                android:gravity="left|center_vertical"
-                android:padding="3dip"
-                android:text="手机号"
-                android:textColor="@color/default_key_color"
-                android:textSize="15sp" />
+            <TableRow
+                android:id="@+id/phoneArea"
+                android:clickable="true" >
 
-            <TextView
-                android:id="@+id/telno"
-                android:layout_height="45dp"
-                android:layout_marginLeft="15dp"
-                android:gravity="left|center_vertical"
-                android:padding="3dip"
-                android:text="13777849380"
-                android:textColor="@color/default_value_color"
-                android:textSize="15sp" />
-        </TableRow>
+                <TextView
+                    android:layout_height="45dp"
+                    android:layout_column="1"
+                    android:gravity="left|center_vertical"
+                    android:padding="3dip"
+                    android:text="手机号"
+                    android:textColor="@color/default_key_color"
+                    android:textSize="15sp" />
 
-        <View
-            android:layout_width="fill_parent"
-            android:layout_height="0.5dp"
-            android:background="@color/default_line_color" />
+                <TextView
+                    android:id="@+id/telno"
+                    android:layout_height="45dp"
+                    android:layout_marginLeft="15dp"
+                    android:gravity="left|center_vertical"
+                    android:padding="3dip"
+                    android:text=""
+                    android:textColor="@color/default_value_color"
+                    android:textSize="15sp" />
+            </TableRow>
 
-        <!--
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="0.5dp"
+                android:background="@color/default_line_color" />
+
+            <!--
         <TableRow>
 
             <TextView
@@ -180,40 +171,50 @@
             android:layout_width="fill_parent"
             android:layout_height="0.5dp"
             android:background="@color/default_line_color" />
-        -->
+            -->
 
-        <TableRow>
+            <TableRow>
 
-            <TextView
-                android:layout_height="45dp"
-                android:layout_column="1"
-                android:gravity="left|center_vertical"
-                android:padding="3dip"
-                android:text="邮箱地址"
-                android:textColor="@color/default_key_color"
-                android:textSize="15sp" />
+                <TextView
+                    android:layout_height="45dp"
+                    android:layout_column="1"
+                    android:gravity="left|center_vertical"
+                    android:padding="3dip"
+                    android:text="邮箱地址"
+                    android:textColor="@color/default_key_color"
+                    android:textSize="15sp" />
 
-            <TextView
-                android:id="@+id/email"
-                android:layout_height="45dp"
-                android:layout_marginLeft="15dp"
-                android:gravity="left|center_vertical"
-                android:padding="3dip"
-                android:text="xxx@mogujie.com"
-                android:textColor="@color/default_value_color"
-                android:textSize="15sp" />
-        </TableRow>
-    </TableLayout>
+                <TextView
+                    android:id="@+id/email"
+                    android:layout_height="45dp"
+                    android:layout_marginLeft="15dp"
+                    android:gravity="left|center_vertical"
+                    android:padding="3dip"
+                    android:text=""
+                    android:textColor="@color/default_value_color"
+                    android:textSize="15sp" />
+            </TableRow>
+        </TableLayout>
 
-    <Button
-        android:id="@+id/chat_btn"
-        android:layout_width="fill_parent"
-        android:layout_height="53dp"
-        android:layout_margin="20dp"
-        android:background="@drawable/tt_default_btn_bk"
-        android:text="@string/chat"
-        android:textColor="@android:color/white"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        <Button
+            android:id="@+id/chat_btn"
+            android:layout_width="fill_parent"
+            android:layout_height="53dp"
+            android:layout_margin="20dp"
+            android:background="@drawable/tt_default_btn_bk"
+            android:text="@string/chat"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
-</LinearLayout>
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:indeterminateDrawable="@drawable/tt_progressbar"
+        android:indeterminateDuration="4000"
+        android:visibility="visible" />
+
+</RelativeLayout>

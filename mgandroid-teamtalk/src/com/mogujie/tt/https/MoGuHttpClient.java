@@ -240,8 +240,8 @@ public class MoGuHttpClient {
 		return null;
 	}
 
-	public String uploadImage3(String strUrl, String fileName) {
-		logger.d("pic#uploadImage3 strUlr:%s, fileName:%s", strUrl, fileName);
+	public String uploadImage3(String strUrl, byte[] bytes, String fileName) {
+		logger.d("pic#uploadImage3 strUlr:%s", strUrl);
 		List<String> list = new ArrayList<String>(); // 要上传的文件名,如：d:\haha.doc.你要实现自己的业务。我这里就是一个空list.
 		list.add(fileName);
 		try {
@@ -276,15 +276,8 @@ public class MoGuHttpClient {
 
 				byte[] data = sb.toString().getBytes();
 				out.write(data);
-				DataInputStream in = new DataInputStream(new FileInputStream(
-						file));
-				int bytes = 0;
-				byte[] bufferOut = new byte[1024];
-				while ((bytes = in.read(bufferOut)) != -1) {
-					out.write(bufferOut, 0, bytes);
-				}
+				out.write(bytes);
 				out.write("\r\n".getBytes()); // 多个文件时，二个文件之间加入这个
-				in.close();
 			}
 			out.write(end_data);
 			out.flush();
@@ -306,7 +299,7 @@ public class MoGuHttpClient {
 				 * }
 				 */
 				JSONObject root = new JSONObject(line);
-				return root.getString("path");
+				return root.getString("url");
 			}
 
 		} catch (Exception e) {

@@ -4,18 +4,34 @@
 
     <!-- Login form -->
 
-    <ScrollView
+    <FrameLayout
         android:id="@+id/login_form"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/default_bk" >
 
         <LinearLayout
+            android:id="@+id/splash_page"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical" >
+
+            <ImageView
+                android:id="@+id/imageView1"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/tt_splash" />
+        </LinearLayout>
+
+        <LinearLayout
+             android:id="@+id/login_page"
             style="@style/LoginFormContainer"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:layout_gravity="center"
-            android:orientation="vertical" >
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="invisible" >
 
             <ImageView
                 android:layout_width="wrap_content"
@@ -44,7 +60,7 @@
                         android:layout_height="50dp"
                         android:background="@drawable/tt_message_text_bg"
                         android:hint="@string/prompt_name"
-                        android:inputType="textEmailAddress"
+                        android:inputType="text|textPersonName|textEmailAddress"
                         android:maxLines="1"
                         android:paddingLeft="40dp"
                         android:singleLine="true"
@@ -104,7 +120,7 @@
                     android:textSize="22sp" />
             </LinearLayout>
         </LinearLayout>
-    </ScrollView>
+    </FrameLayout>
 
     <!-- Login progress -->
 

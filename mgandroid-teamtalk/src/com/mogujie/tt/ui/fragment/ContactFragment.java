@@ -24,9 +24,11 @@ import com.mogujie.tt.R;
 import com.mogujie.tt.adapter.ContactBaseAdapter;
 import com.mogujie.tt.adapter.EntityListViewAdapter;
 import com.mogujie.tt.config.HandlerConstant;
+import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.ContactSortEntity;
 import com.mogujie.tt.imlib.IMActions;
 import com.mogujie.tt.imlib.IMContactManager;
+import com.mogujie.tt.imlib.common.ErrorCode;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.DepartmentEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
@@ -41,6 +43,8 @@ import com.mogujie.tt.utils.SortComparator;
 import com.mogujie.tt.widget.SearchEditText;
 import com.mogujie.tt.widget.SortSideBar;
 import com.mogujie.tt.widget.SortSideBar.OnTouchingLetterChangedListener;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.listener.PauseOnScrollListener;
 
 public class ContactFragment extends MainFragment
 		implements
@@ -67,6 +71,9 @@ public class ContactFragment extends MainFragment
 
 	// todo eric when to release?
 	private IMContactManager contactMgr;
+	
+	private boolean isContactDataAlreadyReady = false;
+	private boolean isGroupDataAlreadyReady = false;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -84,6 +91,7 @@ public class ContactFragment extends MainFragment
 		actions.add(IMActions.ACTION_CONTACT_READY);
 		actions.add(IMActions.ACTION_GROUP_READY);
 		actions.add(IMActions.ACTION_SEARCH_DATA_READY);
+		actions.add(IMActions.ACTION_LOGIN_RESULT);
 
 		imServiceHelper.connect(getActivity(), actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
 
@@ -123,49 +131,66 @@ public class ContactFragment extends MainFragment
 		return contactList;
 
 	}
-	
+
 	public void locateDepartment(String departmentId) {
 		logger.d("department#locateDepartment id:%s", departmentId);
-		
+
 		if (topContactTitle == null) {
 			logger.e("department#TopTabButton is null");
 			return;
 		}
-		
+
 		Button tabDepartmentBtn = topContactTitle.getTabDepartmentBtn();
 		if (tabDepartmentBtn == null) {
 			return;
 		}
-		
+
 		tabDepartmentBtn.performClick();
 		locateDepartmentImpl(departmentId);
 	}
-	
+
 	private void locateDepartmentImpl(String departmentId) {
 		if (imService == null) {
 			return;
 		}
-		
+
 		DepartmentEntity department = imService.getContactManager().findDepartment(departmentId);
 		if (department == null) {
-			logger.e("department:no such id:%s", departmentId);
+			logger.e("department#no such id:%s", departmentId);
 			return;
 		}
-		
-		int position = departmentAdapter.locateDepartment(department.title);
+
+		logger.d("department#go to locate department:%s", department);
+
+		final int position = departmentAdapter.locateDepartment(department.title);
 		logger.d("department#located position:%d", position);
-		
+
 		if (position < 0) {
 			logger.e("department#locateDepartment id:%s failed", departmentId);
 			return;
 		}
-		
-		departmentContactListView.setSelection(position);
+
+		//the first time locate works
+		//from the second time, the locating operations fail ever since
+		departmentContactListView.post(new Runnable() {
+
+			@Override
+			public void run() {
+				departmentContactListView.setSelection(position);
+			}
+		});
 	}
 
 	private void onContactsReady() {
 		hideProgressBar();
+		
+		if (isContactDataAlreadyReady) {
+			logger.w("contactFragment#contact data is already ready");
+			return;
+		}
 
+		isContactDataAlreadyReady = true;
+		
 		contactTabOnContactsReady();
 		departmentTabOnContactsReady();
 	}
@@ -230,7 +255,7 @@ public class ContactFragment extends MainFragment
 				if (department == null) {
 					return 0;
 				}
-				
+
 				return department.pinyinElement.pinyin.charAt(0);
 			}
 
@@ -253,6 +278,11 @@ public class ContactFragment extends MainFragment
 	}
 
 	private void contactTabOnContactsReady() {
+		if (imService == null) {
+			return;
+		}
+		
+		
 		logger.d("contact#onContactReady");
 
 		Map<String, ContactEntity> contacts = contactMgr.getContacts();
@@ -296,6 +326,11 @@ public class ContactFragment extends MainFragment
 					return 0;
 				}
 
+				if(contact.pinyinElement.pinyin == null 
+					|| 0 == contact.pinyinElement.pinyin.length()) {
+					return 0;
+				}
+				
 				return contact.pinyinElement.pinyin.charAt(0);
 			}
 
@@ -314,13 +349,23 @@ public class ContactFragment extends MainFragment
 			}
 		};
 
-		contactAdapter.add(0, entityList);
+		contactAdapter.addTail(entityList);
 	}
 
 	private void onGroupReady() {
 		logger.d("group#onGroupReady");
+		if (imService == null) {
+			return;
+		}
 
 		hideProgressBar();
+		
+		if (isGroupDataAlreadyReady) {
+			logger.w("contactFragment#group data is already ready");
+			return;
+		}
+
+		isGroupDataAlreadyReady = true;
 
 		// todo efficiency
 		List<Object> groupList = new ArrayList<Object>(imService.getGroupManager().getNormalGroupList());
@@ -374,7 +419,6 @@ public class ContactFragment extends MainFragment
 
 		contactAdapter.add(0, entityList);
 	}
-	
 
 	/**
 	 * @Description 初始化界面资源
@@ -382,8 +426,6 @@ public class ContactFragment extends MainFragment
 	private void initRes() {
 		// 设置顶部标题栏
 		showContactTopBar();
-		
-
 		// if (chooseMode) {
 		// setTopLeftButton(R.drawable.tt_top_back);
 		// setTopLeftText(getActivity().getString(R.string.top_left_back));
@@ -427,6 +469,10 @@ public class ContactFragment extends MainFragment
 
 		contactAdapter.initClickEvents(allContactListView);
 		departmentAdapter.initClickEvents(departmentContactListView);
+
+		//this is critical, disable loading when finger sliding, otherwise you'll find sliding is not very smooth
+		allContactListView.setOnScrollListener(new PauseOnScrollListener(ImageLoader.getInstance(), true, true));
+		departmentContactListView.setOnScrollListener(new PauseOnScrollListener(ImageLoader.getInstance(), true, true));
 
 		searchEditText = (SearchEditText) curView.findViewById(R.id.filter_edit);
 
@@ -560,11 +606,33 @@ public class ContactFragment extends MainFragment
 			logger.d("group#action is group_ready");
 
 			onGroupReady();
+		} else if (action.equals(IMActions.ACTION_LOGIN_RESULT)) {
+			handleLoginResultAction(intent);
 		}
-		
+
 		tryHandleSearchAction(action);
 	}
 
+	private void handleLoginResultAction(Intent intent) {
+		logger.d("contact#handleLoginResultAction");
+		int errorCode = intent
+				.getIntExtra(SysConstant.lOGIN_ERROR_CODE_KEY, -1);
+
+		if (errorCode == ErrorCode.S_OK) {
+			onLoginSuccess();
+		}
+	}
+
+	private void onLoginSuccess() {
+		logger.d("contact#onLogin Successful");
+		contactAdapter.clear();
+		departmentAdapter.clear();
+		
+		isContactDataAlreadyReady = false;
+		isGroupDataAlreadyReady = false;
+	}
+
+	
 	@Override
 	public void onIMServiceConnected() {
 		logger.d("contactUI#onIMServiceConnected");
@@ -582,7 +650,7 @@ public class ContactFragment extends MainFragment
 		if (imService.getGroupManager().groupReadyConditionOk()) {
 			onGroupReady();
 		}
-		
+
 		tryInitSearch(imService);
 	}
 }

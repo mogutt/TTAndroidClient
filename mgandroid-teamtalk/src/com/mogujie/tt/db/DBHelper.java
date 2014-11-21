@@ -64,6 +64,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String COLUMN_MESSAGE_OVERVIEW = "overview"; // 消息预览
     public static final String COLUMN_MESSAGE_STATUS = "status"; // 消息加载状态
     public static final String COLUMN_MESSAGE_READ_STATUS = "readStatus"; // 消息是否已读或已展现
+    public static final String COLUMN_MESSAGE_TALKERID = "talkerId";
 
     public static final String COLUMN_MESSAGE_EXTRA_MSG_ID = "msgId"; // 附加消息表中消息对应的消息唯一ID
     public static final String COLUMN_MESSAGE_EXTRA_TEXT_CONTENT = "content"; // 文本消息内容
@@ -124,6 +125,7 @@ public class DBHelper extends SQLiteOpenHelper {
                     + COLUMN_RELATE_ID + " INTEGER NOT NULL, "
                     + COLUMN_MESSAGE_FROM_USER_ID + " VARCHAR(20) NOT NULL, "
                     + COLUMN_MESSAGE_TO_USER_ID + " VARCHAR(20) NOT NULL, "
+                    + COLUMN_MESSAGE_TALKERID + " VARCHAR(20) NOT NULL, "
                     + COLUMN_MESSAGE_TYPE + " INTEGER NOT NULL DEFAULT 1, "
                     + COLUMN_MESSAGE_DISPLAY_TYPE + " INTEGER NOT NULL DEFAULT 7, "
                     + COLUMN_MESSAGE_OVERVIEW + " VARCHAR(1024), "

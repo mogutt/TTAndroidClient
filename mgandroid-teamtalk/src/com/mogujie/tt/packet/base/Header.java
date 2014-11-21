@@ -14,13 +14,9 @@ public class Header {
 	private Logger logger = Logger.getLogger(Header.class);
 
 	private int length; // 数据包长度，包括包头
-
-
 	private int serviceId; // SID
-
 	private int commandId; // CID
 	private short version; // 版本号
-
 	private short reserved; // 保留，可用于如序列号等
 
 	public Header() {
@@ -42,8 +38,8 @@ public class Header {
 		db.writeShort((short) serviceId);
 		db.writeShort((short) commandId);
 		db.writeShort(version);
-		logger.d("packet#header encode -> length:%d,  seviceId:%d, commandId:%d, version:%d, reserved:%d", length, serviceId, commandId, version, reserved);
 		db.writeShort(reserved);
+		
 		return db;
 	}
 	
@@ -64,8 +60,7 @@ public class Header {
 
 			logger.d(
 					"decode header, length:%d, version:%d, serviceId:%d, commandId:%d, reserved:%d",
-					length, version, serviceId, commandId,
-					reserved);
+					length, version,serviceId, commandId,reserved);
 
 		} catch (Exception e) {
 			logger.e(e.getMessage());
@@ -74,12 +69,10 @@ public class Header {
 
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
-		return String
-				.format("decode header, length:%d, version:%d,  serviceId:%d, commandId:%d, reserved:%d",
-						length, version,  serviceId, commandId, 
-						reserved);
-
+		return "Header [length=" + length + ", version=" + version + ", serviceId=" 
+				+ serviceId + ", commandId="
+				+ commandId + ", reserved=" + reserved
+				+ "]";
 	}
 
 	public int getCommandId() {

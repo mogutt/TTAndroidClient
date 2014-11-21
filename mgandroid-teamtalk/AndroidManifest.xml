@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.mogujie.tt"
     android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionName="1.0.2" >
 
     <!-- 11 means android3 at least -->
     <uses-sdk
@@ -26,13 +26,14 @@
     <application
         android:name=".imlib.IMApplication"
         android:icon="@drawable/tt_logo"
+        android:label="@string/app_name"
         android:theme="@android:style/Theme.NoTitleBar" >
         <activity
             android:name=".ui.activity.MessageActivity"
             android:configChanges="orientation|keyboardHidden"
             android:label="@string/app_name"
-            android:launchMode="singleTask"
-            android:screenOrientation="portrait" >
+            android:screenOrientation="portrait"
+            android:launchMode="singleTask" >
         </activity>
         <activity
             android:name=".ui.activity.LoginActivity"
@@ -112,10 +113,20 @@
             android:screenOrientation="portrait"
             android:theme="@android:style/Theme.NoTitleBar" >
         </activity>
-         <activity
+        <activity
             android:name=".ui.activity.SearchActivity"
             android:screenOrientation="portrait"
             android:theme="@android:style/Theme.NoTitleBar" >
+        </activity>
+        <activity 
+            android:name=".ui.activity.WebViewFragmentActivity"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.NoTitleBar">
+        </activity>
+        <activity 
+            android:name=".ui.activity.DetailPortraitActivity"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.NoTitleBar">
         </activity>
     </application>
 

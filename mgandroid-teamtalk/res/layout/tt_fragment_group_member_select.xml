@@ -30,21 +30,21 @@
         <GridView
             android:id="@+id/group_manager_grid"
             android:layout_width="fill_parent"
-            android:layout_height="80dp"
+            android:layout_height="140dp"
             android:layout_marginBottom="5dp"
             android:background="@android:color/white"
-            android:columnWidth="60dp"
+            android:columnWidth="42dp"
             android:gravity="center"
-            android:horizontalSpacing="10dp"
+            android:horizontalSpacing="3dp"
             android:numColumns="auto_fit"
-            android:paddingBottom="10dp"
-            android:paddingLeft="20dp"
+            android:paddingBottom="5dp"
+            android:paddingLeft="5dp"
             android:stretchMode="columnWidth"
-            android:verticalSpacing="10dp" />
+            android:verticalSpacing="3dp" />
 
         <View
             android:layout_width="fill_parent"
-            android:layout_height="0.5dp"
+            android:layout_height="1dp"
             android:background="@color/default_line_color" />
 
         <FrameLayout
@@ -81,7 +81,7 @@
     </LinearLayout>
 
     <ProgressBar
-        android:id="@+id/contact_loading_progress_bar"
+        android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"

@@ -3,10 +3,23 @@ package com.mogujie.tt.imlib;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.http.Header;
+import org.jboss.netty.channel.StaticChannelPipeline;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.JsonHttpResponseHandler;
+import com.loopj.android.http.PersistentCookieStore;
+import com.loopj.android.http.RequestParams;
+import com.mogujie.tt.cache.biz.CacheHub;
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.User;
@@ -17,6 +30,7 @@ import com.mogujie.tt.imlib.network.MsgServerHandler;
 import com.mogujie.tt.imlib.network.SocketThread;
 import com.mogujie.tt.imlib.proto.LoginPacket;
 import com.mogujie.tt.imlib.proto.MsgServerPacket;
+import com.mogujie.tt.imlib.proto.MsgServerPacket.PacketRequest.Entity;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.ui.utils.Md5Helper;
@@ -34,6 +48,8 @@ public class IMLoginManager extends IMManager {
 		}
 	}
 
+	private static final int LOGIN_ERROR_TOKEN_EXPIRED = 6;
+
 	private Logger logger = Logger.getLogger(IMLoginManager.class);
 	private String loginUserName;
 	private String loginPwd;
@@ -48,6 +64,24 @@ public class IMLoginManager extends IMManager {
 	private boolean loggined = false;
 	private boolean everLogined = false;
 	private boolean identityChanged = false;
+	private boolean retryReqLoginServerAddrsFlag = false;
+	private boolean logoutFlag = false;
+	private int msgServerErrorCode = 0;
+
+	public boolean isLogout() {
+		return logoutFlag;
+	}
+
+	public void setLogout(boolean logout) {
+		logger.d("login#setLogout");
+
+		this.logoutFlag = logout;
+		//		logger.d("login#setLogout:%s", Log.getStackTraceString(new Throwable()));
+	}
+
+	private AsyncHttpClient client = new AsyncHttpClient();
+	private PersistentCookieStore myCookieStore;
+
 	private static Handler handler = new Handler() {
 
 		@Override
@@ -67,6 +101,7 @@ public class IMLoginManager extends IMManager {
 
 	};
 
+	private static final int STATUS_REQ_LOGIN_SERVER_ADDRS = -1;
 	private static final int STATUS_CONNECT_LOGIN_SERVER = 0;
 	private static final int STATUS_REQ_MSG_SERVER_ADDRS = 1;
 	private static final int STATUS_CONNECT_MSG_SERVER = 2;
@@ -75,10 +110,44 @@ public class IMLoginManager extends IMManager {
 	private static final int STATUS_LOGIN_FAILED = 5;
 	private static final int STATUS_MSG_SERVER_DISCONNECTED = 6;
 
-	private int currentStatus = STATUS_CONNECT_LOGIN_SERVER;
+	private int currentStatus = STATUS_REQ_LOGIN_SERVER_ADDRS;
 
-	public boolean isEverLoginned() {
+	@Override
+	public void setContext(Context context) {
+		super.setContext(context);
+
+		myCookieStore = new PersistentCookieStore(ctx);
+		client.setCookieStore(myCookieStore);
+	}
+
+	public void logOut() {
+		//		if not login, do nothing
+		//		send logOuting message, so reconnect won't react abnormally
+		//		but when reconnect start to work again?use isEverLogined
+		//		close the socket
+		//		 send logOuteOk message
+		//		mainactivity jumps to login page
+
+		logger.d("login#logOut");
+
+		logger.d("login#stop reconnecting");
+		//		everlogined is enough to stop reconnecting
+		setEverLogined(false);
+		//		ctx.sendBroadcast(new Intent(IMActions.ACTION_LOGOUTING));
+		setLogout(true);
+
+		disconnectMsgServer();
+
+		logger.d("login#send logout finish message");
+		ctx.sendBroadcast(new Intent(IMActions.ACTION_LOGOUT));
+	}
+
+	public boolean isEverLogined() {
 		return everLogined;
+	}
+
+	public void setEverLogined(boolean everLogined) {
+		this.everLogined = everLogined;
 	}
 
 	public boolean isLoggined() {
@@ -92,7 +161,7 @@ public class IMLoginManager extends IMManager {
 	public boolean isDoingLogin() {
 		return currentStatus <= STATUS_LOGINING_MSG_SERVER;
 	}
-	
+
 	public String getLoginId() {
 		return loginId;
 	}
@@ -106,35 +175,41 @@ public class IMLoginManager extends IMManager {
 		logger.d("login#creating IMLoginManager");
 	}
 
-	public boolean relogin() {
-		logger.d("login#relogin");
-		
+	public boolean reloginFromStart() {
+		logger.d("login#reloginFromStart");
+
 		if (isDoingLogin()) {
 			logger.d("login#isDoingLogin, no need");
 			return false;
 		}
-		
-		if (loggined) {
-			logger.d("login#already logined, no need");
-			return false;
-		}
-		
+
+		login(loginUserName, loginPwd, true, true);
+
+		return true;
+	}
+
+	public boolean relogin() {
+		logger.d("login#relogin");
+
 		connectLoginServer();
-		
+
 		return true;
 	}
 
 	public void login(String userName, String password,
 			boolean userNameChanged, boolean pwdChanged) {
-		logger.i(
-				"login#login -> userName:%s, userNameChanged:%s, pwdChanged:%s",
-				userName, userNameChanged, pwdChanged);
+
+		if (ctx != null) {
+			ctx.sendBroadcast(new Intent(IMActions.ACTION_DOING_LOGIN));
+		}
+
+		logger.i("login#login -> userName:%s, userNameChanged:%s, pwdChanged:%s", userName, userNameChanged, pwdChanged);
 
 		loginUserName = userName;
-
-		if (pwdChanged) {
+		loginPwd = password;
+		if(pwdChanged){
 			loginPwd = Md5Helper.encode(password);
-		} else {
+		}else{
 			loginPwd = password;
 		}
 
@@ -144,12 +219,18 @@ public class IMLoginManager extends IMManager {
 	}
 
 	private void connectLoginServer() {
+		currentStatus = STATUS_CONNECT_LOGIN_SERVER;
 		String ip = ProtocolConstant.LOGIN_IP1;
 		int port = ProtocolConstant.LOGIN_PORT;
 
 		logger.i("login#connect login server -> (%s:%d)", ip, port);
 
-		loginServerThread = new SocketThread(ip, port, new LoginServerHandler());
+		if (loginServerThread != null) {
+			loginServerThread.close();
+			loginServerThread = null;
+		}
+		
+ 		loginServerThread = new SocketThread(ip, port, new LoginServerHandler());
 		loginServerThread.start();
 	}
 
@@ -161,8 +242,7 @@ public class IMLoginManager extends IMManager {
 	public void onLoginServerUnconnected() {
 		logger.i("login#onLoginServerUnConnected");
 
-		IMLoginManager.instance().onLoginFailed(
-				ErrorCode.E_CONNECT_LOGIN_SERVER_FAILED);
+		IMLoginManager.instance().onLoginFailed(ErrorCode.E_CONNECT_LOGIN_SERVER_FAILED);
 	}
 
 	public void onLoginFailed(int errorCode) {
@@ -173,6 +253,10 @@ public class IMLoginManager extends IMManager {
 
 		Intent intent = new Intent(IMActions.ACTION_LOGIN_RESULT);
 		intent.putExtra(SysConstant.lOGIN_ERROR_CODE_KEY, errorCode);
+		if (errorCode == ErrorCode.E_MSG_SERVER_ERROR_CODE) {
+			intent.putExtra(SysConstant.KEY_MSG_SERVER_ERROR_CODE, msgServerErrorCode);
+		}
+
 		if (ctx != null) {
 			logger.i("login#broadcast login failed");
 			ctx.sendBroadcast(intent);
@@ -180,7 +264,9 @@ public class IMLoginManager extends IMManager {
 	}
 
 	public void onLoginOk() {
-		logger.i("login#onLoginOk loginUser:%s", loginUser);
+		logger.i("login#onLoginOk");
+
+		setLogout(false);
 
 		currentStatus = STATUS_LOGIN_OK;
 
@@ -188,8 +274,7 @@ public class IMLoginManager extends IMManager {
 		everLogined = true;
 
 		if (identityChanged) {
-			IMDbManager.instance(ctx)
-					.saveLoginIdentity(loginUserName, loginPwd);
+			IMDbManager.instance(ctx).saveLoginIdentity(loginUserName, loginPwd);
 		}
 
 		Intent intent = new Intent(IMActions.ACTION_LOGIN_RESULT);
@@ -198,21 +283,12 @@ public class IMLoginManager extends IMManager {
 			logger.i("login#broadcast login ok");
 			ctx.sendBroadcast(intent);
 		}
-
-		fetchData();
-	}
-
-	private void fetchData() {
-		logger.i("login#fetch data");
-
-		IMContactManager.instance().fetchContacts();
-		IMGroupManager.instance().fetchGroupList();
 	}
 
 	public void onLoginServerConnected() {
 		logger.i("login#onLoginServerConnected");
 
-		fetchMsgServerAddrs();
+		reqMsgServerAddrs();
 	}
 
 	public void onLoginServerDisconnected() {
@@ -225,13 +301,15 @@ public class IMLoginManager extends IMManager {
 		}
 	}
 
-	public void fetchMsgServerAddrs() {
-		logger.i("login#fetchMsgServerAddr");
+	public void reqMsgServerAddrs() {
+		logger.i("login#reqMsgServerAddrs");
 
 		currentStatus = STATUS_REQ_MSG_SERVER_ADDRS;
 
 		if (loginServerThread != null) {
-			loginServerThread.sendPacket(new MsgServerPacket());
+			Entity entity = new Entity();
+			entity.userType = 0;
+			loginServerThread.sendPacket(new MsgServerPacket(entity));
 			logger.d("login#send packet ok");
 		}
 	}
@@ -242,8 +320,7 @@ public class IMLoginManager extends IMManager {
 		MsgServerPacket packet = new MsgServerPacket();
 		packet.decode(buffer);
 
-		MsgServerPacket.MsgServerResponse resp = (MsgServerPacket.MsgServerResponse) packet
-				.getResponse();
+		MsgServerPacket.PacketResponse resp = (MsgServerPacket.PacketResponse) packet.getResponse();
 
 		if (resp == null) {
 			logger.e("login#decode MsgServerResponse failed");
@@ -255,13 +332,12 @@ public class IMLoginManager extends IMManager {
 			msgServerAddrs = new ArrayList<String>();
 		}
 
-		msgServerAddrs.add(resp.getStrIp1());
-		msgServerAddrs.add(resp.getStrIp2());
+		msgServerAddrs.add(resp.entity.ip1);
+		msgServerAddrs.add(resp.entity.ip2);
 
-		msgServerPort = resp.getPort();
+		msgServerPort = resp.entity.port;
 
-		logger.i("login#msgserver ip1:%s,  login ip2:%s, port:%d",
-				resp.getStrIp1(), resp.getStrIp2(), resp.getPort());
+		logger.i("login#msgserver ip1:%s,  login ip2:%s, port:%d", resp.entity.ip1, resp.entity.ip2, resp.entity.port);
 
 		connectMsgServer();
 	}
@@ -286,6 +362,7 @@ public class IMLoginManager extends IMManager {
 	}
 
 	private void disconnectMsgServer() {
+		//		logger.i("login#disconnectMsgServer, callstack:%s", Log.getStackTraceString(new Throwable()));
 		logger.i("login#disconnectMsgServer");
 
 		if (msgServerThread != null) {
@@ -305,6 +382,11 @@ public class IMLoginManager extends IMManager {
 
 		logger.i("login#connectMsgServer -> (%s:%d)", ip, msgServerPort);
 
+		if (msgServerThread != null) {
+			msgServerThread.close();
+			msgServerThread = null;
+		}
+		
 		msgServerThread = new SocketThread(ip, msgServerPort,
 				new MsgServerHandler());
 		msgServerThread.start();
@@ -356,9 +438,13 @@ public class IMLoginManager extends IMManager {
 		currentStatus = STATUS_LOGINING_MSG_SERVER;
 
 		if (msgServerThread != null) {
-			msgServerThread.sendPacket(new LoginPacket(loginUserName, loginPwd,
-					ProtocolConstant.ON_LINE, ProtocolConstant.CLIENT_TYPE,
-					ProtocolConstant.CLIENT_VERSION));
+			com.mogujie.tt.imlib.proto.LoginPacket.PacketRequest.Entity entity = new com.mogujie.tt.imlib.proto.LoginPacket.PacketRequest.Entity();
+			entity.name = loginUserName;
+			entity.pass = loginPwd;
+			entity.onlineStatus = ProtocolConstant.ON_LINE;
+			entity.clientType = ProtocolConstant.CLIENT_TYPE;
+			entity.clientVersion = ProtocolConstant.CLIENT_VERSION;
+			msgServerThread.sendPacket(new LoginPacket(entity));
 		}
 	}
 
@@ -368,8 +454,7 @@ public class IMLoginManager extends IMManager {
 		LoginPacket packet = new LoginPacket();
 		packet.decode(buffer);
 
-		LoginPacket.LoginResponse resp = (LoginPacket.LoginResponse) packet
-				.getResponse();
+		LoginPacket.PacketResponse resp = (LoginPacket.PacketResponse) packet.getResponse();
 
 		if (resp == null) {
 			logger.e("login#decode LoginResponse failed");
@@ -377,18 +462,28 @@ public class IMLoginManager extends IMManager {
 			return;
 		}
 
-		int loginResult = resp.getResult();
+		int loginResult = resp.entity.result;
+		this.msgServerErrorCode = loginResult;
 
 		logger.d("login#loginResult:%d", loginResult);
 
 		if (loginResult == 0) {
 			loginUser = resp.getUser();
-			setLoginId(loginUser.getUserId());
+			loginUser.setUserId(resp.entity.userId);
+			setLoginId(resp.entity.userId);
 
 			onLoginOk();
 		} else {
+			logger.e("login#login msg server failed, result:%d", loginResult);
+
 			// todo eric right now, no detail failed reason
-			onLoginFailed(ErrorCode.E_LOGIN_GENERAL_FAILED);
+			onLoginFailed(ErrorCode.E_MSG_SERVER_ERROR_CODE);
+
+			if (loginResult == LOGIN_ERROR_TOKEN_EXPIRED) {
+				logger.e("login#error:token expired");
+
+				reloginFromStart();
+			}
 		}
 	}
 
@@ -401,5 +496,11 @@ public class IMLoginManager extends IMManager {
 
 		disconnectLoginServer();
 		disconnectMsgServer();
+	}
+
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+
 	}
 }

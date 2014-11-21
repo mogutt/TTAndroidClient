@@ -1,5 +1,6 @@
 package com.mogujie.tt.imlib.utils;
 
+import java.util.Date;
 import java.util.List;
 
 import com.mogujie.tt.config.SysConstant;
@@ -25,27 +26,19 @@ public class IMContactHelper {
 	// todo eric
 	public static User contactEntity2User(ContactEntity contact) {
 		User user = new User();
-		/*
-		 * 
-		 * private String userId = null; private String token=""; private int
-		 * onlineStatus; private String name = ""; private String nickName = "";
-		 * private String avatarUrl = ""; private String title=""; private
-		 * String position=""; private int roleStatus; private int sex; private
-		 * String departId; private int jobNum; private String telphone; private
-		 * String email;
-		 */
+
 		user.setUserId(contact.id);
 		user.setName(contact.name);
 		user.setNickName(contact.nickName);
 		user.setAvatarUrl(contact.avatarUrl);
-		user.setTitle(contact.title);
-		user.setPosition(contact.position);
-		user.setRoleStatus(contact.roleStatus);
-		user.setSex(contact.sex);
+		// user.setTitle(contact.title);
+		// user.setPosition(contact.position);
+		// user.setRoleStatus(contact.roleStatus);
+		// user.setSex(contact.sex);
 		user.setDepartId(contact.departmentId);
-		user.setJobNum(contact.jobNum);
-		user.setTelphone(contact.telephone);
-		user.setEmail(contact.email);
+		// user.setJobNum(contact.jobNum);
+		// user.setTelphone(contact.telephone);
+		// user.setEmail(contact.email);
 
 		return user;
 	}
@@ -91,10 +84,24 @@ public class IMContactHelper {
 		msr.decode();
 
 		List<MessageInfo> msgInfoList = msr.getMsgList();
+		int increasement = 0;
 		for (MessageInfo msgInfo : msgInfoList) {
 			msgInfo.copy(msg);
+
+			// every split msg has the same time, in order to sort them
+			// we have to increase the time 1 milliseconds manually
+			adjustSplitMsgTime(msgInfo, increasement++);
+
 		}
 
 		return msgInfoList;
+	}
+
+	private static void adjustSplitMsgTime(MessageInfo msgInfo, int increasement) {
+		int created = msgInfo.getCreated();
+		msgInfo.setCreated(created + increasement);
+
+		msgInfo.createTime += increasement;
+
 	}
 }

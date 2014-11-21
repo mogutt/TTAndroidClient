@@ -1036,7 +1036,7 @@ public class DataModel {
                 createdTime = c.getInt(0);
             }
         } catch (SQLException e) {
-            Logger.getLogger().e(e.toString());
+//            Logger.getLogger().e(e.toString());
         } finally {
             if (null != c) {
                 c.close();

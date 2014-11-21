@@ -5,10 +5,10 @@ public interface ConfigDefs {
 	boolean DEF_VALUE_NOTIFICATION_NO_DISTURB = false;
 	
 	String KEY_NOTIFICATION_GOT_SOUND = "notification_got_sound";
-	boolean DEF_VALUE_NOTIFICATION_GOT_SOUND = true;
+	boolean DEF_VALUE_NOTIFICATION_GOT_SOUND = false;
 	
 	String KEY_NOTIFICATION_GOT_VIBRATION = "notification_got_vibration";
-	boolean DEF_VALUE_NOTIFICATION_GOT_VIBRATION = true;
+	boolean DEF_VALUE_NOTIFICATION_GOT_VIBRATION = false;
 	
 	String KEY_SAVE_TRAFFIC_MODE = "save_traffic_mode";
 	boolean DEF_VALUE_SAVE_TRAFFIC_MODE = true;

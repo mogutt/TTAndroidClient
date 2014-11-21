@@ -38,13 +38,17 @@
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
                 android:layout_gravity="center"
-                android:divider="@null" />
+                android:listSelector="@android:color/transparent"
+                android:cacheColorHint="@android:color/transparent"
+                android:divider="@null"/>
 
             <ListView
                 android:id="@+id/department_contact_list"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
                 android:layout_gravity="center"
+                android:cacheColorHint="@android:color/transparent"
+                android:listSelector="@android:color/transparent"
                 android:divider="@null"
                 android:visibility="gone" />
 
@@ -77,6 +81,5 @@
         android:indeterminateDrawable="@drawable/tt_progressbar"
         android:indeterminateDuration="4000"
         android:visibility="visible" />
-
 
 </RelativeLayout>

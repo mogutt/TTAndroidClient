@@ -43,6 +43,7 @@ public class MessagePacket extends Packet {
 		bodyBuffer.writeString(entity.toId);
 		bodyBuffer.writeInt(entity.createTime);
 		bodyBuffer.writeByte(entity.type);
+		//bodyBuffer.writeByte(1);
 		bodyBuffer.writeInt(entity.msgLen);
 		bodyBuffer.writeBytes(entity.msgData);
 		bodyBuffer.writeString(entity.attach);

@@ -2,6 +2,8 @@
 package com.mogujie.tt.adapter.album;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -10,6 +12,7 @@ import java.util.Map.Entry;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.provider.MediaStore.Audio.Albums;
 import android.provider.MediaStore.Images.Media;
@@ -176,6 +179,7 @@ public class AlbumHelper {
      * @Description 获取图片集
      */
     private void buildImagesBucketList() {
+    	bucketList.clear();
         Cursor cur = null;
         // long startTime = System.currentTimeMillis();
         try {
@@ -234,7 +238,7 @@ public class AlbumHelper {
                     imageItem.setImageId(id);
                     imageItem.setImagePath(path);
                     imageItem.setThumbnailPath(thumbnailList.get(id));
-                    bucket.imageList.add(imageItem);
+                    bucket.imageList.add(0, imageItem);
 
                 } while (cur.moveToNext());
             }
@@ -273,26 +277,64 @@ public class AlbumHelper {
             if (refresh || (!refresh && !hasBuildImagesBucketList)) {
                 buildImagesBucketList();
             }
-            List<ImageBucket> tmpList = new ArrayList<ImageBucket>();
-            Iterator<Entry<String, ImageBucket>> itr = bucketList.entrySet()
-                    .iterator();
-            while (itr.hasNext()) {
-                Map.Entry<String, ImageBucket> entry = (Map.Entry<String, ImageBucket>) itr
-                        .next();
-                ImageBucket bucket = entry.getValue();
-                if (bucket.bucketName.equals("Camera")) {
-                    tmpList.add(0, bucket);
-                } else {
-                    tmpList.add(bucket);
-                }
-            }
-            return tmpList;
+            List<ImageBucket> imageList = new ArrayList<ImageBucket>(bucketList.values());
+            Collections.sort(imageList, new Comparator<ImageBucket>() {
+
+				@Override
+				public int compare(ImageBucket lhs, ImageBucket rhs) {
+//					logger.d("pic#photo set name:%s", lhs.bucketName);
+					boolean lhsDefaultCameraSet = probablyDefaultCameraPhotoSet(lhs.bucketName);
+					boolean rhsDefaultCameraSet = probablyDefaultCameraPhotoSet(rhs.bucketName);
+					
+					logger.d("pic#name:%s, lhsDefaultCameraSet:%s", lhs.bucketName, lhsDefaultCameraSet);
+					logger.d("pic#name:%s, rhsDefaultCameraSet:%s", rhs.bucketName, rhsDefaultCameraSet);
+					
+					if (lhsDefaultCameraSet && !rhsDefaultCameraSet) {
+						return -1;
+					} 
+					
+					if (rhsDefaultCameraSet && !lhsDefaultCameraSet) {
+						return 1;
+					}
+					
+					return Integer.valueOf(rhs.count).compareTo(Integer.valueOf(lhs.count));
+				}
+			});
+            
+            return imageList;
+//            List<ImageBucket> tmpList = new ArrayList<ImageBucket>();
+//            Iterator<Entry<String, ImageBucket>> itr = bucketList.entrySet()
+//                    .iterator();
+//            while (itr.hasNext()) {
+//                Map.Entry<String, ImageBucket> entry = (Map.Entry<String, ImageBucket>) itr
+//                        .next();
+//                ImageBucket bucket = entry.getValue();
+//                if (bucket.bucketName.equals("Camera")) {
+//                    tmpList.add(0, bucket);
+//                } else {
+//                    tmpList.add(bucket);
+//                }
+//            }
+//            return tmpList;
         } catch (Exception e) {
             logger.e(e.getMessage());
             return null;
         }
     }
 
+    boolean probablyDefaultCameraPhotoSet(String photoSetName) {
+    	//from my test result, different phones use different names to represent 
+    	//default photo set
+    	if (photoSetName == null || photoSetName.isEmpty()) {
+    		return false;
+    	}
+    	
+    	String lowerCaseName = photoSetName.toLowerCase();
+    	
+    	//todo eric i18n
+    	return lowerCaseName.contains("camera") || lowerCaseName.contains("相机");
+    }
+    
     /**
      * 得到原始图像路径
      * 

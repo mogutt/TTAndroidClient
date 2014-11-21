@@ -114,7 +114,7 @@ public class RecentInfo implements Comparable<RecentInfo> {
 
     public void setUserId(String userId) {
     	
-    	logger.d("stack:%s",Log.getStackTraceString(new Throwable()));
+//    	logger.d("stack:%s",Log.getStackTraceString(new Throwable()));
         this.entityId = userId;
         logger.d("recent#setUserId -> userId:%s", userId);
     }

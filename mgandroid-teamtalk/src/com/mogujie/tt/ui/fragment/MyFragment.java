@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -19,10 +20,8 @@ import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.ui.activity.SettingActivity;
-import com.mogujie.tt.ui.activity.UserInfoActivity;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
-import com.mogujie.widget.imageview.MGWebImageView;
 
 public class MyFragment extends MainFragment implements OnIMServiceListner {
 	private View curView = null;
@@ -146,11 +145,11 @@ public class MyFragment extends MainFragment implements OnIMServiceListner {
 
 		TextView nickNameView = (TextView) curView.findViewById(R.id.nickName);
 		TextView userNameView = (TextView) curView.findViewById(R.id.userName);
-		MGWebImageView portraitImageView = (MGWebImageView) curView.findViewById(R.id.user_portrait);
+		ImageView portraitImageView = (ImageView) curView.findViewById(R.id.user_portrait);
 
 		nickNameView.setText(loginContact.nickName);
 		userNameView.setText(loginContact.name);
-		IMUIHelper.setWebImageViewAvatar(portraitImageView, loginContact.avatarUrl, IMSession.SESSION_P2P);
+		IMUIHelper.setEntityImageViewAvatar(portraitImageView, loginContact.avatarUrl, IMSession.SESSION_P2P);
 
 		RelativeLayout userContainer = (RelativeLayout) curView.findViewById(R.id.user_container);
 		userContainer.setOnClickListener(new View.OnClickListener() {

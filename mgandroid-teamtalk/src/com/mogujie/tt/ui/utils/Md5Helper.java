@@ -27,6 +27,29 @@ public class Md5Helper {
 		}
 
 	}
+	
+	public static String encode(byte[] str) {
+
+		if (str == null) {
+
+			return null;
+		}
+
+		try {
+
+			MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+
+			messageDigest.update(str);
+
+			return getFormattedText(messageDigest.digest());
+
+		} catch (Exception e) {
+			return "";
+		}
+
+	}
+
+	
 
 	private static String getFormattedText(byte[] bytes) {
 

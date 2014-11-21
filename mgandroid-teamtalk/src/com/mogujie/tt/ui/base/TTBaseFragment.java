@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.mogujie.tt.R;
@@ -29,6 +30,7 @@ public abstract class TTBaseFragment extends Fragment {
 	protected TopTabButton topContactTitle;
 	protected SearchEditText topSearchEdt;
 	protected ViewGroup topContentView;
+	protected LinearLayout topLeftContainerLayout;
 	protected float x1, y1, x2, y2 = 0;
 	protected static Logger logger = Logger.getLogger(TTBaseFragment.class);
 
@@ -46,7 +48,8 @@ public abstract class TTBaseFragment extends Fragment {
 		topRightBtn = (ImageView) topContentView.findViewById(R.id.right_btn);
 		topContactTitle = (TopTabButton) topContentView.findViewById(R.id.contact_tile);
 		topSearchEdt = (SearchEditText) topContentView.findViewById(R.id.chat_title_search);
-
+		topLeftContainerLayout=(LinearLayout)topContentView.findViewById(R.id.top_left_container);
+				
 		topTitleTxt.setVisibility(View.GONE);
 		topRightBtn.setVisibility(View.GONE);
 		topLeftBtn.setVisibility(View.GONE);

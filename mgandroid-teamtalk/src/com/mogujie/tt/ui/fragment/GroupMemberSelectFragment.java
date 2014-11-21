@@ -6,12 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -19,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,7 +40,6 @@ import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
-import com.mogujie.tt.ui.base.TTBaseFragment;
 import com.mogujie.tt.ui.utils.EntityList;
 import com.mogujie.tt.ui.utils.IMGroupMemberGridViewHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
@@ -46,7 +49,7 @@ import com.mogujie.tt.widget.SearchEditText;
 import com.mogujie.tt.widget.SortSideBar;
 import com.mogujie.tt.widget.SortSideBar.OnTouchingLetterChangedListener;
 
-public class GroupMemberSelectFragment extends TTBaseFragment
+public class GroupMemberSelectFragment extends MainFragment
 		implements
 			OnIMServiceListner,
 			OnTouchingLetterChangedListener {
@@ -84,6 +87,8 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 
 		imServiceHelper.connect(getActivity(), actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
 
+		super.init(curView);
+
 		initRes();
 
 		return curView;
@@ -100,12 +105,13 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 		setTopLeftText(getActivity().getString(R.string.top_left_back));
 		setTopRightText(getActivity().getString(R.string.save));
 
-		topLeftBtn.setOnClickListener(new View.OnClickListener() {
+		topLeftContainerLayout.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
 				getActivity().finish();
 			}
 		});
+		setTopLeftText(getResources().getString(R.string.top_left_back));
 
 		topRightTitleTxt.setOnClickListener(new OnClickListener() {
 
@@ -132,7 +138,7 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 					String tempGroupName = generateTempGroupName(memberList);
 					logger.d("tempgroup#generateTempGroupName:%s", tempGroupName);
 
-					groupMgr.reqCreateTempGroup(tempGroupName, memberList);
+					ShowDialogForTempGroupname(groupMgr, memberList, tempGroupName);
 
 				} else if (sessionType == IMSession.SESSION_TEMP_GROUP) {
 					List<String> addingMemberList = gridViewHelper.getAdapter().getAddingMemberList();
@@ -175,6 +181,38 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 				}
 
 				return name;
+			}
+
+			private void ShowDialogForTempGroupname(
+					final IMGroupManager groupMgr,
+					final List<String> memberList, String defaultName) {
+
+				AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(getActivity(), android.R.style.Theme_Holo_Light_Dialog));
+
+				final EditText editText = new EditText(getActivity());
+				editText.setText(defaultName);
+
+				builder.setTitle(getString(R.string.create_temp_group_dialog_title)).setView(editText);
+
+				builder.setPositiveButton(getString(R.string.tt_ok), new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						String tempGroupName = editText.getText().toString();
+						tempGroupName = tempGroupName.trim();
+
+						if (tempGroupName == null || tempGroupName.isEmpty()) {
+							Toast.makeText(getActivity(), getString(R.string.empty_prompt), Toast.LENGTH_SHORT).show();
+							return;
+						}
+
+						showProgressBar();
+						groupMgr.reqCreateTempGroup(tempGroupName, memberList);
+					}
+				});
+
+				builder.setNegativeButton(getString(R.string.tt_cancel), null);
+				builder.show();
 			}
 		});
 
@@ -231,8 +269,9 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 				((BaseAdapter) contactListView.getAdapter()).notifyDataSetChanged();
 			}
 		});
-	}
 
+		gridViewHelper.getAdapter().setItemLayout(R.layout.tt_group_select_member_grid_item);
+	}
 	private void initContactList(Set<String> removedIdSet) {
 		Map<String, ContactEntity> contacts = imService.getContactManager().getContacts();
 		List<Object> contactList = IMUIHelper.getContactSortedList(contacts);
@@ -333,10 +372,10 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 			@Override
 			public void onSearchImpl(String key) {
 				ArrayList<Object> searchList = new ArrayList<Object>();
-				for (Object obj : list) {
+				for (Object obj : backupList) {
 					ContactEntity contact = (ContactEntity) obj;
-					if (contact.pinyinElement.pinyin.contains(key)
-							|| contact.name.contains(key)) {
+
+					if (IMUIHelper.handleContactSearch(key, contact)) {
 						searchList.add(obj);
 					}
 				}
@@ -368,7 +407,7 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 			return;
 		}
 
-		String sessionId = intent.getStringExtra(SysConstant.SESSION_ID_KEY);
+		String sessionId = intent.getStringExtra(SysConstant.KEY_SESSION_ID);
 		logger.d("tempgroup#result ok, sessionId:%s", sessionId);
 
 		//todo eric adding an notification to the chat window, tell that "members are changed, right now, members are 'a', 'b', 'c' "
@@ -379,6 +418,8 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 
 	private void handleAddTempGroupResult(Intent intent) {
 		logger.d("groupmgr#on ACTION_GROUP_CREATE_TEMP_GROUP_RESULT");
+		hideProgressBar();
+
 		int result = intent.getIntExtra(SysConstant.OPERATION_RESULT_KEY, -1);
 		if (result != 0) {
 			logger.d("groupmgr#result failed");
@@ -387,7 +428,7 @@ public class GroupMemberSelectFragment extends TTBaseFragment
 			return;
 		}
 
-		String sessionId = intent.getStringExtra(SysConstant.SESSION_ID_KEY);
+		String sessionId = intent.getStringExtra(SysConstant.KEY_SESSION_ID);
 
 		logger.d("groupmgr#result ok");
 

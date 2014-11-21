@@ -3,6 +3,7 @@
 	<name>MGTTInitAct</name>
 	<comment></comment>
 	<projects>
+		<project>mgimlibs</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

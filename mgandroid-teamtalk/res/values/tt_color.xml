@@ -32,6 +32,7 @@
     <color name="default_blue_color">#01aff4</color>
     <color name="default_fragment_bk_color">#f2f2f2</color>
     <color name="default_value_color">#333333</color>
+    <color name="contact_name_color">#222222</color>
     <color name="default_key_color">#999999</color>
     <color name="default_line_color">#cccccc</color>
 
@@ -45,5 +46,6 @@
     <!-- group manager -->
     <color name="group_manager_group_title">#a4a5a9</color>
     <color name="group_manager_user_title">#777777</color>
+    <color name="list_item_sel_color">#eaeaea</color>
 
 </resources>

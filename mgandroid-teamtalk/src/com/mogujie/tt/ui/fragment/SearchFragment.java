@@ -23,14 +23,12 @@ import com.mogujie.tt.imlib.proto.DepartmentEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
-import com.mogujie.tt.imlib.utils.SearchElement;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.activity.MainActivity;
 import com.mogujie.tt.ui.base.TTBaseFragment;
 import com.mogujie.tt.ui.utils.EntityList;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
-import com.mogujie.tt.utils.pinyin.PinYin.PinYinArea;
 
 public class SearchFragment extends TTBaseFragment
 		implements
@@ -119,7 +117,7 @@ public class SearchFragment extends TTBaseFragment
 		initDepartmentEntityList();
 		initGroupEntityList();
 		initContactEntityList();
-		
+
 	}
 
 	private void initContactEntityList() {
@@ -140,14 +138,35 @@ public class SearchFragment extends TTBaseFragment
 				return "";
 			}
 
+			/*
+			 * (non-Javadoc)
+			 * 
+			 * @see
+			 * com.mogujie.tt.ui.utils.EntityList#onSearchImpl(java.lang.String)
+			 * feature:
+			 * 支持首字母拼音搜索
+			 * 拼音搜索从完整字的搜索开始
+			 * 当然支持汉字搜索
+			 * 去重
+			 * 单元测试先通过
+			 * 
+			 * 理解如何给单独的element加上颜色
+			 * 首字母拼音搜索：
+			 * 将所有单个汉字的拼音放到队列里去
+			 * 首字母搜索的时候，可以计算是从哪个字符开始，一共有几个字符符合，那么计算一下起始位置
+			 * 拼音搜索，遍历，生成一个子拼音，startswith符合，则符合，但是需要计算一下起始位置, 单独写一个算法根据长度来计算
+			 * name搜索，本身已经支持
+			 * 
+			 * 特殊case:
+			 * 输入一个字符的时候，走首字母拼音搜索没有问题...基本A-Z都有覆盖的
+			 */
 			@Override
 			public void onSearchImpl(String key) {
 				ArrayList<Object> searchList = new ArrayList<Object>();
 				for (Object obj : backupList) {
 					ContactEntity contact = (ContactEntity) obj;
 
-					if (IMUIHelper.handleNameSearch(contact.name, key, contact.searchElement)
-							|| IMUIHelper.handleContactPinyinSearch(logger, contact.pinyinElement, key, contact.searchElement)) {
+					if (IMUIHelper.handleContactSearch(key, contact)) {
 						searchList.add(obj);
 					}
 				}
@@ -158,7 +177,7 @@ public class SearchFragment extends TTBaseFragment
 
 		adapter.add(0, entityList);
 	}
-	
+
 	private void initGroupEntityList() {
 		if (imService == null) {
 			return;
@@ -183,8 +202,7 @@ public class SearchFragment extends TTBaseFragment
 				for (Object obj : backupList) {
 					GroupEntity group = (GroupEntity) obj;
 
-					if (IMUIHelper.handleNameSearch(group.name, key, group.searchElement)
-							|| IMUIHelper.handleContactPinyinSearch(logger, group.pinyinElement, key, group.searchElement)) {
+					if (IMUIHelper.handleGroupSearch(key, group)) {
 						searchList.add(obj);
 					}
 				}
@@ -195,7 +213,7 @@ public class SearchFragment extends TTBaseFragment
 
 		adapter.add(0, entityList);
 	}
-	
+
 	private void initDepartmentEntityList() {
 		if (imService == null) {
 			return;
@@ -220,8 +238,7 @@ public class SearchFragment extends TTBaseFragment
 				for (Object obj : backupList) {
 					DepartmentEntity department = (DepartmentEntity) obj;
 
-					if (IMUIHelper.handleNameSearch(department.title, key, department.searchElement)
-							|| IMUIHelper.handleContactPinyinSearch(logger, department.pinyinElement, key, department.searchElement)) {
+					if (IMUIHelper.handleDepartmentSearch(key, department)) {
 						searchList.add(obj);
 					}
 				}
@@ -234,15 +251,16 @@ public class SearchFragment extends TTBaseFragment
 				DepartmentEntity department = (DepartmentEntity) list.get(position);
 				locateDepartment(ctx, department);
 			}
-			
-			private void locateDepartment(Context ctx, DepartmentEntity department) {
+
+			private void locateDepartment(Context ctx,
+					DepartmentEntity department) {
 				if (ctx == null || department == null) {
 					return;
 				}
-				
+
 				Intent intent = new Intent(ctx, MainActivity.class);
 				intent.putExtra(SysConstant.KEY_LOCATE_DEPARTMENT, department.id);
-				
+
 				ctx.startActivity(intent);
 			}
 		};
@@ -250,9 +268,6 @@ public class SearchFragment extends TTBaseFragment
 		adapter.add(0, entityList);
 	}
 
-
-
-	
 	@Override
 	protected void initHandler() {
 	}

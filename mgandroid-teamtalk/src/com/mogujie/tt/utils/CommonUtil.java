@@ -509,7 +509,7 @@ public class CommonUtil {
                         .getSystemService(Context.ACTIVITY_SERVICE);
                 ComponentName cn = am.getRunningTasks(1).size() > 0 ? am
                         .getRunningTasks(1).get(0).topActivity : null;
-                Logger.getLogger().d(cn.getClassName());
+//                Logger.getLogger().d(cn.getClassName());
                 if (cn != null && cn.getClassName().contains(SysConstant.APPLICATION_PACKAGE_NAME)) {
                     return true;
                 }

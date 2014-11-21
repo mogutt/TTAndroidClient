@@ -36,6 +36,7 @@ public class ImageTool {
 			opts.inJustDecodeBounds = true;
 			BitmapFactory.decodeFile(filePath, opts);
 			opts.inSampleSize = computeSampleSize(opts, -1, MAX_NUM_PIXELS);
+			Logger.getLogger(ImageTool.class).d("image#opts.inSampleSize:%d", opts.inSampleSize);
 			opts.inJustDecodeBounds = false;
 			//            if (opts.inSampleSize == 1) {
 			//                bitmap = BitmapFactory.decodeFile(filePath, opts);
@@ -51,7 +52,7 @@ public class ImageTool {
 		return newBitmap;
 	}
 
-	private static int computeSampleSize(BitmapFactory.Options options,
+	public static int computeSampleSize(BitmapFactory.Options options,
 			int minSideLength, int maxNumOfPixels) {
 		int initialSize = computeInitialSampleSize(options, minSideLength, maxNumOfPixels);
 		int roundedSize;

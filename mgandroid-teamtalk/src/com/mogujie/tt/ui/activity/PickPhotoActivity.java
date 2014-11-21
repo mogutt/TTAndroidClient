@@ -28,6 +28,7 @@ import com.mogujie.tt.adapter.album.ImageBucket;
 import com.mogujie.tt.adapter.album.ImageBucketAdapter;
 import com.mogujie.tt.config.HandlerConstant;
 import com.mogujie.tt.config.SysConstant;
+import com.mogujie.tt.log.Logger;
 
 /**
  * @Description 相册列表
@@ -44,9 +45,11 @@ public class PickPhotoActivity extends Activity implements OnTouchListener {
     public static Bitmap bimap = null;
     private String CHAT_USER_ID = null;
     boolean touchable = true;
+	private Logger logger = Logger.getLogger(PickPhotoActivity.class);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+    	logger.d("pic#PickPhotoActivity onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.tt_activity_pick_photo);
         initData();
@@ -60,7 +63,7 @@ public class PickPhotoActivity extends Activity implements OnTouchListener {
         CHAT_USER_ID = (String) getIntent().getSerializableExtra(
                 SysConstant.EXTRA_CHAT_USER_ID);
         helper = AlbumHelper.getHelper(getApplicationContext());
-        dataList = helper.getImagesBucketList(false);
+        dataList = helper.getImagesBucketList(true);
         bimap = BitmapFactory.decodeResource(getResources(),
                 R.drawable.tt_default_album_grid_image);
     }

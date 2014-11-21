@@ -28,16 +28,13 @@
             android:src="@drawable/tt_default_user_portrait_corner" />
             -->
 
-            <com.mogujie.widget.imageview.MGWebImageView
-                xmlns:app="http://schemas.android.com/apk/res-auto"
+            <ImageView
                 android:id="@+id/user_portrait"
                 android:layout_width="65dp"
                 android:layout_height="65dp"
                 android:layout_alignParentLeft="true"
                 android:background="@drawable/tt_default_user_portrait_corner"
-                android:scaleType="centerCrop"
-                app:cornerSize="2dp"
-                app:shape="round_corner" />
+                android:scaleType="centerCrop" />
 
             <RelativeLayout
                 android:layout_width="wrap_content"
@@ -108,8 +105,7 @@
         </RelativeLayout>
     </LinearLayout>
 
-        
-         <ProgressBar
+    <ProgressBar
         android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -117,5 +113,5 @@
         android:indeterminateDrawable="@drawable/tt_progressbar"
         android:indeterminateDuration="4000"
         android:visibility="visible" />
-         
-    </RelativeLayout>
+
+</RelativeLayout>

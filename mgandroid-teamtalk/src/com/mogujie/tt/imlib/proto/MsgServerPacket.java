@@ -1,132 +1,118 @@
-
 package com.mogujie.tt.imlib.proto;
+
+import java.util.List;
 
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
+import com.mogujie.tt.imlib.proto.MsgServerPacket.PacketRequest.Entity;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
+import com.mogujie.tt.packet.base.DefaultHeader;
 import com.mogujie.tt.packet.base.Header;
 import com.mogujie.tt.packet.base.Packet;
-import com.mogujie.tt.utils.SequenceNumberMaker;
 
 /**
- * MsgServerPacket:请求(返回)分配一个消息服务器的IP和端口 yugui 2014-05-04
+ * MsgServerPacket:请求(返回)登陆消息服务器 yugui 2014-05-04
  */
 
 public class MsgServerPacket extends Packet {
 
-    private Logger logger = Logger.getLogger(MsgServerPacket.class);
+	private Logger logger = Logger.getLogger(MsgServerPacket.class);
 
-    public MsgServerPacket() {
-        mRequest = new MsgServerRequest();
-        setNeedMonitor(true);
-    }
+	public MsgServerPacket() {
+		// todo eric remove this
+		setNeedMonitor(true);
+	}
 
-    @Override
-    public DataBuffer encode() {
-        Header RequestMsgServerHeader = mRequest.getHeader();
-        DataBuffer headerBuffer = RequestMsgServerHeader.encode();
-        int readable = headerBuffer.readableBytes();
+	public MsgServerPacket(Entity entity) {
+		mRequest = new PacketRequest(entity);
+		setNeedMonitor(true);
+	}
 
-        DataBuffer buffer = new DataBuffer(readable);
-        buffer.writeDataBuffer(headerBuffer);
+	@Override
+	public DataBuffer encode() {
 
-        return buffer;
-    }
+		Header header = mRequest.getHeader();
+		DataBuffer headerBuffer = header.encode();
+		DataBuffer bodyBuffer = new DataBuffer();
 
-    @Override
-    public void decode(DataBuffer buffer) {
-        if (null == buffer)
-            return;
+		PacketRequest req = (PacketRequest) mRequest;
+		if (null == req)
+			return null;
 
-        try {
-            MsgServerResponse res = new MsgServerResponse();
+		int headLength = headerBuffer.readableBytes();
+		int bodyLength = bodyBuffer.readableBytes();
 
-            Header ResponseMsgServerHeader = new Header();
-            ResponseMsgServerHeader.decode(buffer);
-            res.setHeader(ResponseMsgServerHeader);
+		logger.d("packet#message len:%d, header report len:%d", headLength
+				+ bodyLength, header.getLength());
 
-            if (ResponseMsgServerHeader.getServiceId() != ProtocolConstant.SID_LOGIN
-                    ||
-                    ResponseMsgServerHeader.getCommandId() != ProtocolConstant.CID_LOGIN_RES_MSGSERVER)
-                return;
+		DataBuffer buffer = new DataBuffer(headLength + bodyLength);
+		buffer.writeDataBuffer(headerBuffer);
+		buffer.writeDataBuffer(bodyBuffer);
 
-            int nResult = buffer.readInt();
-            res.setResult(nResult);
-            if (nResult == 0) {
-                int len = buffer.readInt();
-                res.setStrIp1(buffer.readString(len));
-                len = buffer.readInt();
-                res.setStrIp2(buffer.readString(len));
-                res.setPort(buffer.readShort());
-            }
+		return buffer;
+	}
 
-            mResponse = res;
-        } catch (Exception e) {
-            logger.e(e.getMessage());
-        }
+	@Override
+	public void decode(DataBuffer buffer) {
 
-    }
+		if (null == buffer)
+			return;
+		try {
+			PacketResponse res = new PacketResponse();
 
-    public static class MsgServerRequest extends Request {
+			Header header = new Header();
+			header.decode(buffer);
+			res.setHeader(header);
 
-        public MsgServerRequest() {
+			logger.d("packet#header:%s", header);
 
-            Header msrHeader = new Header();
-            msrHeader.setVersion((short) SysConstant.PROTOCOL_VERSION);
-            //msrHeader.setFlag((short) SysConstant.PROTOCOL_FLAG);
-            msrHeader.setServiceId(ProtocolConstant.SID_LOGIN);
-            msrHeader.setCommandId(ProtocolConstant.CID_LOGIN_REQ_MSGSERVER);
-            //msrHeader.setError((short) SysConstant.PROTOCOL_ERROR);
-            short seqNo = SequenceNumberMaker.getInstance().make();
-            msrHeader.setReserved(seqNo);
-            msrHeader.setLength(SysConstant.PROTOCOL_HEADER_LENGTH);
-            
-            setHeader(msrHeader);
-        }
-    }
+			// starts filling from here
+			res.entity.result = buffer.readInt();
+			/*
+			 * public String ip1;
+			public String ip2;
+			public short port;
 
-    public static class MsgServerResponse extends Response {
-        private int result;
-        private String strIp1;
-        private String strIp2;
-        private short port;
+			 */
+			res.entity.ip1 = buffer.readString();
+			res.entity.ip2 = buffer.readString();
+			res.entity.port = buffer.readShort();
 
-        public MsgServerResponse() {
+			mResponse = res;
+		} catch (Exception e) {
+			logger.e("packet#decode exception:%s", e.getMessage());
+			logger.e(e.getMessage());
+		}
 
-        }
+	}
 
-        public int getResult() {
-            return result;
-        }
+	public static class PacketRequest extends Request {
+		public static class Entity {
+			public int userType;
+		}
 
-        public void setResult(int result) {
-            this.result = result;
-        }
+		public Entity entity;
 
-        public String getStrIp1() {
-            return strIp1;
-        }
+		public PacketRequest(Entity entity) {
+			this.entity = entity;
+			Header header = new DefaultHeader(ProtocolConstant.SID_LOGIN, ProtocolConstant.CID_LOGIN_REQ_MSGSERVER);
 
-        public void setStrIp1(String strIp1) {
-            this.strIp1 = strIp1;
-        }
+			int contentLength = 0;
+			header.setLength(SysConstant.PROTOCOL_HEADER_LENGTH + contentLength);
 
-        public String getStrIp2() {
-            return strIp2;
-        }
+			setHeader(header);
+		}
+	}
 
-        public void setStrIp2(String strIp2) {
-            this.strIp2 = strIp2;
-        }
+	public static class PacketResponse extends Response {
+		public static class Entity {
+			public int result;
+			public String ip1;
+			public String ip2;
+			public short port;
+		}
 
-        public short getPort() {
-            return port;
-        }
-
-        public void setPort(short port) {
-            this.port = port;
-        }
-
-    }
+		public Entity entity = new Entity();
+	}
 }

@@ -22,7 +22,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="10dp"
-        android:layout_weight="1" >
+        android:layout_weight="1"
+        android:background="@drawable/tt_list_item_bk" >
 
         <CheckBox
             android:id="@+id/checkBox"
@@ -36,22 +37,6 @@
             android:focusable="false"
             android:text=""
             android:visibility="gone" />
-
-        <!--
-             <com.mogujie.widget.imageview.MGWebImageView
-            xmlns:app="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/contact_portrait"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:layout_centerVertical="true"
-            android:layout_marginBottom="10dp"
-            android:layout_marginTop="10dp"
-            android:layout_toRightOf="@id/checkBox"
-            android:scaleType="centerCrop"
-            android:src="@drawable/tt_default_user_portrait_corner"
-            app:cornerSize="2dp"
-            app:shape="round_corner" />
-        -->
 
         <ImageView
             android:id="@+id/contact_portrait"
@@ -71,10 +56,9 @@
             android:layout_centerVertical="true"
             android:layout_marginLeft="10dp"
             android:layout_toRightOf="@id/contact_portrait"
-            android:background="@color/contact_list_item_bk"
-            android:textColor="@color/default_value_color"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:background="@android:color/transparent"
+            android:textColor="@color/contact_name_color"
+            android:textSize="14sp" />
 
         <View
             android:layout_width="fill_parent"

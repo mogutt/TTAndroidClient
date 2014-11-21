@@ -52,9 +52,9 @@ public class IMApplication extends Application {
 				.threadPriority(Thread.NORM_PRIORITY - 2)
 				.denyCacheImageMultipleSizesInMemory()
 				.diskCacheFileNameGenerator(new Md5FileNameGenerator())
-				.diskCacheSize(50 * 1024 * 1024) // 50 Mb
+				.diskCacheSize(200 * 1024 * 1024) 
 				.tasksProcessingOrder(QueueProcessingType.LIFO)
-				.writeDebugLogs() // todo eric Remove for release app
+//				.writeDebugLogs() // todo eric Remove for release app
 				.build();
 		// Initialize ImageLoader with configuration.
 		ImageLoader.getInstance().init(config);

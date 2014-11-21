@@ -7,16 +7,20 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.PersistentCookieStore;
 import com.mogujie.tt.R;
 import com.mogujie.tt.app.IMEntrance;
 import com.mogujie.tt.cache.biz.CacheHub;
@@ -34,8 +38,9 @@ import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 
 public class LoginActivity extends TTBaseActivity implements OnIMServiceListner {
 
-	// todo eric remove uiHandler dead Codes
-	// protected static Handler uiHandler = null;
+	private static final int CODE_SHOW_LOGIN_PAGE = 0;
+
+	private Handler uiHandler = new Handler();
 
 	private EditText mNameView;
 
@@ -58,29 +63,47 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 
 	private LoginIdentity loginIdentity;
 
-	private String getLoginErrorTip(int errorCode) {
-		switch (errorCode) {
-		case ErrorCode.E_CONNECT_LOGIN_SERVER_FAILED:
-			return getString(R.string.connect_login_server_failed);
-		case ErrorCode.E_REQ_MSG_SERVER_ADDRS_FAILED:
-			return getString(R.string.req_msg_server_addrs_failed);
-		case ErrorCode.E_CONNECT_MSG_SERVER_FAILED:
-			return getString(R.string.connect_msg_server_failed);
-		case ErrorCode.E_LOGIN_MSG_SERVER_FAILED:
-			return getString(R.string.login_msg_server_failed);
-		case ErrorCode.E_LOGIN_GENERAL_FAILED:
-			return getString(R.string.login_error_general_failed);
+	private InputMethodManager intputManager;
 
-		default:
-			return getString(R.string.login_error_unexpected);
+	private boolean autoLogin = false;
+
+	private View loginPage;
+	private View splashPage;
+
+	// public static Handler getUiHandler() {
+	//
+	// return uiHandler;
+	//
+	// }
+
+	private String getLoginErrorTip(int errorCode, int msgServerErrorCode) {
+		switch (errorCode) {
+			case ErrorCode.E_CONNECT_LOGIN_SERVER_FAILED :
+				return getString(R.string.connect_login_server_failed);
+			case ErrorCode.E_REQ_MSG_SERVER_ADDRS_FAILED :
+				return getString(R.string.req_msg_server_addrs_failed);
+			case ErrorCode.E_CONNECT_MSG_SERVER_FAILED :
+				return getString(R.string.connect_msg_server_failed);
+			case ErrorCode.E_LOGIN_MSG_SERVER_FAILED :
+				return getString(R.string.login_msg_server_failed);
+			case ErrorCode.E_LOGIN_GENERAL_FAILED :
+				return getString(R.string.login_error_general_failed);
+			case ErrorCode.E_REQ_LOGIN_SERVER_ADDRS_FAILED :
+				return getString(R.string.login_error_fetch_login_server_addrs_failed);
+			case ErrorCode.E_MSG_SERVER_ERROR_CODE :
+				return String.format("%s %s:%d", getString(R.string.login_msg_server_failed), getString(R.string.error_code_name), msgServerErrorCode);
+			default :
+				return getString(R.string.login_error_unexpected);
 
 		}
 	}
 
-	private void onLoginError(int errorCode) {
-		logger.e("login#onLoginError -> errorCode:%d", errorCode);
+	private void onLoginError(int errorCode, int msgServerErrorCode) {
+		logger.e("login#onLoginError -> errorCode:%d, msgServerErrorCode:%d", errorCode, msgServerErrorCode);
 
-		String errorTip = getLoginErrorTip(errorCode);
+		showLoginPage();
+
+		String errorTip = getLoginErrorTip(errorCode, msgServerErrorCode);
 		logger.d("login#errorTip:%s", errorTip);
 
 		mLoginStatusView.setVisibility(View.GONE);
@@ -96,11 +119,11 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 		logger.d("login#onAction -> action:%s", action);
 
 		if (action.equals(IMActions.ACTION_LOGIN_RESULT)) {
-			int errorCode = intent.getIntExtra(
-					SysConstant.lOGIN_ERROR_CODE_KEY, -1);
+			int errorCode = intent.getIntExtra(SysConstant.lOGIN_ERROR_CODE_KEY, -1);
+			int msgServerErrorCode = intent.getIntExtra(SysConstant.KEY_MSG_SERVER_ERROR_CODE, 0);
 
 			if (errorCode != ErrorCode.S_OK) {
-				onLoginError(errorCode);
+				onLoginError(errorCode, msgServerErrorCode);
 			} else {
 				onLoginSuccess();
 			}
@@ -125,37 +148,75 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 
 		try {
 			loginIdentity = imService.getDbManager().loadLoginIdentity();
-
-			logger.d("login#loginId:%s", loginIdentity.loginId);
-
-			mNameView.setText(loginIdentity.loginId);
-			mPasswordView.setText(loginIdentity.pwd);
+			if (loginIdentity == null) {
+				handleNoLoginIdentity();
+			} else {
+				handleGotLoginIdentity();
+			}
 		} catch (Exception e) {
 			logger.w("loadIdentity failed");
 		}
 	}
 
-	
+	private void handleNoLoginIdentity() {
+		logger.i("login#handleNoLoginIdentity");
 
-	
+		if (autoLogin) {
+			//no login identity yet, show login page a few seconds delay
+			uiHandler.postDelayed(new Runnable() {
+
+				@Override
+				public void run() {
+					showLoginPage();
+				}
+			}, 1500);
+		}
+	}
+
+	private void handleGotLoginIdentity() {
+		logger.i("login#handleGotLoginIdentity");
+
+		logger.d("login#loginId:%s", loginIdentity.loginId);
+
+		mNameView.setText(loginIdentity.loginId);
+		mPasswordView.setText(loginIdentity.pwd);
+
+		if (autoLogin) {
+			uiHandler.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					logger.d("login#start auto login");
+
+					if (imLoginMgr != null) {
+						imLoginMgr.login(loginIdentity.loginId, loginIdentity.pwd, false, false);
+					}
+				}
+			}, 1500);
+		}
+	}
+
+	private void showLoginPage() {
+		splashPage.setVisibility(View.GONE);
+		loginPage.setVisibility(View.VISIBLE);
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 
 		super.onCreate(savedInstanceState);
-		
+		intputManager = (InputMethodManager) getSystemService(this.INPUT_METHOD_SERVICE);
 		logger.d("login#onCreate");
-		
+
 		List<String> actions = new ArrayList<String>();
 		actions.add(IMActions.ACTION_LOGIN_RESULT);
-		if (!imServiceHelper.connect(getApplicationContext(), actions,
-				IMServiceHelper.INTENT_NO_PRIORITY, this)) {
+		if (!imServiceHelper.connect(getApplicationContext(), actions, IMServiceHelper.INTENT_NO_PRIORITY, this)) {
 			logger.e("login#fatal,  connect im service failed");
 		}
 
-//		 if (true) {
-//		 CommonTest.test();
-//		 return;
-//		 }
+		//		 if (true) {
+		//		 CommonTest.test();
+		//		 return;
+		//		 }
 
 		IMEntrance.getInstance().setContext(LoginActivity.this);
 
@@ -166,12 +227,8 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 		instance = this;
 
 		mNameView = (EditText) findViewById(R.id.name);
-
 		mPasswordView = (EditText) findViewById(R.id.password);
-
-		mPasswordView
-
-		.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+		mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 
 			@Override
 			public boolean onEditorAction(TextView textView, int id,
@@ -203,6 +260,8 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 			@Override
 			public void onClick(View view) {
 
+				intputManager.hideSoftInputFromWindow(mPasswordView.getWindowToken(), 0);
+
 				attemptLogin();
 
 				// if (NetworkUtil.isNetWorkAvalible(LoginActivity.this)) {
@@ -217,6 +276,59 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 			}
 
 		});
+
+		initAutoLogin();
+	}
+	private void initAutoLogin() {
+		logger.i("login#initAutoLogin");
+		autoLogin = shouldAutoLogin();
+		logger.w("login#autoLogin:%s", autoLogin);
+
+		splashPage = findViewById(R.id.splash_page);
+		loginPage = findViewById(R.id.login_page);
+
+		splashPage.setVisibility(autoLogin ? View.VISIBLE : View.GONE);
+		loginPage.setVisibility(autoLogin ? View.GONE : View.VISIBLE);
+
+		loginPage.setOnTouchListener(new OnTouchListener() {
+
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+
+				if (mPasswordView != null) {
+					intputManager.hideSoftInputFromWindow(mPasswordView.getWindowToken(), 0);
+				}
+
+				if (mNameView != null) {
+					intputManager.hideSoftInputFromWindow(mNameView.getWindowToken(), 0);
+				}
+
+				return false;
+			}
+		});
+
+		if (autoLogin) {
+			Animation splashAnimation = AnimationUtils.loadAnimation(this, R.anim.login_splash);
+			if (splashAnimation == null) {
+				logger.e("login#loadAnimation login_splash failed");
+				return;
+			}
+
+			splashPage.startAnimation(splashAnimation);
+		}
+	}
+
+	private boolean shouldAutoLogin() {
+		Intent intent = getIntent();
+		if (intent != null) {
+			boolean notAutoLogin = intent.getBooleanExtra(SysConstant.KEY_LOGIN_NOT_AUTO, false);
+			logger.d("login#notAutoLogin:%s", notAutoLogin);
+			if (notAutoLogin) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	@Override
@@ -224,6 +336,10 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 		super.onDestroy();
 
 		imServiceHelper.disconnect(getApplicationContext());
+
+		splashPage = null;
+		loginPage = null;
+		mLoginFormView = null;
 	}
 
 	public void attemptLogin() {
@@ -236,6 +352,10 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 
 		String mPassword = mPasswordView.getText().toString();
 
+		//todo eric
+		//loginName = "大佛";
+		//mPassword = "123321";
+
 		boolean cancel = false;
 
 		View focusView = null;
@@ -243,8 +363,7 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 		if (TextUtils.isEmpty(mPassword)) {
 
 			// mPasswordView.setError(getString(R.string.error_field_required));
-			Toast.makeText(this, getString(R.string.error_password_required),
-					Toast.LENGTH_SHORT).show();
+			Toast.makeText(this, getString(R.string.error_field_required), Toast.LENGTH_SHORT).show();
 
 			focusView = mPasswordView;
 
@@ -263,8 +382,7 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 		if (TextUtils.isEmpty(loginName)) {
 
 			// mNameView.setError(getString(R.string.error_field_required));
-			Toast.makeText(this, getString(R.string.error_field_required),
-					Toast.LENGTH_SHORT).show();
+			Toast.makeText(this, getString(R.string.error_field_required), Toast.LENGTH_SHORT).show();
 
 			focusView = mNameView;
 
@@ -299,8 +417,7 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 						pwdChanged = false;
 					}
 				}
-				imLoginMgr.login(loginName, mPassword, userNameChanged,
-						pwdChanged);
+				imLoginMgr.login(loginName, mPassword, userNameChanged, pwdChanged);
 			}
 
 		}
@@ -378,11 +495,8 @@ public class LoginActivity extends TTBaseActivity implements OnIMServiceListner 
 	private void onLoginSuccess() {
 		logger.i("login#onLoginSuccess");
 
-		// todo eric remove it
-		CacheHub.getInstance()
-				.setLoginUser(
-						imServiceHelper.getIMService().getLoginManager()
-								.getLoginUser());
+		//		 todo eric remove it
+		CacheHub.getInstance().setLoginUser(imServiceHelper.getIMService().getLoginManager().getLoginUser());
 
 		// todo eric remove this
 		// Intent i = new Intent();

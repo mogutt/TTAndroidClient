@@ -7,6 +7,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -16,6 +17,7 @@ import android.support.v4.app.NotificationCompat.Builder;
 import android.view.View;
 
 import com.mogujie.tt.R;
+import com.mogujie.tt.entity.MessageInfo;
 import com.mogujie.tt.imlib.common.ConfigDefs;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
@@ -55,10 +57,13 @@ public class IMNotificationManager extends IMManager
 	}
 
 	public void register() {
-		logger.d("notification#regisgter");
+		logger.d("notification#register");
+
+		cancelAllNotifications();
 
 		List<String> actions = new ArrayList<String>();
 		actions.add(IMActions.ACTION_MSG_RECV);
+		actions.add(IMActions.ACTION_LOGOUT);
 
 		imServiceHelper.registerActions(ctx, actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
 	}
@@ -70,8 +75,23 @@ public class IMNotificationManager extends IMManager
 
 		if (action.equals(IMActions.ACTION_MSG_RECV)) {
 			handleMsgRecv(intent);
-
+		} else if (action.equals(IMActions.ACTION_LOGOUT)) {
+			handleLogout();
 		}
+	}
+
+	private void handleLogout() {
+		cancelAllNotifications();
+	}
+
+	public void cancelAllNotifications() {
+		logger.d("notification#cancelAllNotifications");
+
+		NotificationManager notifyMgr = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+		if (notifyMgr == null) {
+			return;
+		}
+		notifyMgr.cancelAll();
 	}
 
 	public String getSessionAvatarUrl(int sessionType, String sessionId) {
@@ -101,28 +121,36 @@ public class IMNotificationManager extends IMManager
 	private void handleMsgRecv(Intent intent) {
 		logger.d("notification#recv unhandled message");
 
-		if (!shouldShowNotification()) {
-			logger.d("notification#shouldShowNotification is false, return");
-			return;
-		}
-
 		SessionInfo sessionInfo = IMUIHelper.getSessionInfoFromIntent(intent);
 		String sessionId = sessionInfo.getSessionId();
 		logger.d("notification#msg no one handled, sessionId:%s, sessionType:%d", sessionId, sessionInfo.getSessionType());
+
+		if (!shouldGloballyShowNotification()) {
+			logger.d("notification#shouldGloballyShowNotification is false, return");
+			return;
+		}
+		
+		if (!shouldShowNotificationBySession(sessionInfo)) {
+			logger.d("notification#shouldShowNotificationBySession is false, return.sessionInfo:%s", sessionInfo);
+			return;
+		}
 
 		final MessageEntity msg = IMUnreadMsgManager.instance().getLatestMessage(sessionId);
 		if (msg == null) {
 			logger.e("notification#getLatestMessage failed for sessionId:%s", sessionId);
 			return;
 		}
+		MessageInfo msgInfo = new MessageInfo(msg);
+		//if the message is a multi login message which send from another terminal,not need notificate to status bar
+		if(!msgInfo.isMyMsg()) {
+			int sessionTotalMsgCnt = IMUnreadMsgManager.instance().getUnreadMsgListCnt(sessionId);
+			logger.d("notification#getUnreadMsgListCnt:%d", sessionTotalMsgCnt);
 
-		int sessionTotalMsgCnt = IMUnreadMsgManager.instance().getUnreadMsgListCnt(sessionId);
-		logger.d("notification#getUnreadMsgListCnt:%d", sessionTotalMsgCnt);
-
-		showNotification(msg, sessionId, sessionTotalMsgCnt);
+			showNotification(msg, sessionId, sessionTotalMsgCnt);			
+		}
 	}
 
-	private boolean shouldShowNotification() {
+	private boolean shouldGloballyShowNotification() {
 		if (IMConfigurationManager.instance().getBoolean(ConfigDefs.CATEGORY_GLOBAL, ConfigDefs.KEY_NOTIFICATION_NO_DISTURB, ConfigDefs.DEF_VALUE_NOTIFICATION_NO_DISTURB)) {
 			logger.d("notification#global setting: no disturb");
 			return false;
@@ -130,6 +158,18 @@ public class IMNotificationManager extends IMManager
 
 		return true;
 	}
+	
+	private boolean shouldShowNotificationBySession(SessionInfo sessionInfo) {
+		String sessionKey = IMUIHelper.getSessionKey(sessionInfo.getSessionId(), sessionInfo.getSessionType());
+		if (IMConfigurationManager.instance().getBoolean(sessionKey, ConfigDefs.KEY_NOTIFICATION_NO_DISTURB, ConfigDefs.DEF_VALUE_NOTIFICATION_NO_DISTURB)) {
+			logger.d("notification#shouldShowNotificationBySession:%s: no disturb", sessionKey);
+			return false;
+		}
+
+		return true;
+	}
+	
+	
 
 	private boolean shouldUseNotificationSound() {
 		return IMConfigurationManager.instance().getBoolean(ConfigDefs.CATEGORY_GLOBAL, ConfigDefs.KEY_NOTIFICATION_GOT_SOUND, ConfigDefs.DEF_VALUE_NOTIFICATION_GOT_SOUND);
@@ -141,8 +181,8 @@ public class IMNotificationManager extends IMManager
 
 	private void showNotification(final MessageEntity latestMsg,
 			final String sessionId, final int sessionTotalMsgCnt) {
-		//todo eric need to set the exact size of the big icon
-		ImageSize targetSize = new ImageSize(128, 128);
+		// todo eric need to set the exact size of the big icon
+		ImageSize targetSize = new ImageSize(80, 80);
 		String avatarUrl = getSessionAvatarUrl(latestMsg.sessionType, sessionId);
 		logger.d("notification#notification avatarUrl:%s", avatarUrl);
 
@@ -152,7 +192,7 @@ public class IMNotificationManager extends IMManager
 			public void onLoadingComplete(String imageUri, View view,
 					Bitmap loadedImage) {
 				logger.d("notification#icon onLoadingComplete");
-				//holder.image.setImageBitmap(loadedImage);
+				// holder.image.setImageBitmap(loadedImage);
 
 				showInNotificationBar(latestMsg, sessionId, latestMsg.sessionType, loadedImage, sessionTotalMsgCnt);
 			}
@@ -185,18 +225,18 @@ public class IMNotificationManager extends IMManager
 		builder.setWhen(System.currentTimeMillis());
 		builder.setAutoCancel(true);
 
-		//this is the content near the right bottom side
-		//builder.setContentInfo("content info");
+		// this is the content near the right bottom side
+		// builder.setContentInfo("content info");
 
 		if (shouldUseNotificationVibration()) {
-			//delay 0ms, vibrate 200ms, delay 250ms, vibrate 200ms 
+			// delay 0ms, vibrate 200ms, delay 250ms, vibrate 200ms
 			long[] vibrate = {0, 200, 250, 200};
 			builder.setVibrate(vibrate);
 		} else {
 			logger.d("notification#setting is not using vibration");
 		}
 
-		//sound
+		// sound
 		if (shouldUseNotificationSound()) {
 			builder.setDefaults(Notification.DEFAULT_SOUND);
 		} else {
@@ -206,21 +246,28 @@ public class IMNotificationManager extends IMManager
 			logger.d("notification#fetch icon from network ok");
 			builder.setLargeIcon(iconBitmap);
 		} else {
-			//todo eric default avatar is too small, need big size(128 * 128)
+			// todo eric default avatar is too small, need big size(128 * 128)
 			Bitmap defaultBitmap = BitmapFactory.decodeResource(ctx.getResources(), IMUIHelper.getDefaultAvatarResId(msg.sessionType));
 			if (defaultBitmap != null) {
 				builder.setLargeIcon(defaultBitmap);
 			}
 		}
 
+		int notificationId = getSessionNotificationId(sessionId, sessionType);
+
 		Intent intent = new Intent(ctx, MessageActivity.class);
 		IMUIHelper.setSessionInIntent(intent, sessionId, sessionType);
 
-		PendingIntent pendingIntent = PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		// if MessageActivity is in the background, the system would bring it to
+		// the front
+		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		PendingIntent pendingIntent = PendingIntent.getActivity(ctx, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
 		builder.setContentIntent(pendingIntent);
+
 		Notification notification = builder.build();
 
-		notifyMgr.notify(Integer.parseInt(sessionId), notification);
+		notifyMgr.notify(notificationId, notification);
 	}
 
 	private String getNotificationContent(MessageEntity msg) {
@@ -289,40 +336,77 @@ public class IMNotificationManager extends IMManager
 
 	@Override
 	public void onIMServiceConnected() {
+		logger.d("notification#onIMServiceConnected");
 
 	}
 
-	//	private void oldNotification() {
-	//		Notification notification = new Notification();
+	// come from
+	// http://www.partow.net/programming/hashfunctions/index.html#BKDRHashFunction
+	private long hashBKDR(String str) {
+		long seed = 131; // 31 131 1313 13131 131313 etc..
+		long hash = 0;
+
+		for (int i = 0; i < str.length(); i++) {
+			hash = (hash * seed) + str.charAt(i);
+		}
+
+		return hash;
+	}
+
+	/* End Of BKDR Hash Function */
+
+	public int getSessionNotificationId(String sessionId, int sessionType) {
+		logger.d("notification#getSessionNotificationId sessionId:%s, sessionType:%d", sessionId, sessionType);
+
+		String sessionKey = getSessionKey(sessionId, sessionType);
+		int hashedNotificationId = (int) hashBKDR(sessionKey);
+		logger.d("notification#hashedNotificationId:%d", hashedNotificationId);
+
+		return hashedNotificationId;
+	}
+
+	private String getSessionKey(String sessionId, int sessionType) {
+		return String.format("%s_%d", sessionId, sessionType);
+	}
+
+	@Override
+	public void reset() {
+		cancelAllNotifications();
+	}
+
+	// private void oldNotification() {
+	// Notification notification = new Notification();
 	//
-	//		//notification.icon = IMUIHelper.getDefaultAvatarResId(msg.sessionType);
-	//		if (icon == null) {
-	//			logger.e("notification#icon is null");
-	//			notification.icon = IMUIHelper.getDefaultAvatarResId(msg.sessionType);
-	//		} else {
-	//			notification.largeIcon = icon;
-	//		}
-	//		
-	//		//notification.icon = IMUIHelper.getDefaultAvatarResId(msg.sessionType);
+	// //notification.icon = IMUIHelper.getDefaultAvatarResId(msg.sessionType);
+	// if (icon == null) {
+	// logger.e("notification#icon is null");
+	// notification.icon = IMUIHelper.getDefaultAvatarResId(msg.sessionType);
+	// } else {
+	// notification.largeIcon = icon;
+	// }
 	//
-	//		//delay 0ms, vibrate 200ms, delay 250ms, vibrate 200ms 
-	//		long[] vibrate = {0, 200, 250, 200};
-	//		notification.vibrate = vibrate;
+	// //notification.icon = IMUIHelper.getDefaultAvatarResId(msg.sessionType);
 	//
-	//		notification.when = System.currentTimeMillis();
+	// //delay 0ms, vibrate 200ms, delay 250ms, vibrate 200ms
+	// long[] vibrate = {0, 200, 250, 200};
+	// notification.vibrate = vibrate;
 	//
-	//		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+	// notification.when = System.currentTimeMillis();
 	//
-	//		// rolling text
-	//		notification.tickerText = getRollingText(msg, false);
-	//		notification.defaults = Notification.DEFAULT_SOUND;
+	// notification.flags |= Notification.FLAG_AUTO_CANCEL;
 	//
-	//		Intent intent = new Intent(ctx, MessageActivity.class);
-	//		IMUIHelper.setSessionInIntent(intent, sessionId, sessionType);
+	// // rolling text
+	// notification.tickerText = getRollingText(msg, false);
+	// notification.defaults = Notification.DEFAULT_SOUND;
 	//
-	//		PendingIntent pendingIntent = PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_ONE_SHOT);
-	//		notification.setLatestEventInfo(ctx, getNotificationTitle(msg), getNotificationContentText(msg), pendingIntent);
-	//		notifyMgr.notify(Integer.parseInt(sessionId), notification);
-	//	}
+	// Intent intent = new Intent(ctx, MessageActivity.class);
+	// IMUIHelper.setSessionInIntent(intent, sessionId, sessionType);
+	//
+	// PendingIntent pendingIntent = PendingIntent.getActivity(ctx, 0, intent,
+	// PendingIntent.FLAG_ONE_SHOT);
+	// notification.setLatestEventInfo(ctx, getNotificationTitle(msg),
+	// getNotificationContentText(msg), pendingIntent);
+	// notifyMgr.notify(Integer.parseInt(sessionId), notification);
+	// }
 
 }

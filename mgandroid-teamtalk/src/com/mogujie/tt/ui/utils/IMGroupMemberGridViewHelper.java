@@ -20,6 +20,8 @@ import com.mogujie.tt.imlib.IMSession;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.service.IMService;
 import com.mogujie.tt.log.Logger;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.listener.PauseOnScrollListener;
 
 public class IMGroupMemberGridViewHelper {
 	private Logger logger = Logger.getLogger(IMGroupMemberGridViewHelper.class);
@@ -50,6 +52,7 @@ public class IMGroupMemberGridViewHelper {
 
 		gridView = (GridView) parentView.findViewById(gridViewResId);
 		gridView.setSelector(new ColorDrawable(Color.TRANSPARENT));// 去掉点击时的黄色背影
+		gridView.setOnScrollListener(new PauseOnScrollListener(ImageLoader.getInstance(), true, true));
 
 		if (itemClickListner != null) {
 			gridView.setOnItemClickListener(itemClickListner);
@@ -76,8 +79,8 @@ public class IMGroupMemberGridViewHelper {
 			return;
 		}
 
-		sessionId = intent.getStringExtra(SysConstant.SESSION_ID_KEY);
-		sessionType = intent.getIntExtra(SysConstant.SESSION_TYPE_KEY, 0);
+		sessionId = intent.getStringExtra(SysConstant.KEY_SESSION_ID);
+		sessionType = intent.getIntExtra(SysConstant.KEY_SESSION_TYPE, 0);
 		logger.d("groupmgr#sessionType:%d, sessionId:%s", sessionType,
 				sessionId);
 

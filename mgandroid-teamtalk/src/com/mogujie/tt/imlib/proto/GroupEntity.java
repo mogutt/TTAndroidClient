@@ -13,6 +13,7 @@ public class GroupEntity {
 	public String creatorId;
 	public int type; // 1--normal group, 2--temporary group
 	public int updated;
+	public int shieldStatus;
 	public List<String> memberIdList = new ArrayList<String>();
 
 	public PinYinElement pinyinElement = new PinYinElement();
@@ -22,7 +23,7 @@ public class GroupEntity {
 	public String toString() {
 		String ret = "GroupEntity [id=" + id + ", name=" + name + ", avatar="
 				+ avatarUrl + ", creatorId=" + creatorId + ", type=" + type
-				+ ", updated=" + updated + "memberCnt=" + memberIdList.size()
+				+ ", updated=" + updated + ", shieldStatus=" + shieldStatus + "memberCnt=" + memberIdList.size()
 				+ "]";
 
 		StringBuilder memberString = new StringBuilder("member ids:");

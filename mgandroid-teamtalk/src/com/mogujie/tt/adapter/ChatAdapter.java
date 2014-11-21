@@ -1,11 +1,12 @@
 package com.mogujie.tt.adapter;
 
-import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,10 +27,10 @@ import com.mogujie.tt.log.Logger;
 @SuppressLint("ResourceAsColor")
 public class ChatAdapter extends BaseAdapter {
 	private LayoutInflater mInflater = null;
-	private List<RecentInfo> recentSessionList = new LinkedList<RecentInfo>();
-	private static Logger logger = Logger.getLogger(ChatAdapter.class);
+	private List<RecentInfo> recentSessionList = new ArrayList<RecentInfo>();
+	private Logger logger = Logger.getLogger(ChatAdapter.class);
 
-	public ChatAdapter(Context context) throws ParseException {
+	public ChatAdapter(Context context) {
 		this.mInflater = LayoutInflater.from(context);
 	}
 
@@ -38,25 +39,26 @@ public class ChatAdapter extends BaseAdapter {
 		return recentSessionList.size();
 	}
 
-	@Override
-	public RecentInfo getItem(int position) {
-		logger.d("recent#getItem position:%d", position);
-		if (position >= recentSessionList.size() || position < 0) {
-			return null;
+		@Override
+		public RecentInfo getItem(int position) {
+			//logger.d("recent#getItem position:%d", position);
+			if (position >= recentSessionList.size() || position < 0) {
+				return null;
+			}
+	
+			return recentSessionList.get(position);
 		}
-
-		return recentSessionList.get(position);
-	}
 
 	@Override
 	public long getItemId(int position) {
 		// todo eric won't use it, right?
-		logger.d("recent#getItemId:%d", position);
-		if (position >= recentSessionList.size() || position < 0) {
-			return -1;
-		}
-
-		return position;
+		////		logger.d("recent#getItemId:%d", position);
+		//		if (position >= recentSessionList.size() || position < 0) {
+		//			return -1;
+		//		}
+		//
+		//		return position;
+		return 0;
 	}
 
 	public final class ContactViewHolder {
@@ -72,7 +74,6 @@ public class ChatAdapter extends BaseAdapter {
 		//		logger.d("recent#getview position:%d", position);
 
 		try {
-			// 设置holder信息
 			ContactViewHolder holder = null;
 			if (null == convertView && null != mInflater) {
 				convertView = mInflater.inflate(R.layout.tt_item_chat, null);
@@ -87,51 +88,45 @@ public class ChatAdapter extends BaseAdapter {
 				}
 
 			} else {
-
 				holder = (ContactViewHolder) convertView.getTag();
-			}
-			if (null == holder) {
-				return null;
 			}
 
 			String avatarUrl = null;
 			String userName = "";
 			String lastContent = "";
 			String lastTime = "";
-			int backgroundResource = 0;
 			int unReadCount = 0;
 			int sessionType = IMSession.SESSION_P2P;
 
-			if (null != recentSessionList
-					&& position < recentSessionList.size()) {
-				userName = recentSessionList.get(position).getUserName();
-				lastContent = recentSessionList.get(position).getLastContent();
-				lastTime = recentSessionList.get(position).getLastTimeString();
-				if (10 > recentSessionList.get(position).getUnreadCount()) {
-					backgroundResource = R.drawable.tt_message_notify_single;
-				} else {
-					backgroundResource = R.drawable.tt_message_notify_double;
+			if (position < recentSessionList.size()) {
+				RecentInfo recentInfo = recentSessionList.get(position);
+				if(!TextUtils.isEmpty(recentInfo.getNickname())){
+				    userName = recentInfo.getNickname();
+				}else if(!TextUtils.isEmpty(recentInfo.getUserName())){
+				    userName = recentInfo.getUserName();
+				}else{
+				    userName = recentInfo.getUserId();
 				}
-				unReadCount = recentSessionList.get(position).getUnreadCount();
-				logger.d("recent#userName:%s,  unReadCount:%d", userName, unReadCount);
-				avatarUrl = recentSessionList.get(position).getUserAvatar();
-				sessionType = recentSessionList.get(position).getSessionType();
-
+				lastContent = recentInfo.getLastContent();
+				lastTime = recentInfo.getLastTimeString();
+				unReadCount = recentInfo.getUnreadCount();
+				avatarUrl = recentInfo.getUserAvatar();
+				sessionType = recentInfo.getSessionType();
+				
+//				logger.d("recent#userName:%s,  unReadCount:%d", userName, unReadCount);
 			}
-
 			// 设置未读消息计数
 			if (unReadCount > 0) {
-				holder.msgCount.setBackgroundResource(backgroundResource);
+			    String strCountString=String.valueOf(unReadCount);
+			    if (unReadCount>99) {
+                    strCountString = "99+";
+                }
 				holder.msgCount.setVisibility(View.VISIBLE);
-				holder.msgCount.setText(String.valueOf(unReadCount));
+				holder.msgCount.setText(strCountString);
 			} else {
 				holder.msgCount.setVisibility(View.GONE);
 			}
 
-			if (avatarUrl == null) {
-				avatarUrl = "";
-			}
-			
 			IMUIHelper.setEntityImageViewAvatar(holder.avatar, avatarUrl, sessionType);
 
 			// 设置其它信息
@@ -143,7 +138,7 @@ public class ChatAdapter extends BaseAdapter {
 			// this.notifyDataSetChanged();
 			return convertView;
 		} catch (Exception e) {
-			logger.e(e.getMessage());
+			logger.e(e.getStackTrace().toString());
 			return null;
 		}
 	}
@@ -156,6 +151,5 @@ public class ChatAdapter extends BaseAdapter {
 		logger.d("recent#notifyDataSetChanged");
 
 		notifyDataSetChanged();
-
 	}
 }

@@ -7,14 +7,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
 
 import com.mogujie.tt.R;
 import com.mogujie.tt.imlib.IMSession;
+import com.mogujie.tt.imlib.common.ConfigDefs;
 import com.mogujie.tt.imlib.proto.ContactEntity;
 import com.mogujie.tt.imlib.proto.GroupEntity;
 import com.mogujie.tt.imlib.service.IMService;
+import com.mogujie.tt.imlib.utils.CheckboxConfigUtils;
 import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.imlib.utils.IMUIHelper.SessionInfo;
 import com.mogujie.tt.ui.activity.GroupMemberSelectActivity;
@@ -38,6 +41,8 @@ public class GroupManagerFragment extends TTBaseFragment
 	private IMServiceHelper imServiceHelper = new IMServiceHelper();
 	private IMService imService;
 	private IMGroupMemberGridViewHelper gridViewHelper = new IMGroupMemberGridViewHelper();
+	CheckboxConfigUtils checkBoxConfiger = new CheckboxConfigUtils();
+	CheckBox dontDisturbCheckbox;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -47,6 +52,7 @@ public class GroupManagerFragment extends TTBaseFragment
 			return curView;
 		}
 		curView = inflater.inflate(R.layout.tt_fragment_group_manage, topContentView);
+		dontDisturbCheckbox = (CheckBox) curView.findViewById(R.id.NotificationNoDisturbCheckbox);
 
 		imServiceHelper.connect(getActivity(), null, IMServiceHelper.INTENT_NO_PRIORITY, this);
 		initRes();
@@ -62,12 +68,13 @@ public class GroupManagerFragment extends TTBaseFragment
 
 		setTopLeftButton(R.drawable.tt_top_back);
 		setTopLeftText(getActivity().getString(R.string.top_left_back));
-		topLeftBtn.setOnClickListener(new View.OnClickListener() {
+		topLeftContainerLayout.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
 				getActivity().finish();
 			}
 		});
+		setTopLeftText(getResources().getString(R.string.top_left_back));
 
 		// 设置其它页面信息
 		// gridView = (GroupManagerGridView) curView
@@ -145,16 +152,15 @@ public class GroupManagerFragment extends TTBaseFragment
 	// }
 
 	private void init() {
-		SessionInfo sesisonInfo = IMUIHelper.getSessionInfoFromIntent(getActivity().getIntent());
-		if (sesisonInfo == null) {
+		SessionInfo sessionInfo = IMUIHelper.getSessionInfoFromIntent(getActivity().getIntent());
+		if (sessionInfo == null) {
 			logger.e("groupmgr#getSessionInfoFromIntent failed");
 			return;
 		}
-		
-		int sessionType = sesisonInfo.getSessionType();
-		String sessionId = sesisonInfo.getSessionId();
 
-		
+		int sessionType = sessionInfo.getSessionType();
+		String sessionId = sessionInfo.getSessionId();
+
 		if (imService == null) {
 			return;
 		}
@@ -162,9 +168,10 @@ public class GroupManagerFragment extends TTBaseFragment
 		if (curView == null) {
 			return;
 		}
-		
+
 		String title = "聊天信息";
 		boolean hasAddBtn = true;
+		boolean shouldDisplayNotifySetting = false;
 		if (sessionType == IMSession.SESSION_P2P) {
 
 			View groupNameContainerView = curView.findViewById(R.id.group_manager_name);
@@ -175,13 +182,21 @@ public class GroupManagerFragment extends TTBaseFragment
 			groupNameContainerView.setVisibility(View.GONE);
 
 		} else {
+			shouldDisplayNotifySetting = true;
+
 			if (sessionType == IMSession.SESSION_GROUP) {
 				hasAddBtn = false;
 			}
-			
+
 			GroupEntity group = imService.getGroupManager().findGroup(sessionId);
 			if (group == null) {
 				return;
+			}
+
+			if (sessionType == IMSession.SESSION_TEMP_GROUP) {
+				if (!(imService != null && imService.getLoginManager().getLoginId().equals(group.creatorId))) {
+					hasAddBtn = false;
+				}
 			}
 
 			// todo eric i18n
@@ -194,6 +209,7 @@ public class GroupManagerFragment extends TTBaseFragment
 			groupNameView.setText(group.name);
 		}
 
+		initDontDisturbCheckbox(shouldDisplayNotifySetting, sessionInfo);
 		gridViewHelper.onInit(curView, R.id.group_manager_grid, getActivity(), hasAddBtn, new OnItemClickListener() {
 
 			@Override
@@ -211,6 +227,24 @@ public class GroupManagerFragment extends TTBaseFragment
 		setTopTitle(title);
 	}
 
+	private void initDontDisturbCheckbox(boolean shouldDisplayNotifySetting,
+			SessionInfo sessionInfo) {
+
+		View notifySettingArea = curView.findViewById(R.id.notification_setting_area);
+		if (notifySettingArea != null) {
+			notifySettingArea.setVisibility(shouldDisplayNotifySetting
+					? View.VISIBLE
+					: View.GONE);
+		}
+
+		if (!shouldDisplayNotifySetting) {
+			return;
+		}
+
+		String sessionKey = IMUIHelper.getSessionKey(sessionInfo.getSessionId(), sessionInfo.getSessionType());
+		checkBoxConfiger.initCheckBox(dontDisturbCheckbox, sessionKey, ConfigDefs.KEY_NOTIFICATION_NO_DISTURB, ConfigDefs.DEF_VALUE_NOTIFICATION_NO_DISTURB);
+	}
+
 	@Override
 	public void onAction(String action, Intent intent,
 			BroadcastReceiver broadcastReceiver) {
@@ -224,6 +258,7 @@ public class GroupManagerFragment extends TTBaseFragment
 		logger.d("groupmgr#onIMServiceConnected");
 
 		imService = imServiceHelper.getIMService();
+		checkBoxConfiger.setConfigMgr(imService.getConfigManager());
 
 		init();
 

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/scrollView1"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content" >
+    android:layout_height="match_parent"
+    android:background="@color/default_fragment_bk_color" >
 
     <LinearLayout
         android:id="@+id/gridlayout"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@color/default_fragment_bk_color"
         android:orientation="vertical" >
 
         <!--
@@ -26,7 +26,9 @@
         android:verticalSpacing="10dp" />
         -->
 
-        <com.mogujie.tt.widget.GroupManagerGridView
+
+        <!--
+            <com.mogujie.tt.widget.GroupManagerGridView
             android:id="@+id/group_manager_grid"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -38,6 +40,21 @@
             android:padding="20dp"
             android:stretchMode="columnWidth"
             android:verticalSpacing="10dp" />
+        -->
+
+        <GridView
+            android:id="@+id/group_manager_grid"
+            android:layout_width="fill_parent"
+            android:layout_height="250dp"
+            android:layout_marginBottom="5dp"
+            android:background="@android:color/white"
+            android:columnWidth="50dp"
+            android:gravity="center"
+            android:horizontalSpacing="5dp"
+            android:numColumns="auto_fit"
+            android:padding="5dp"
+            android:stretchMode="columnWidth"
+            android:verticalSpacing="5dp" />
 
         <RelativeLayout
             android:id="@+id/group_manager_name"
@@ -71,49 +88,56 @@
                 android:textSize="17sp" />
         </RelativeLayout>
 
-        <TextView
-            android:id="@+id/textView1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            android:text="@string/setting_notificaton_name"
-            android:textColor="#666666"
-            android:textSize="16sp" />
-
         <LinearLayout
+            android:id="@+id/notification_setting_area"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="5dp"
-            android:background="@drawable/tt_page_item_bk"
+            android:layout_height="wrap_content"
             android:orientation="vertical" >
 
-            <RelativeLayout
+            <TextView
+                android:id="@+id/textView1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/setting_notificaton_name"
+                android:textColor="#666666"
+                android:textSize="16sp" />
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" >
+                android:layout_height="match_parent"
+                android:layout_marginTop="5dp"
+                android:orientation="vertical" >
 
-                <TextView
-                    android:id="@+id/textView2"
-                    android:layout_width="wrap_content"
+                <RelativeLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentLeft="true"
-                    android:layout_centerInParent="true"
-                    android:padding="15dp"
-                    android:text="@string/no_disturb"
-                    android:textColor="@android:color/black" />
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/tt_page_item_bk" >
 
-                <CheckBox
-                    android:id="@+id/NotificationNoDisturbCheckbox"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginLeft="5dp"
-                    android:layout_marginRight="18dp"
-                    android:button="@color/toggle_checkbox_background"
-                    android:text=""
-                    android:visibility="visible" />
-            </RelativeLayout>
+                    <TextView
+                        android:id="@+id/textView2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_centerInParent="true"
+                        android:padding="15dp"
+                        android:text="@string/no_disturb"
+                        android:textColor="@android:color/black" />
+
+                    <CheckBox
+                        android:id="@+id/NotificationNoDisturbCheckbox"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginLeft="5dp"
+                        android:layout_marginRight="18dp"
+                        android:button="@color/toggle_checkbox_background"
+                        android:visibility="visible" />
+                </RelativeLayout>
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
-</ScrollView>
+</LinearLayout>

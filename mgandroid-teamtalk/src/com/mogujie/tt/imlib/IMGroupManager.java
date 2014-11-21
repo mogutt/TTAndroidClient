@@ -6,11 +6,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import android.content.BroadcastReceiver;
 import android.content.Intent;
 
 import com.mogujie.tt.config.ProtocolConstant;
 import com.mogujie.tt.config.SysConstant;
 import com.mogujie.tt.entity.RecentInfo;
+import com.mogujie.tt.imlib.common.ErrorCode;
 import com.mogujie.tt.imlib.network.SocketThread;
 import com.mogujie.tt.imlib.proto.ChangeTempGroupMemberPacket;
 import com.mogujie.tt.imlib.proto.ContactEntity;
@@ -25,9 +27,11 @@ import com.mogujie.tt.imlib.utils.IMUIHelper;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.packet.base.DataBuffer;
 import com.mogujie.tt.packet.base.Header;
+import com.mogujie.tt.ui.utils.IMServiceHelper;
+import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
 import com.mogujie.tt.utils.pinyin.PinYin;
 
-public class IMGroupManager extends IMManager {
+public class IMGroupManager extends IMManager implements OnIMServiceListner {
 	public static final int ADD_CHANGE_MEMBER_TYPE = 0;
 	public static final int REMOVE_CHANGE_MEMBER_TYPE = 1;
 
@@ -40,6 +44,7 @@ public class IMGroupManager extends IMManager {
 			return "tempgroup#no such type";
 		}
 	}
+
 	private static IMGroupManager inst;
 
 	public static IMGroupManager instance() {
@@ -59,6 +64,17 @@ public class IMGroupManager extends IMManager {
 	private boolean tempGroupReady = false;
 	private boolean unreadMsgGroupListReady = false;
 	private List<UnreadMsgGroupListPacket.PacketResponse.Entity> unreadMsgGroupList;
+	private IMServiceHelper imServiceHelper = new IMServiceHelper();
+
+	public void register() {
+		logger.d("reconnect#regisgter");
+
+		List<String> actions = new ArrayList<String>();
+		actions.add(IMActions.ACTION_LOGIN_RESULT);
+
+		imServiceHelper.registerActions(ctx, actions,
+				IMServiceHelper.INTENT_NO_PRIORITY, this);
+	}
 
 	public Map<String, GroupEntity> getGroups() {
 		return groups;
@@ -174,7 +190,8 @@ public class IMGroupManager extends IMManager {
 		GroupPacket packet = new GroupPacket();
 		packet.decode(buffer);
 
-		GroupPacket.PacketResponse resp = (GroupPacket.PacketResponse) packet.getResponse();
+		GroupPacket.PacketResponse resp = (GroupPacket.PacketResponse) packet
+				.getResponse();
 		logger.i("group#group cnt:%d", resp.entityList.size());
 
 		for (GroupEntity group : resp.entityList) {
@@ -194,8 +211,9 @@ public class IMGroupManager extends IMManager {
 		if (groupReadyConditionOk()) {
 			ctx.sendBroadcast(new Intent(IMActions.ACTION_GROUP_READY));
 			logger.d("group#broadcast group ready msg");
-			
-			IMUIHelper.triggerSearchDataReady(logger, ctx, IMContactManager.instance(), this);
+
+			IMUIHelper.triggerSearchDataReady(logger, ctx,
+					IMContactManager.instance(), this);
 		}
 
 		triggerAddRecentInfo();
@@ -213,8 +231,10 @@ public class IMGroupManager extends IMManager {
 
 				logger.d("group#recent#group:%s", group);
 
-				RecentInfo recentSession = IMContactHelper.convertGroupEntity2RecentInfo(group);
-				IMRecentSessionManager.instance().addRecentSession(recentSession);
+				RecentInfo recentSession = IMContactHelper
+						.convertGroupEntity2RecentInfo(group);
+				IMRecentSessionManager.instance().addRecentSession(
+						recentSession);
 			}
 
 			IMRecentSessionManager.instance().broadcast();
@@ -226,16 +246,21 @@ public class IMGroupManager extends IMManager {
 
 		logger.d("changeTempGroupMembers gropuId:%s", groupId);
 
-		DumpUtils.dumpStringList(logger, "tempgroup#adding list", addingMemberList);
-		DumpUtils.dumpStringList(logger, "tempgroup#removing list", removingMemberList);
+		DumpUtils.dumpStringList(logger, "tempgroup#adding list",
+				addingMemberList);
+		DumpUtils.dumpStringList(logger, "tempgroup#removing list",
+				removingMemberList);
 
-		changeTempGroupMembersImpl(groupId, ADD_CHANGE_MEMBER_TYPE, addingMemberList);
-		changeTempGroupMembersImpl(groupId, REMOVE_CHANGE_MEMBER_TYPE, removingMemberList);
+		changeTempGroupMembersImpl(groupId, ADD_CHANGE_MEMBER_TYPE,
+				addingMemberList);
+		changeTempGroupMembersImpl(groupId, REMOVE_CHANGE_MEMBER_TYPE,
+				removingMemberList);
 	}
 
 	public void changeTempGroupMembersImpl(String groupId, int changeType,
 			List<String> memberList) {
-		logger.d("tempgroup#changeGroupMembers gropuId:%s, changeType:%d", groupId, changeType);
+		logger.d("tempgroup#changeGroupMembers gropuId:%s, changeType:%d",
+				groupId, changeType);
 
 		if (memberList.isEmpty()) {
 			logger.d("tempgroup#empty, no need to change");
@@ -264,7 +289,8 @@ public class IMGroupManager extends IMManager {
 		ChangeTempGroupMemberPacket packet = new ChangeTempGroupMemberPacket();
 		packet.decode(buffer);
 
-		ChangeTempGroupMemberPacket.PacketResponse resp = (ChangeTempGroupMemberPacket.PacketResponse) packet.getResponse();
+		ChangeTempGroupMemberPacket.PacketResponse resp = (ChangeTempGroupMemberPacket.PacketResponse) packet
+				.getResponse();
 
 		ChangeTempGroupMemberPacket.PacketResponse.Entity entity = resp.entity;
 
@@ -272,9 +298,10 @@ public class IMGroupManager extends IMManager {
 		boolean ok = handleChangeTempGroupMember(entity, entity.groupId);
 		logger.d("tempgroup#result ok:%s", ok);
 
-		Intent intent = new Intent(IMActions.ACTION_GROUP_CHANGE_TEMP_GROUP_MEMBER_RESULT);
+		Intent intent = new Intent(
+				IMActions.ACTION_GROUP_CHANGE_TEMP_GROUP_MEMBER_RESULT);
 		intent.putExtra(SysConstant.OPERATION_RESULT_KEY, ok);
-		intent.putExtra(SysConstant.SESSION_ID_KEY, entity.groupId);
+		intent.putExtra(SysConstant.KEY_SESSION_ID, entity.groupId);
 
 		triggerAddRecentInfo();
 
@@ -287,7 +314,8 @@ public class IMGroupManager extends IMManager {
 			String groupId) {
 
 		if (entity.result != 0) {
-			logger.e("tempgroup#onRepChangeTempGroupMembers failed, result:%d", entity.result);
+			logger.e("tempgroup#onRepChangeTempGroupMembers failed, result:%d",
+					entity.result);
 			return false;
 		}
 
@@ -302,7 +330,10 @@ public class IMGroupManager extends IMManager {
 			return false;
 		}
 
-		DumpUtils.dumpStringList(logger, getChangeMemberTypeString(entity.changeType), entity.memberList);
+		DumpUtils
+				.dumpStringList(logger,
+						getChangeMemberTypeString(entity.changeType),
+						entity.memberList);
 
 		if (entity.changeType == ADD_CHANGE_MEMBER_TYPE) {
 			group.memberIdList.addAll(entity.memberList);
@@ -314,7 +345,8 @@ public class IMGroupManager extends IMManager {
 	}
 
 	public void reqCreateTempGroup(String tempGroupName, List<String> memberList) {
-		logger.d("tempgroup#reqCreateTempGroup, name:%s, member cnt:%d", tempGroupName, memberList.size());
+		logger.d("tempgroup#reqCreateTempGroup, name:%s, member cnt:%d",
+				tempGroupName, memberList.size());
 
 		SocketThread channel = IMLoginManager.instance().getMsgServerChannel();
 		if (channel == null) {
@@ -323,7 +355,8 @@ public class IMGroupManager extends IMManager {
 		}
 
 		String dummyTempGroupAvatarUrl = "";
-		channel.sendPacket(new CreateTempGroupPacket(tempGroupName, dummyTempGroupAvatarUrl, memberList));
+		channel.sendPacket(new CreateTempGroupPacket(tempGroupName,
+				dummyTempGroupAvatarUrl, memberList));
 
 		logger.i("tempgroup#send packet to server");
 
@@ -335,9 +368,11 @@ public class IMGroupManager extends IMManager {
 		CreateTempGroupPacket packet = new CreateTempGroupPacket();
 		packet.decode(buffer);
 
-		CreateTempGroupPacket.PacketResponse resp = (CreateTempGroupPacket.PacketResponse) packet.getResponse();
+		CreateTempGroupPacket.PacketResponse resp = (CreateTempGroupPacket.PacketResponse) packet
+				.getResponse();
 
-		Intent intent = new Intent(IMActions.ACTION_GROUP_CREATE_TEMP_GROUP_RESULT);
+		Intent intent = new Intent(
+				IMActions.ACTION_GROUP_CREATE_TEMP_GROUP_RESULT);
 		intent.putExtra(SysConstant.OPERATION_RESULT_KEY, resp.result);
 		if (resp.result != 0) {
 			logger.e("tempgroup#createTempGroup failed");
@@ -345,7 +380,7 @@ public class IMGroupManager extends IMManager {
 			GroupEntity group = resp.entity;
 			addGroup(group);
 
-			intent.putExtra(SysConstant.SESSION_ID_KEY, group.id);
+			intent.putExtra(SysConstant.KEY_SESSION_ID, group.id);
 
 			triggerAddRecentInfo();
 
@@ -378,7 +413,8 @@ public class IMGroupManager extends IMManager {
 		UnreadMsgGroupListPacket packet = new UnreadMsgGroupListPacket();
 		packet.decode(buffer);
 
-		UnreadMsgGroupListPacket.PacketResponse resp = (UnreadMsgGroupListPacket.PacketResponse) packet.getResponse();
+		UnreadMsgGroupListPacket.PacketResponse resp = (UnreadMsgGroupListPacket.PacketResponse) packet
+				.getResponse();
 		logger.i("unread#unreadMsgGroupList cnt:%d", resp.entityList.size());
 		unreadMsgGroupList = resp.entityList;
 
@@ -408,7 +444,8 @@ public class IMGroupManager extends IMManager {
 		}
 
 		for (UnreadMsgGroupListPacket.PacketResponse.Entity entity : unreadMsgGroupList) {
-			logger.d("unread#sending unreadmsg request -> groupId:%s", entity.groupId);
+			logger.d("unread#sending unreadmsg request -> groupId:%s",
+					entity.groupId);
 
 			GroupUnreadMsgPacket.PacketRequest.Entity requestParam = new GroupUnreadMsgPacket.PacketRequest.Entity();
 			requestParam.groupId = entity.groupId;
@@ -416,6 +453,46 @@ public class IMGroupManager extends IMManager {
 
 			logger.i("unread#send packet to server");
 		}
+
+	}
+
+	@Override
+	public void reset() {
+		groups.clear();
+		groupReady = false;
+		tempGroupReady = false;
+		unreadMsgGroupListReady = false;
+		unreadMsgGroupList = null;
+	}
+
+	@Override
+	public void onAction(String action, Intent intent,
+			BroadcastReceiver broadcastReceiver) {
+		if (action.equals(IMActions.ACTION_LOGIN_RESULT)) {
+			handleLoginResultAction(intent);
+
+		}
+
+	}
+
+	private void handleLoginResultAction(Intent intent) {
+		logger.d("contact#handleLoginResultAction");
+		int errorCode = intent
+				.getIntExtra(SysConstant.lOGIN_ERROR_CODE_KEY, -1);
+
+		if (errorCode == ErrorCode.S_OK) {
+			onLoginSuccess();
+		}
+	}
+
+	private void onLoginSuccess() {
+		logger.d("contact#onLogin Successful");
+		fetchGroupList();
+	}
+
+	@Override
+	public void onIMServiceConnected() {
+		// TODO Auto-generated method stub
 
 	}
 }

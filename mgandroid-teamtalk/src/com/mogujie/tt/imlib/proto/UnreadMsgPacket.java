@@ -84,6 +84,7 @@ public class UnreadMsgPacket extends Packet {
 
 				entity.fromId = id;
 				entity.toId = IMLoginManager.instance().getLoginId();
+				entity.talkerId = id;
 				entity.createTime = createTime;
 				entity.type = msgType;
 				entity.msgLen = msgLen;

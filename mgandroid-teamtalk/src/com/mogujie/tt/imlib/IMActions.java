@@ -1,9 +1,15 @@
 package com.mogujie.tt.imlib;
 
 public interface IMActions {
+	String ACTION_DOING_LOGIN = "com.mogujie.tt.imlib.action.doing_login";
+	String ACTION_USER_PROFILE_RESULT = "com.mogujie.tt.imlib.action.user_profile_result";
 	String ACTION_LOGIN_RESULT = "com.mogujie.tt.imlib.action.login.result";
 	String ACTION_CONTACT_READY = "com.mogujie.tt.imlib.action.contact.ready";
 	String ACTION_SEARCH_DATA_READY = "com.mogujie.tt.imlib.action.search_data.ready";
+//	String ACTION_LOGOUTING = "com.mogujie.tt.imlib.action.login.logouting";
+	String ACTION_LOGOUT = "com.mogujie.tt.imlib.action.login.logout";
+
+
 	
 	String ACTION_MSG_ACK = "com.mogujie.tt.imlib.action.msg.ack";
 	String ACTION_MSG_RECV = "com.mogujie.tt.imlib.action.msg.recv";
@@ -27,8 +33,8 @@ public interface IMActions {
 	String ACTION_RECONNECT = "com.mogujie.tt.imlib.action.reconnect";
 	
 	String ACTION_SENDING_HEARTBEAT = "com.mogujie.tt.imlib.action.sending_heartbeat";
-	
-	String ACTION_NEW_MESSAGE_SESSION = "com.mogujie.tt.ui.action.new_message_session";
+
+
 
 
 

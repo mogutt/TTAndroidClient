@@ -72,6 +72,12 @@ public class IMConfigurationManager extends IMManager {
 			return "0";
 		}
 	}
+
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+		
+	}
 	
 	
 	

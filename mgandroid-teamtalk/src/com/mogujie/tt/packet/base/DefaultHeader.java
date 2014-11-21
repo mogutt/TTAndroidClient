@@ -9,11 +9,9 @@ public class DefaultHeader extends Header {
 	private Logger logger = Logger.getLogger(DefaultHeader.class);
 
 	public DefaultHeader(int serviceId, int commandId) {
-		setVersion((short) SysConstant.PROTOCOL_VERSION);
-//		setFlag((short) SysConstant.PROTOCOL_FLAG);
+		setVersion((short)SysConstant.PROTOCOL_VERSION);
 		setServiceId(serviceId);
 		setCommandId(commandId);
-//		setError((short) SysConstant.PROTOCOL_ERROR);
 		short seqNo = SequenceNumberMaker.getInstance().make();
 		setReserved(seqNo);
 

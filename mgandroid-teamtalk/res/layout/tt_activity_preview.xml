@@ -48,17 +48,17 @@
             android:paddingLeft="20dp"
             android:paddingRight="15dp" >
 
-            <TextView
+            <!-- <TextView
                 android:id="@+id/send_btn"
                 android:layout_width="75dp"
                 android:layout_height="35dp"
                 android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
-                android:background="@drawable/tt_send_message_btn_bg"
+                android:background="@drawable/tt_default_btn_bk"
                 android:gravity="center|center_vertical"
                 android:text="@string/send"
                 android:textColor="@android:color/white"
-                android:textSize="15sp" />
+                android:textSize="15sp" /> -->
         </RelativeLayout>
     </RelativeLayout>
 

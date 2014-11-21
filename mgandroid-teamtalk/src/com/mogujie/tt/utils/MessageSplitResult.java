@@ -27,7 +27,7 @@ public class MessageSplitResult {
     private Logger logger = Logger.getLogger(MessageSplitResult.class);
 
     private boolean isTextMsgType(byte msgType) {
-    	return (msgType == ProtocolConstant.MSG_TYPE_GROUP_TEXT || msgType == ProtocolConstant.MSG_TYPE_P2P_TEXT);
+    	return (msgType == ProtocolConstant.MSG_TYPE_GROUP_TEXT || msgType == ProtocolConstant.MSG_TYPE_P2P_TEXT || msgType == ProtocolConstant.MSG_TYPE_GROUP_TEXT_FOR_HISTORY_REASON_COMPATIBILITY);
     }
     
     private boolean isAudioMsgType(byte msgType) {
@@ -146,7 +146,7 @@ public class MessageSplitResult {
             msgInfo.setMsgLoadState(SysConstant.MESSAGE_STATE_FINISH_SUCCESSED);
             msgInfo.setMsgReadStatus(SysConstant.MESSAGE_UNREAD);
             msgInfo.setMsgParentId(nMsgParentId);
-            logger.d("recv a text message, content = " + strContent);
+            logger.d("recv a text message, content = %s", strContent);
             // int newId =
             // IMDBManager.getInstance(Login.context).pushMsg(msgInfo);
             

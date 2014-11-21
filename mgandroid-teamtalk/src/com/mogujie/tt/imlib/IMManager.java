@@ -2,7 +2,7 @@ package com.mogujie.tt.imlib;
 
 import android.content.Context;
 
-public class IMManager {
+public abstract class IMManager {
 
 	protected Context ctx;
 
@@ -13,4 +13,6 @@ public class IMManager {
 		
 		ctx = context;
 	}
+	
+	public abstract void reset();
 }

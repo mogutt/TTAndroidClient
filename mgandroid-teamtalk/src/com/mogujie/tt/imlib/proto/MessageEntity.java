@@ -15,6 +15,7 @@ public class MessageEntity {
 	public int seqNo;
 	public String fromId;
 	public String toId;
+	public String talkerId;//the guy which sends the message
 	public int createTime;
 	public byte type;
 	public int msgLen;
@@ -26,15 +27,17 @@ public class MessageEntity {
 	public String msgId;
 	public String sessionId;
 	public int sessionType = -1;
-
-	public boolean isMy() {
-		return fromId.equals(IMLoginManager.instance().getLoginId());
-	}
+	public boolean multiLoginSelfMsg = false;
+	
+//	public boolean isMy() {
+//		return fromId.equals(IMLoginManager.instance().getLoginId());
+//	}
 
 	public void copy(MessageEntity anotherEntity) {
 		seqNo = anotherEntity.seqNo;
 		fromId = anotherEntity.fromId;
 		toId = anotherEntity.toId;
+		talkerId = anotherEntity.talkerId;
 		createTime = anotherEntity.createTime;
 		type = anotherEntity.type;
 		msgLen = anotherEntity.msgLen;
@@ -43,6 +46,7 @@ public class MessageEntity {
 		generateMsgId();
 		sessionId = anotherEntity.sessionId;
 		sessionType = anotherEntity.sessionType;
+		multiLoginSelfMsg = anotherEntity.multiLoginSelfMsg;
 	}
 
 	private String getMsgDataDescription() {
@@ -117,7 +121,7 @@ public class MessageEntity {
 	public boolean isGroupMsg() {
 		// todo eric consider flag &
 		if (type == ProtocolConstant.MSG_TYPE_GROUP_AUDIO
-				|| type == ProtocolConstant.MSG_TYPE_GROUP_TEXT) {
+				|| type == ProtocolConstant.MSG_TYPE_GROUP_TEXT || type == ProtocolConstant.MSG_TYPE_GROUP_TEXT_FOR_HISTORY_REASON_COMPATIBILITY) {
 			return true;
 		}
 
@@ -146,10 +150,14 @@ public class MessageEntity {
 	public String getSessionId(boolean sending) {
 		if (type == ProtocolConstant.MSG_TYPE_P2P_TEXT
 				|| type == ProtocolConstant.MSG_TYPE_P2P_AUDIO) {
+			if (multiLoginSelfMsg) {
+				return toId;
+			}
+			
 			return sending ? toId : fromId;
 		}
 
-		if (type == ProtocolConstant.MSG_TYPE_GROUP_TEXT
+		if (type == ProtocolConstant.MSG_TYPE_GROUP_TEXT || type == ProtocolConstant.MSG_TYPE_GROUP_TEXT_FOR_HISTORY_REASON_COMPATIBILITY
 				|| type == ProtocolConstant.MSG_TYPE_GROUP_AUDIO) {
 			return toId;
 		}
@@ -306,19 +314,7 @@ public class MessageEntity {
 		}
 	}
 
-	public String getContent() {
-		if (isTextType()) {
-			return new String(msgData);
-		} else if (isAudioType()) {
-			return createAudioInfo(msgInfo);
-		} else if (isImage()) {
-			return createPicInfo(msgInfo);
-		}
-
-		return "";
-	}
-
-	// todo eric
+		// todo eric
 	public MessageInfo msgInfo;
 
 }

@@ -35,12 +35,6 @@ public class AllContactsPacket extends Packet {
 		if (null == req)
 			return null;
 
-		// bodyBuffer.writeString(req.getUser_id_url());
-		// bodyBuffer.writeString(req.getUser_token());
-		// bodyBuffer.writeInt(req.getOnline_status());
-		// bodyBuffer.writeInt(req.getClient_type());
-		// bodyBuffer.writeString(req.getClient_version());
-
 		int headLength = headerBuffer.readableBytes();
 		int bodyLength = bodyBuffer.readableBytes();
 
@@ -80,6 +74,7 @@ public class AllContactsPacket extends Packet {
 				entity.jobNum = buffer.readInt();
 				entity.telephone = buffer.readString();
 				entity.email = buffer.readString();
+//				entity.userType = buffer.readInt();
 				res.entityList.add(entity);
 			}
 

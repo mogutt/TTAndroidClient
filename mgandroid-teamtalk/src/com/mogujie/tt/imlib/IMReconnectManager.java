@@ -16,7 +16,6 @@ import com.mogujie.tt.imlib.common.ErrorCode;
 import com.mogujie.tt.log.Logger;
 import com.mogujie.tt.ui.utils.IMServiceHelper;
 import com.mogujie.tt.ui.utils.IMServiceHelper.OnIMServiceListner;
-import com.mogujie.tt.utils.NetworkUtil;
 
 public class IMReconnectManager extends IMManager implements OnIMServiceListner {
 
@@ -24,8 +23,10 @@ public class IMReconnectManager extends IMManager implements OnIMServiceListner 
 	private Logger logger = Logger.getLogger(IMReconnectManager.class);
 	private IMServiceHelper imServiceHelper = new IMServiceHelper();
 	private boolean reconnecting = false;
-	private final int RECONNECT_TIME_BASE = 3;
-	private int reconnect_index = 0;
+
+	private final int INIT_RECONNECT_INTERVAL_SECONDS = 3;
+	private int reconnectInterval = INIT_RECONNECT_INTERVAL_SECONDS;
+	private final int MAX_RECONNECT_INTERVAL_SECONDS = 60;
 
 	public static IMReconnectManager instance() {
 		synchronized (IMReconnectManager.class) {
@@ -46,6 +47,7 @@ public class IMReconnectManager extends IMManager implements OnIMServiceListner 
 		List<String> actions = new ArrayList<String>();
 		actions.add(IMActions.ACTION_LOGIN_RESULT);
 		actions.add(IMActions.ACTION_SERVER_DISCONNECTED);
+		actions.add(IMActions.ACTION_RECONNECT);
 		actions.add(ConnectivityManager.CONNECTIVITY_ACTION);
 
 		imServiceHelper.registerActions(ctx, actions, IMServiceHelper.INTENT_NO_PRIORITY, this);
@@ -68,13 +70,19 @@ public class IMReconnectManager extends IMManager implements OnIMServiceListner 
 
 	private void resetReconnectTime() {
 		logger.d("reconnect#resetReconnectTime");
-		reconnect_index = 0;
+		reconnectInterval = INIT_RECONNECT_INTERVAL_SECONDS;
 	}
 
-	private void reconnect() {
+	public void reconnect() {
+		logger.i("reconnect#reconnect");
+		if (reconnecting) {
+			logger.d("reconnect#it's already doing reconnect");
+			return;
+		}
+
 		logger.d("reconnect#reconnect the server");
 
-		if (!IMLoginManager.instance().isEverLoginned()) {
+		if (!IMLoginManager.instance().isEverLogined()) {
 			logger.d("reconnect#not everlogined before, no need to do reconnect");
 			return;
 		}
@@ -99,8 +107,16 @@ public class IMReconnectManager extends IMManager implements OnIMServiceListner 
 		if (reconnecting) {
 			logger.d("reconnect#in reconnecting procedure");
 
-			// Exponential backoff strategy
-			scheduleReconnect(RECONNECT_TIME_BASE * (2 << reconnect_index++));
+			scheduleReconnect(reconnectInterval);
+			incrementReconnectInterval();
+		}
+	}
+
+	private void incrementReconnectInterval() {
+		if (reconnectInterval >= MAX_RECONNECT_INTERVAL_SECONDS) {
+			reconnectInterval = MAX_RECONNECT_INTERVAL_SECONDS;
+		} else {
+			reconnectInterval = reconnectInterval * 2;
 		}
 	}
 
@@ -115,9 +131,9 @@ public class IMReconnectManager extends IMManager implements OnIMServiceListner 
 		}
 	}
 
-	private void handleDisconnectServerAction() {
+	private void handleDisconnectServerAction(Intent intent) {
 		logger.d("reconnect#handleDisconnectServerAction");
-		if (NetworkUtil.isNetWorkAvalible(ctx)) {
+		if (isNetworkAvailable(intent)) {
 			logger.d("reconnect#disconnect with the server, network is available, reconnect");
 			reconnect();
 		} else {
@@ -125,10 +141,15 @@ public class IMReconnectManager extends IMManager implements OnIMServiceListner 
 		}
 	}
 
-	private void handleNetworkActivityChangedAction() {
+	private boolean isNetworkAvailable(Intent intent) {
+		boolean noConnectivity = intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
+		return !noConnectivity;
+	}
+
+	private void handleNetworkActivityChangedAction(Intent intent) {
 		logger.d("reconnect#handleNetworkActivityChangedAction");
 
-		if (NetworkUtil.isNetWorkAvalible(ctx)) {
+		if (isNetworkAvailable(intent)) {
 			logger.d("reconnect#network is available");
 			reconnect();
 		} else {
@@ -160,10 +181,10 @@ public class IMReconnectManager extends IMManager implements OnIMServiceListner 
 			handleLoginResultAction(intent);
 
 		} else if (action.equals(IMActions.ACTION_SERVER_DISCONNECTED)) {
-			handleDisconnectServerAction();
+			handleDisconnectServerAction(intent);
 
 		} else if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-			handleNetworkActivityChangedAction();
+			handleNetworkActivityChangedAction(intent);
 		} else if (action.equals(IMActions.ACTION_RECONNECT)) {
 			handleReconnectServer();
 		}
@@ -171,6 +192,12 @@ public class IMReconnectManager extends IMManager implements OnIMServiceListner 
 
 	@Override
 	public void onIMServiceConnected() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void reset() {
 		// TODO Auto-generated method stub
 
 	}

@@ -341,7 +341,8 @@ public class HanziToPinyin3 {
     private static final String FIRST_PINYIN_UNIHAN = "\u963F";
     private static final String LAST_PINYIN_UNIHAN = "\u9FFF";
 
-    private static final Collator COLLATOR = Collator.getInstance(Locale.CHINA);
+//    private static final Collator COLLATOR = Collator.getInstance(Locale.CHINA);
+    private static final Collator COLLATOR = Collator.getInstance(Locale.CHINESE);
 
     private static HanziToPinyin3 sInstance;
     private final boolean mHasChinaCollator;
@@ -392,7 +393,7 @@ public class HanziToPinyin3 {
             // Check if zh_CN collation data is available
             final Locale locale[] = Collator.getAvailableLocales();
             for (int i = 0; i < locale.length; i++) {
-                if (locale[i].equals(Locale.CHINA)) {
+                if (locale[i].equals(Locale.CHINESE)) {
                     // Do self validation just once.
                     if (DEBUG) {
                         Log.d(TAG, "Self validation. Result: " + doSelfValidation());

@@ -41,12 +41,6 @@ public class GroupPacket extends Packet {
 		if (null == req)
 			return null;
 
-		// bodyBuffer.writeString(req.getUser_id_url());
-		// bodyBuffer.writeString(req.getUser_token());
-		// bodyBuffer.writeInt(req.getOnline_status());
-		// bodyBuffer.writeInt(req.getClient_type());
-		// bodyBuffer.writeString(req.getClient_version());
-
 		int headLength = headerBuffer.readableBytes();
 		int bodyLength = bodyBuffer.readableBytes();
 
@@ -95,6 +89,7 @@ public class GroupPacket extends Packet {
 				} else {
 					entity.updated = 0;
 				}
+				//entity.shieldStatus = buffer.readInt();
 				
 				logger.d("group#type:%d", entity.type);
 				

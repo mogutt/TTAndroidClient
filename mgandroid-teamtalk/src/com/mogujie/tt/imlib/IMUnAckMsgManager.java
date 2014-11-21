@@ -57,15 +57,15 @@ public class IMUnAckMsgManager extends IMManager {
 		if (msgId == null) {
 			return;
 		}
-		
+
 		logger.d("unack#handleTimeoutUnAckMsg ,msgId:%s", msgId);
-		
+
 		UnAckMsg unAckMsg = unackMsgList.get(msgId);
 		if (unAckMsg == null) {
 			logger.e("unack#so such message -> msgId:%s", msgId);
 			return;
 		}
-		
+
 		MessageInfo msg = unAckMsg.msg;
 		handleTimeoutUnAckMsgImpl(msg);
 
@@ -97,7 +97,8 @@ public class IMUnAckMsgManager extends IMManager {
 		long currentElapsedRealtime = SystemClock.elapsedRealtime();
 
 		List<MessageInfo> toRemovedMsgList = new ArrayList<MessageInfo>();
-		for (java.util.Map.Entry<String, UnAckMsg> entry : unackMsgList.entrySet()) {
+		for (java.util.Map.Entry<String, UnAckMsg> entry : unackMsgList
+				.entrySet()) {
 			UnAckMsg unAckMsg = entry.getValue();
 
 			// todo eric optimization
@@ -134,7 +135,8 @@ public class IMUnAckMsgManager extends IMManager {
 		String msgId = msgInfo.msgId;
 		// todo eric efficiency
 		if (unackMsgList.containsKey(msgId) || msgInfo.isResend()) {
-			// for uploading image msg, it has already been added to the list when
+			// for uploading image msg, it has already been added to the list
+			// when
 			// uploading the image, and at the time of sending the msg to the
 			// peer, reset the timer
 			IMDbManager.instance(ctx).deleteMsg(msgId);
@@ -143,15 +145,17 @@ public class IMUnAckMsgManager extends IMManager {
 
 		IMDbManager.instance(ctx).saveMsg(msgInfo, true);
 
-		unackMsgList.put(msgInfo.msgId, new UnAckMsg(msgInfo, SystemClock.elapsedRealtime()
-				+ getTimeoutTolerance(msgInfo)));
+		unackMsgList.put(msgInfo.msgId,
+				new UnAckMsg(msgInfo, SystemClock.elapsedRealtime()
+						+ getTimeoutTolerance(msgInfo)));
 	}
 
 	public synchronized MessageInfo remove(int msgSeqNo) {
 		logger.d("unack#try to remove unack msg -> seqNo:%d", msgSeqNo);
 		logger.d("unack#current unack msg cnt:%d", unackMsgList.size());
 
-		for (java.util.Map.Entry<String, UnAckMsg> entry : unackMsgList.entrySet()) {
+		for (java.util.Map.Entry<String, UnAckMsg> entry : unackMsgList
+				.entrySet()) {
 			UnAckMsg unAckMsg = entry.getValue();
 			if (unAckMsg.msg.seqNo == msgSeqNo) {
 
@@ -174,5 +178,10 @@ public class IMUnAckMsgManager extends IMManager {
 		} else {
 			return unAckMsg.msg;
 		}
+	}
+
+	@Override
+	public void reset() {
+		unackMsgList.clear();
 	}
 }

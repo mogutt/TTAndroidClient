@@ -18,14 +18,12 @@
         android:layout_weight="1"
         class="com.mogujie.tt.ui.fragment.ContactFragment" />
 
-    <!--
-         <fragment
+     <fragment
         android:id="@+id/fragment_internal"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
         class="com.mogujie.tt.ui.fragment.InternalFragment" />
-    -->
 
     <fragment
         android:id="@+id/fragment_my"
@@ -53,13 +51,11 @@
             android:layout_height="fill_parent"
             android:layout_weight="1" />
 
-        <!--
-             <com.mogujie.tt.widget.NaviTabButton
+        <com.mogujie.tt.widget.NaviTabButton
             android:id="@+id/tabbutton_internal"
             android:layout_width="0dip"
             android:layout_height="fill_parent"
             android:layout_weight="1" />
-        -->
 
         <com.mogujie.tt.widget.NaviTabButton
             android:id="@+id/tabbutton_my"
