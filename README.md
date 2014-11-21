@@ -1,10 +1,3 @@
-# 公告
-近期有很多热衷开源的geek们在问最新代码的更新日期，我们在此说明一下，由于近期工程师们都在备战双十一，开源的投入会相对减少，所以我们把提交最新代码的时间定在2014年11月18日，非常感谢大家对TeamTalk的关注和支持~具体安排如下：
-* 11.11之前工程师全力备战双十一，请见谅
-* 11.12～11.14 C++ Server, Java DB Proxy, PHP, android, iOS, Win Client代码移植, MAC Client延后（功能还未完全）
-* 11.15～11.17 测试TeamTalk，包括PHP，android, iOS, Win Client 端功能走通，测试一键部署脚本
-* 11.18  上传代码并正式发布
-
 # mogujie Open Source IM App  ![Logo](https://avatars2.githubusercontent.com/u/8542441?v=2&s=200)
 
 [mogujie](http://www.mogujie.com) Open Source IM is aiming to provide another IM solution in your company for colleagues to communicate with each other. 
