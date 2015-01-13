@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@android:color/white"
+    android:gravity="center" >
+
+    <LinearLayout
+        android:id="@+id/desktop_news_count_bg"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:paddingTop="8dip" >
+
+        <ImageView
+            android:id="@+id/grid_item_image"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:adjustViewBounds="false"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/group_manager_user_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:textColor="@color/group_manager_user_title"
+            android:textSize="12sp" >
+        </TextView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/deleteLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|top"
+        android:layout_marginRight="20dip"
+        android:focusable="false"
+        android:gravity="center"
+        android:visibility="invisible" >
+
+        <ImageView
+            android:id="@+id/grid_delete_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/tt_clear_bar" >
+        </ImageView>
+    </LinearLayout>
+
+</FrameLayout>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/default_fragment_bk_color"
+    android:orientation="vertical" >
+
+    <!-- 
+    <WebView
+        android:id="@+id/web_view"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"/>
+    -->
+
+    <RelativeLayout
+        android:id="@+id/TTOpenSourcePage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/tt_page_item_bk"
+        android:layout_marginTop="20dp" >
+        
+        <ImageView
+            android:id="@+id/imageTTOpenSource"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:src="@drawable/tt_internal_page_logo" />
+
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="40dp"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"            
+            android:text="TT开源" />
+        
+         <ImageView
+            android:id="@+id/imageView1"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="10dp"
+            android:layout_centerVertical="true"
+            android:src="@drawable/tt_default_arrow" />
+        
+    </RelativeLayout>
+
+</LinearLayout>

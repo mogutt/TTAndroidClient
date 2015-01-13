@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="0dp" >
+
+        <LinearLayout
+            android:id="@+id/layout_no_network"
+            android:layout_width="fill_parent"
+            android:layout_height="49dp"
+            android:orientation="vertical"
+            android:visibility="gone" >
+
+            <!-- todo eric specify the detail height is not a good option -->
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="47dp"
+                android:layout_gravity="center_vertical"
+                android:background="#ffeeee"
+                android:orientation="horizontal" >
+
+                <TextView
+                    android:id="@+id/textView1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="23dp"
+                    android:text="@string/no_network"
+                    android:textColor="#ABABAB" />
+
+                <ProgressBar
+                    android:id="@+id/progressbar_reconnect"
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="100dp"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/tt_msg_tip"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/message_divider_footer"
+                android:layout_width="fill_parent"
+                android:layout_height="0.5dp"
+                android:background="@color/list_divider_color"
+                android:paddingTop="1dp"
+                android:textColor="@color/message_time_color"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <ListView
+            android:id="@+id/ContactListView"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_marginTop="0dp"
+            android:background="@android:color/white"
+            android:cacheColorHint="@android:color/transparent"
+            android:divider="@null"
+            android:listSelector="@android:color/transparent"
+            android:paddingBottom="0dp" />
+
+        <View
+            android:id="@+id/search_transparent_view"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:background="@color/half_transparent_light"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/search_tip_txt"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:gravity="center"
+            android:text="@string/chat_failed_search"
+            android:visibility="gone" />
+
+        <com.handmark.pulltorefresh.library.PullToRefreshListView
+            xmlns:ptr="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/SearchListView"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_marginTop="0dp"
+            android:background="@android:color/white"
+            android:cacheColorHint="@android:color/transparent"
+            android:divider="@null"
+            android:paddingBottom="0dp"
+            ptr:ptrMode="pullFromStart"
+            ptr:ptrOverScroll="false" />
+        <!-- </LinearLayout> -->
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:indeterminateDrawable="@drawable/tt_progressbar"
+        android:indeterminateDuration="4000"
+        android:visibility="visible" />
+
+</RelativeLayout>

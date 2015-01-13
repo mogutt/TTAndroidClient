@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/contact_category_title"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_weight="1"
+        android:background="@color/contact_category_title_bk"
+        android:paddingBottom="5dip"
+        android:paddingLeft="10dip"
+        android:paddingTop="5dip"
+        android:textColor="@color/contact_category_text_color"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_weight="1"
+        android:background="@drawable/tt_list_item_bk" >
+
+        <CheckBox
+            android:id="@+id/checkBox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="18dp"
+            android:button="@color/checkbox_background"
+            android:clickable="false"
+            android:focusable="false"
+            android:text=""
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/contact_portrait"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_centerVertical="true"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_toRightOf="@id/checkBox"
+            android:scaleType="centerCrop"
+            android:src="@drawable/tt_default_user_portrait_corner" />
+
+        <TextView
+            android:id="@+id/contact_item_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/contact_portrait"
+            android:background="@android:color/transparent"
+            android:textColor="@color/contact_name_color"
+            android:textSize="14sp" />
+
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="0.5dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginTop="10dp"
+            android:background="@color/default_line_color" />
+    </RelativeLayout>
+
+</LinearLayout>

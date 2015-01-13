@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/default_fragment_bk_color"
+        android:orientation="vertical" >
+        <RelativeLayout
+            android:id="@+id/user_container"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/tt_page_item_bk"
+            android:padding="15dp" >
+
+            <!--
+             <ImageView
+            android:id="@+id/user_portrait"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:layout_alignParentLeft="true"
+            android:src="@drawable/tt_default_user_portrait_corner" />
+            -->
+
+            <ImageView
+                android:id="@+id/user_portrait"
+                android:layout_width="65dp"
+                android:layout_height="65dp"
+                android:layout_alignParentLeft="true"
+                android:background="@drawable/tt_default_user_portrait_corner"
+                android:scaleType="centerCrop" />
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_marginLeft="15dp"
+                android:layout_toRightOf="@id/user_portrait"
+                android:gravity="center" >
+
+                <TextView
+                    android:id="@+id/nickName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="纳纳"
+                    android:textColor="@android:color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/userName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/nickName"
+                    android:layout_marginTop="5dp"
+                    android:text="席晓纳"
+                    android:textColor="@color/default_light_grey_color"
+                    android:textSize="15sp" />
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/sex"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/user_portrait"
+                android:layout_alignParentRight="true"
+                android:gravity="center"
+                android:text="小仙"
+                android:textColor="#ff71A8"
+                android:textStyle="italic"
+                android:visibility="gone" />
+
+        </RelativeLayout>
+
+        <TableLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:background="@drawable/tt_page_item_bk"
+            android:gravity="center_vertical"
+            android:paddingLeft="20dp"
+            android:shrinkColumns="1" >
+
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="0.5dp"
+                android:background="@color/default_line_color" />
+
+            <TableRow>
+
+                <TextView
+                    android:layout_height="45dp"
+                    android:layout_column="1"
+                    android:gravity="left|center_vertical"
+                    android:padding="3dip"
+                    android:text="部门"
+                    android:textColor="@color/default_key_color"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/department"
+                    android:layout_height="45dp"
+                    android:layout_marginLeft="15dp"
+                    android:gravity="left|center_vertical"
+                    android:padding="3dip"
+                    android:text=""
+                    android:textColor="@color/default_value_color"
+                    android:textSize="15sp" />
+            </TableRow>
+
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="0.5dp"
+                android:background="@color/default_line_color" />
+
+            <TableRow
+                android:id="@+id/phoneArea"
+                android:clickable="true" >
+
+                <TextView
+                    android:layout_height="45dp"
+                    android:layout_column="1"
+                    android:gravity="left|center_vertical"
+                    android:padding="3dip"
+                    android:text="手机号"
+                    android:textColor="@color/default_key_color"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/telno"
+                    android:layout_height="45dp"
+                    android:layout_marginLeft="15dp"
+                    android:gravity="left|center_vertical"
+                    android:padding="3dip"
+                    android:text=""
+                    android:textColor="@color/default_value_color"
+                    android:textSize="15sp" />
+            </TableRow>
+
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="0.5dp"
+                android:background="@color/default_line_color" />
+
+            <!--
+        <TableRow>
+
+            <TextView
+                android:layout_height="45dp"
+                android:layout_column="1"
+                android:gravity="left|center_vertical"
+                android:padding="3dip"
+                android:text="生日"
+                android:textColor="@color/default_key_color"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/birthday"
+                android:layout_height="45dp"
+                android:layout_marginLeft="15dp"
+                android:gravity="left|center_vertical"
+                android:padding="3dip"
+                android:text="1990/12/12"
+                android:textColor="@color/default_value_color"
+                android:textSize="15sp" />
+        </TableRow>
+
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="0.5dp"
+            android:background="@color/default_line_color" />
+            -->
+
+            <TableRow>
+
+                <TextView
+                    android:layout_height="45dp"
+                    android:layout_column="1"
+                    android:gravity="left|center_vertical"
+                    android:padding="3dip"
+                    android:text="邮箱地址"
+                    android:textColor="@color/default_key_color"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/email"
+                    android:layout_height="45dp"
+                    android:layout_marginLeft="15dp"
+                    android:gravity="left|center_vertical"
+                    android:padding="3dip"
+                    android:text=""
+                    android:textColor="@color/default_value_color"
+                    android:textSize="15sp" />
+            </TableRow>
+        </TableLayout>
+
+        <Button
+            android:id="@+id/chat_btn"
+            android:layout_width="fill_parent"
+            android:layout_height="53dp"
+            android:layout_margin="20dp"
+            android:background="@drawable/tt_default_btn_bk"
+            android:text="@string/chat"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:indeterminateDrawable="@drawable/tt_progressbar"
+        android:indeterminateDuration="4000"
+        android:visibility="visible" />
+
+</RelativeLayout>
